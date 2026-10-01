@@ -1,0 +1,14 @@
+node_modules/
+.next/
+dist/
+coverage/
+playwright-report/
+test-results/
+.pnpm-store/
+.env*
+!.env.example
+*.tsbuildinfo
+.DS_Store
+
+# Local, bounded live investigation reports
+.crossexam/

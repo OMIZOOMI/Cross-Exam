@@ -1,0 +1,138 @@
+import { ScanReportSchema } from "../../packages/contracts/src/index";
+
+/** Synthetic test input for LIVE rendering/storage checks only. Never imported by application code. */
+export function liveReportFixture(id: string) {
+  const date = "2026-10-01T10:00:00.000Z";
+  const evidence = [
+    {
+      id: "E-001",
+      code: "HTTP_STATUS",
+      kind: "network",
+      url: "https://example.com/",
+      title: "HTTP 200 · /",
+      detail: "Controlled test response: 200.",
+      data: { statusCode: 200, responseBytes: 400, finalUrl: "https://example.com/" },
+    },
+    {
+      id: "E-002",
+      code: "HTTP_STATUS",
+      kind: "network",
+      url: "https://example.com/broken",
+      title: "HTTP 404 · /broken",
+      detail: "Controlled test response: 404.",
+      data: { statusCode: 404, responseBytes: 200, finalUrl: "https://example.com/broken" },
+    },
+    {
+      id: "E-003",
+      code: "DOCUMENT_METADATA",
+      kind: "metadata",
+      url: "https://example.com/",
+      title: "Document metadata · /",
+      detail: "Controlled HTML title.",
+      data: {
+        title: "<script>window.attacked=true</script>",
+        description: "Test document",
+        lang: "en",
+      },
+    },
+  ].map((item) => ({
+    ...item,
+    scanId: id,
+    source: "live",
+    provenance: "OBSERVED",
+    capturedAt: date,
+    collector: "controlled-test-fixture",
+  }));
+  return ScanReportSchema.parse({
+    schemaVersion: 1,
+    summary: {
+      id,
+      source: "live",
+      targetUrl: "https://example.com/",
+      status: "partial",
+      startedAt: date,
+      durationMs: 1300,
+      pageCount: 2,
+      evidenceCount: 3,
+      findingCount: 1,
+    },
+    pages: [
+      {
+        id: "P-1",
+        path: "/",
+        title: "Controlled home",
+        statusCode: 200,
+        durationMs: 321,
+        linksTo: ["P-2"],
+        requestedUrl: "https://example.com/",
+        finalUrl: "https://example.com/",
+        depth: 0,
+        responseBytes: 400,
+      },
+      {
+        id: "P-2",
+        path: "/broken",
+        title: "Not found",
+        statusCode: 404,
+        durationMs: 1200,
+        linksTo: [],
+        requestedUrl: "https://example.com/broken",
+        finalUrl: "https://example.com/broken",
+        depth: 1,
+        responseBytes: 200,
+      },
+    ],
+    evidence,
+    metrics: [],
+    challenges: [],
+    experiments: [],
+    agentRuns: [],
+    claims: [
+      {
+        id: "C-001",
+        scanId: id,
+        statement: "/broken returned HTTP 404 in this observation.",
+        provenance: "DERIVED",
+        evidenceIds: ["E-002"],
+        proposedBy: "Deterministic rule",
+      },
+    ],
+    verdicts: [
+      {
+        id: "V-001",
+        claimId: "C-001",
+        status: "confirmed",
+        rationale: "Rule matches this response only. No reproduction was performed.",
+        evidenceIds: ["E-002"],
+        experimentIds: [],
+        decidedBy: "Deterministic rule",
+      },
+    ],
+    findings: [
+      {
+        id: "F-001",
+        claimId: "C-001",
+        verdictId: "V-001",
+        title: "Document returned HTTP 404",
+        description: "/broken returned HTTP 404 in this observation.",
+        category: "Navigation",
+        severity: "medium",
+        provenance: "DERIVED",
+        evidenceIds: ["E-002"],
+        affectedPaths: ["/broken"],
+        recommendation: "Review the intended destination.",
+        verification: "Repeat a read-only request.",
+      },
+    ],
+    investigation: {
+      mode: "deterministic-http",
+      version: 1,
+      finalOrigin: "https://example.com",
+      requestCount: 5,
+      receivedBytes: 600,
+      limits: { maxPages: 8, maxDepth: 2 },
+      limitations: ["Controlled UI test fixture. No target was contacted."],
+      notes: ["One page could not be collected."],
+    },
+  });
+}

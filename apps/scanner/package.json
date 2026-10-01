@@ -1,0 +1,23 @@
+{
+  "name": "@crossexam/scanner",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "smoke": "vitest run src/investigate.test.ts -t \"builds evidence\" --root ../..",
+    "typecheck": "tsc --noEmit",
+    "scan": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@crossexam/contracts": "workspace:*",
+    "@crossexam/engine": "workspace:*",
+    "cheerio": "1.2.0"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  },
+  "exports": {
+    ".": "./src/runner.ts",
+    "./limits": "./src/limits.ts"
+  }
+}
