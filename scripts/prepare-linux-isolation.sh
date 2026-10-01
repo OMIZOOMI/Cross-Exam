@@ -32,9 +32,11 @@ sudo -n cp -aL "$playwright_test_dir" "$runtime/node_modules/@playwright/test"
 sudo -n cp -aL "$playwright_dir" "$runtime/node_modules/playwright"
 sudo -n cp -aL "$playwright_core_dir" "$runtime/node_modules/playwright-core"
 phase=browser
-browser_cache=$(find "$HOME/.cache/ms-playwright" -mindepth 1 -maxdepth 1 -type d | head -n 1)
-test -n "$browser_cache"
-sudo -n cp -aL "$browser_cache"/. "$browser"/
+test -d "$HOME/.cache/ms-playwright"
+for browser_cache in "$HOME"/.cache/ms-playwright/*; do
+  test -d "$browser_cache" || continue
+  sudo -n cp -aL "$browser_cache" "$browser"/
+done
 sudo -n install -m 0644 packages/engine/src/security/fixtures/test-cert.pem "$runtime/test-cert.pem"
 : | sudo -n tee "$runtime/resolv.conf" >/dev/null
 : | sudo -n tee "$runtime/hosts" >/dev/null
