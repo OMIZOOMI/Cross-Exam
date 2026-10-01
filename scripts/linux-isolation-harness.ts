@@ -28,6 +28,7 @@ const key = path.resolve(
 );
 
 type Relay = { close(): Promise<void> };
+let currentStage = "startup";
 
 async function createRelay(proxy: EgressProxy): Promise<Relay> {
   await rm(socketPath, { force: true });
@@ -99,6 +100,7 @@ async function run() {
   let proxy: EgressProxy | undefined;
   let relay: Relay | undefined;
   try {
+    currentStage = "start-proxy";
     proxy = await startProxy({
       resolve: async (hostname) => {
         if (hostname === "private.crossexam-fixture.com")
@@ -127,7 +129,9 @@ async function run() {
         });
       },
     });
+    currentStage = "create-relay";
     relay = await createRelay(proxy);
+    currentStage = "detect-backend";
     const backend = new LinuxIsolationBackend({
       runtimeDirectory,
       browserDirectory,
@@ -145,19 +149,23 @@ async function run() {
     const modes = ["network", "filesystem", "pids", "browser", "tls"] as const;
     const results: Record<string, LinuxIsolationResult> = {};
     for (const mode of modes) {
+      currentStage = `probe-${mode}`;
       const result = await backend.run(mode, input);
       if (result.exitCode !== 0 || !result.cleaned)
         throw new Error(`${mode} probe failed or was not cleaned.`);
       results[mode] = result;
     }
+    currentStage = "probe-memory";
     const memory = await backend.run("memory", input);
     if (!memory.cleaned || memory.properties.Result !== "oom-kill")
       throw new Error("memory probe was not cgroup OOM-killed.");
     results.memory = memory;
+    currentStage = "probe-timeout";
     const timeout = await backend.run("timeout", input);
     if (!timeout.cleaned || !timeout.timedOut)
       throw new Error("timeout probe was not killed by RuntimeMaxSec.");
     results.timeout = timeout;
+    currentStage = "probe-proxy-down";
     await relay.close();
     relay = undefined;
     const proxyDownRelay = await createRelay(proxy);
@@ -191,6 +199,7 @@ async function run() {
 }
 
 void run().catch((error) => {
-  console.error(error instanceof Error ? error.message : "Linux isolation harness failed");
+  const message = error instanceof Error ? error.message : "Linux isolation harness failed";
+  console.error(`::error title=Linux isolation harness::stage=${currentStage} message=${message}`);
   process.exitCode = 1;
 });
