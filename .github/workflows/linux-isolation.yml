@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: linux-isolation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   isolation:
     runs-on: ubuntu-24.04
