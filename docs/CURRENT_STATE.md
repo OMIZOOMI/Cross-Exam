@@ -1,71 +1,54 @@
 # Current state
 
-Updated 2026-10-01. Task: **Browser egress proxy and worker isolation**.
+Updated 2026-10-01. Task: **10A — Active systemd/cgroup verification**.
 
-**Proxy and fixture worker validated; Linux isolation backend and focused CI harness added, but the Linux workflow has not yet executed from this macOS session. Arbitrary browser scanning remains disabled. Task 9a is pending verification, not a production-security sign-off.**
+**Task 9a remains PARTIAL. The post-exit limit-verification defect is fixed locally; the filesystem/PID confinement mismatch is explicitly unresolved. Public browser scanning remains disabled. This document is the pre-push snapshot for the single authorized Linux validation attempt, not a production-security sign-off.**
 
-## Recovered baseline
+## Recovered baseline and scope
 
-Started with a clean working tree on main. HEAD and fetched origin/main both matched `1e04ce051c81090c3356e83ab370c5623d5140ed` (`feat: deliver safe deterministic website investigations`). Read the state/security/architecture/decisions/tasks/workflow and AGENTS instructions, inspected the shared destination gate, package structure and existing Playwright product tests before implementation. No UI redesign or changes to the deterministic scanner, contracts, demo, live report store/API or existing security policy were made.
+Started clean on `validation/linux-isolation` at `fb6200af37d2eacfcf5526c56f90c66c5a8ea4f3`. Stable main and fetched origin/main remain `9bafdb5df0d97668abd66e09fa342610da323ace`. Preserved all 19 existing candidate commits. Read the state, security, architecture, decisions, tasks and workflow documentation and inspected the backend, unit tests, harness, fixed probes, preparation script and workflow before edits.
 
-The baseline's example.com verification remains historical: one fetched HTML page, seven real observations, two deterministic findings, and separate unchanged fixture demo. No new live public scan was performed for this task; all adversarial tests are controlled fixtures.
+Task 10A changes only the Linux backend lifecycle, direct cgroup verification, focused tests, harness diagnostics and candidate documentation. It preserves all systemd security properties, requested limits, proxy behavior and fixed probes. No UI, HTTP collector, shared contracts, browser collector, AI, dependencies or deployment changes. The separate filesystem test has not been weakened or redesigned. Main must not be merged or pushed by this task.
 
-## Implemented
+## Linux failure diagnosed
 
-- `packages/engine/src/browser-egress`: bounded loopback HTTP/CONNECT proxy; reuses existing URL validation, all-answer DNS/IP validation and pinned HTTP transport. CONNECT adds literal TCP pinning and peer validation before acknowledging/forwarding. No TLS MITM or certificate verification bypass. Strict authority/port checks, HTTP redirect validation, upgrade/body/method rejection, cleanup and resource limits.
-- Structured proxy audit decisions contain only allow/block, classification, reason and request type. Browser decisions add bounded sequencing/type/reason without target URLs, queries, headers or payloads.
-- `apps/browser-worker`: public `launchBrowserWorker()` always fails closed with `ISOLATION_UNAVAILABLE`. Immutable status enumerates the missing external process/network/filesystem/resource enforcement. No public API/form browser execution was added.
-- Internal direct-file fixture harness launches fresh sandbox-enabled Chromium with explicit proxy, subtractive `<-loopback>` bypass rule, no DIRECT fallback, browser DNS blocked, QUIC/non-proxied WebRTC UDP disabled, clean environment/context, no credentials or granted permissions, blocked service workers/downloads/WS/WSS, bounded page/request/deadline behavior.
-- New `test:browser-security` suite combines proxy/worker unit/integration tests with a separate serial Chromium/protocol suite. Existing product E2E configuration remains unchanged. Existing Playwright version is reused; the lockfile adds only the new workspace importer.
-- `apps/browser-worker/src/linux-backend.ts` adds a fixed Linux-only systemd/cgroup-v2 backend. `scripts/prepare-linux-isolation.sh` creates the sanitized runtime; `scripts/linux-isolation-harness.ts` owns only controlled fixture proxy/TLS relay setup; `tests/linux-isolation/probe.ts` contains fixed adversarial modes. Public worker launch remains fail-closed until CI verifies the backend.
+The baseline [Linux run 36858793108](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/36858793108) **failed**. The old ordering awaited `systemd-run --pipe --wait`, allowing a fast successful transient service to exit/unload, then called `systemctl show` to assert limits. Reported `MemoryMax=infinity`, `TasksMax=19151`, `CPUQuotaPerSecUSec=infinity` and empty ControlGroup were post-completion observations, not active enforcement evidence. A zero status from `systemctl show` does not imply a loaded unit.
 
-Detailed enforcement boundaries, primary research references, exact budgets and limitations are in `docs/SECURITY.md`; component design is in `docs/ARCHITECTURE.md`; decisions 023–025 record the tradeoffs.
+## Task 10A implementation
 
-## Verification evidence
+- Split launcher startup from input release and completion. Stdin remains open and empty; the existing fixed probe reads through EOF before executing its operation.
+- Require loaded/active state, positive MainPID, nonempty actual unit-specific ControlGroup and nonzero InvocationID within a bounded startup wait.
+- `linux-cgroup.ts` validates the captured path and reads fixed, bounded cgroup-v2 files, rejecting traversal/symlinks/missing or malformed values. Require memory 1073741824 bytes, swap 0, 128 tasks, finite CPU quota equal to period, and MainPID membership in `cgroup.procs`.
+- Reconfirm the same active PID/cgroup/invocation after the reads, then release JSON and close stdin. Terminal state is outcome evidence only; unloaded-success defaults cannot replace the retained active proof.
+- Kill/stop on startup, verification or timeout failure. Cleanup checks the actual captured cgroup and descendant population; no `/system.slice/<unit>` fallback is invented. A startup failure without a captured group cannot claim proven cleanup.
+- Each completed probe logs active systemd identity, direct kernel values and cleanup before subsequent assertions. Verification exceptions retain the phase, bounded values and launcher diagnostics.
 
-Playwright 1.63.0 / Chromium 153.0.8010.12 on macOS:
+The lifecycle regression tests were run against the original backend first and reproduced incorrect ordering/guessed cleanup paths. The replacement passes fast-success/unload, activation waiting, invalid identity, changed invocation, startup failure/deadline, malformed/unlimited/mismatched kernel limits, missing PID membership, timeout and lingering-descendant cases. Three real local child-process checks verify the stdin barrier, timeout and exec failure without pretending macOS enforces Linux cgroups.
 
-- Allowed public-style fixture HTML, scripts, fetch/XHR and frames load through the real local proxy. A closed fake resolver and response transport prevent all real target DNS/HTTP requests.
-- Browser-created images/scripts/fetch/XHR/iframes to private-resolving names are blocked; mixed IPv4/IPv6 DNS answers fail closed. Redirect and window.location escapes are blocked.
-- Owned IPv4/IPv6 loopback sentinels receive zero hits for proxy-bypass attempts (localhost, loopback, shorthand IPv4, ::1, mapped IPv6). A stopped proxy causes ERR_PROXY_CONNECTION_FAILED without direct fallback.
-- WS/WSS and unsafe POST are denied by worker routing; cleartext upgrades are independently denied by proxy tests. Chromium rejects the self-signed test certificate through CONNECT; a separately scoped Node TLS test verifies an explicitly trusted fixture tunnel.
-- A WebRTC data-channel ICE attempt sends zero packets to an owned UDP STUN sentinel. This is a bounded browser observation, not proof of general UDP containment.
-- Private IPv4, unspecified, link-local, metadata, IPv6 loopback/ULA/link-local/mapped literals and non-default ports are tested as proxy HTTP/CONNECT input, never by probing real infrastructure.
-- Fresh context state, ungranted geolocation, popup closure and deadline shutdown work in real Chromium. Configuration/unit tests cover service-worker/download blocking and request caps; full hostile secure-origin service-worker/download lifecycle tests remain a coverage gap.
+## Local validation
 
-Linux execution is **pending**. The supported workflow is `.github/workflows/linux-isolation.yml` on Ubuntu 24.04; it installs systemd/iproute2, prepares a root-owned runtime with no repository/home mounts, starts the existing proxy behind a single AF_UNIX relay, and runs network/filesystem/PID/memory/timeout/browser/TLS/proxy-down probes. This Mac has no Linux runtime, so no Linux OS claim is made yet.
-
-## Validation
-
-Executed 2026-10-01 on Node.js 24.18.1 / pnpm 11.19.0:
+Executed on Node.js 24.18.1 / pnpm 11.19.0 with controlled fixture listeners and installed Chromium:
 
 | Command | Actual result |
 | --- | --- |
-| `pnpm install --frozen-lockfile` | PASS; existing dependency versions reused |
-| `pnpm lint` | PASS; 92 files |
+| `pnpm lint` | PASS |
 | `pnpm test:security` | PASS; 288 tests / 6 files |
 | `pnpm test:scanner` | PASS; 94 tests / 4 files |
-| `pnpm test` | PASS; 470 tests / 19 files (all original 420 retained) |
-| `pnpm build` | PASS; root + six workspace typechecks and Next.js production build |
-| `pnpm scanner:smoke` | PASS; 1 selected test; 33 deliberately filtered |
-| `pnpm test:browser-security` | PASS; 50 unit/integration tests plus 25 serial adversarial browser/protocol checks |
-| `E2E_PRODUCTION=1 pnpm test:e2e` | PASS; 22 desktop/mobile product checks against freshly built production server |
-| Linux isolation workflow | NOT RUN LOCALLY; pending execution on Ubuntu 24.04 |
+| `pnpm test` | PASS; 544 tests / 23 files |
+| `pnpm build` | PASS; root/workspace typechecks and Next.js production build |
+| `pnpm test:browser-security` | PASS; 124 unit/integration tests and 25 Chromium/protocol checks |
+| `pnpm exec vitest run apps/browser-worker/src/linux-backend.test.ts apps/browser-worker/src/linux-cgroup.test.ts apps/browser-worker/src/linux-lifecycle.test.ts apps/browser-worker/src/linux-command.test.ts` | PASS; 74 tests / 4 files, including 55 new regressions |
 
-The previous local production preview was deliberately terminated (SIGTERM/143) before E2E started the new build; this is not a validation failure. No public targets, real private services, cloud metadata services, model APIs, deployments or paid services were used.
+These local checks do not prove Linux OS confinement. No public website, private infrastructure or cloud metadata endpoint was probed. The existing deterministic HTTP live-report milestone and separate fixture demo remain unchanged.
 
-## Run and limitations
+## One permitted Linux run
 
-Normal application workflow is unchanged: `pnpm dev` at `http://127.0.0.1:3000`; production preview is `pnpm build && pnpm start`. The form continues deterministic HTTP collection only. No browser worker HTTP endpoint, arbitrary URL CLI or feature-enable environment variable exists. Run `pnpm test:browser-security` for the controlled boundary checks with the already installed Chromium.
+The authorized delivery is exactly one descriptive commit and push to `validation/linux-isolation`, followed by read-only observation of the resulting Ubuntu 24.04 workflow. No PR is open for this branch, so its push is the single configured event. The new run cannot exist before this commit is pushed: its actual run ID/outcome and active cgroup observations belong to the commit's [Linux Actions record](https://github.com/OMIZOOMI/Cross-Exam/actions/workflows/linux-isolation.yml) and final Task 10A handoff. This pre-push document records **no new Linux success**. The mandatory stop-on-failure rule forbids a patch/retry or second run, including another documentation push; do not infer complete isolation from a resource-only pass.
 
-No Docker/Podman or Linux runtime exists on this macOS host; the new Linux backend is not locally executable. Its systemd/cgroup claims remain unverified until CI. Chromium sandbox/context isolation and proxy settings are not substitutes. Direct socket/UDP/IPv6 escape by other browser facilities or a compromised subprocess remains outside the proof until the Linux probes pass. Proxy CONNECT cannot inspect encrypted methods/headers/URLs/WSS or public forwarding services; public IP pinning does not prevent deployment-specific DNAT. The public launcher therefore still refuses execution.
+## Remaining boundary and next task
 
-No full browser collector, Lighthouse, axe browser execution, AI agents/providers, authentication, billing, AWS, WhatIf, screenshots as product evidence or automatic fixes were implemented. No UI changes.
+Systemd's `ProtectSystem=strict` makes host paths read-only; it does not provide a filesystem allowlist or prohibit access to all filesystem AF_UNIX sockets. Removing bubblewrap left no replacement PID namespace/root confinement. The filesystem probe still assumes a confined PID 1 root via `/proc/1/root`; its assumptions and the backend do not match. Task 10A does not solve this gap, even if its active resource proof succeeds.
 
-## Delivery and next task
+`launchBrowserWorker()` still always throws `ISOLATION_UNAVAILABLE`. All production browser collection remains disabled. The verified destination proxy and controlled Chromium checks do not establish complete process/filesystem/network isolation; CONNECT also cannot inspect encrypted URLs, methods or WebSockets. See SECURITY.md for the full boundary.
 
-The existing validated-task review/document/commit/fetch/push definition of done in AGENTS.md and AI_WORKFLOW.md was preserved. The final handoff reports the actual commit and remote verification; a commit cannot contain its own SHA. Generated reports, browser artifacts, caches and credentials must remain excluded. Reviewed public TLS fixture PEM files are reused unchanged in controlled tests only.
-
-Final scope/privacy review: 26 changed/new source, test, manifest and documentation files; no new secret-like files or credential/machine-path pattern matches. Existing disposable PEM bytes are unchanged. Git confirms no changes under web, deterministic scanner, contracts, agents or product E2E configuration. Reports, `.next` and test output are ignored; whitespace validation and final lint pass. Fetched origin/main still matched the baseline before publication, so no unrelated remote history needed reconciliation.
-
-**Exactly one recommended next task:** execute and, if needed, repair the Ubuntu 24.04 Linux isolation workflow until every OS/network/process/filesystem/resource probe passes; only then consider Task 10. This verification task was not executed here.
+**Exactly one recommended next task: Resolve filesystem/PID confinement mismatch.** Do not begin browser collection or AI work.

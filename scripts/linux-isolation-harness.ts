@@ -153,6 +153,17 @@ async function run() {
     for (const mode of modes) {
       currentStage = `probe-${mode}`;
       const result = await backend.run(mode, input);
+      // Emit each completed active snapshot before a later probe can fail the suite.
+      console.log(
+        JSON.stringify({
+          mode,
+          phase: "probe-completed",
+          active: result.active,
+          terminal: result.properties,
+          exitCode: result.exitCode,
+          cleaned: result.cleaned,
+        }),
+      );
       if (result.exitCode !== 0 || !result.cleaned)
         throw new Error(
           `${mode} probe failed or was not cleaned: ${result.stdout} ${result.stderr ?? ""} ${JSON.stringify(result.properties)}`,

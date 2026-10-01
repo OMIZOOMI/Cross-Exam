@@ -16,7 +16,10 @@ const options: LinuxIsolationOptions = {
 };
 
 const initialProperties = [
-  "Result=success",
+  "LoadState=loaded",
+  "ActiveState=failed",
+  `InvocationID=${"a".repeat(32)}`,
+  "Result=exit-code",
   "MemoryMax=1073741824",
   "TasksMax=128",
   "CPUQuotaPerSecUSec=1s",
@@ -24,6 +27,19 @@ const initialProperties = [
   "MainPID=0",
   "ExecMainStatus=7",
   "",
+].join("\n");
+
+const activeProperties = [
+  "LoadState=loaded",
+  "ActiveState=active",
+  "SubState=running",
+  `InvocationID=${"a".repeat(32)}`,
+  "MemoryMax=1073741824",
+  "MemorySwapMax=0",
+  "TasksMax=128",
+  "CPUQuotaPerSecUSec=1s",
+  "MainPID=4321",
+  "ControlGroup=/system.slice/crossexam-isolation-test.service",
 ].join("\n");
 
 const cleanupProperties = [
@@ -46,6 +62,40 @@ function dependencies(
   return {
     platform: "linux",
     execute,
+    start: (request) => {
+      let finished = false;
+      let resolve: (result: Result) => void = () => {};
+      const completion = new Promise<Result>((done) => {
+        resolve = done;
+      });
+      return {
+        completion,
+        get finished() {
+          return finished;
+        },
+        release: (input) => {
+          void execute({ ...request, input }).then((result) => {
+            finished = true;
+            resolve(result);
+          });
+        },
+        terminate: () => {
+          finished = true;
+          resolve({ ...success(), exitCode: 137 });
+        },
+      };
+    },
+    readCgroupFile: async (file) => {
+      const values: Record<string, string> = {
+        "memory.max": "1073741824",
+        "memory.swap.max": "0",
+        "pids.max": "128",
+        "cpu.max": "100000 100000",
+        "cgroup.procs": "4321",
+      };
+      return values[file.split("/").at(-1) ?? ""] ?? "";
+    },
+    pause: async () => {},
     validateEnvironment: async () => null,
     verifyControlGroupEmpty: async () => true,
     uuid: () => "test",
@@ -61,11 +111,15 @@ function successfulExecutor(requests: Request[]): (request: Request) => Promise<
     }
     if (request.args.includes("show")) {
       return success(
-        request.args.includes("--property=Result") ? initialProperties : cleanupProperties,
+        request.args.includes("--property=MemoryMax")
+          ? activeProperties
+          : request.args.includes("--property=Result")
+            ? initialProperties
+            : cleanupProperties,
       );
     }
     if (request.args.includes("/usr/bin/systemd-run") && request.args.includes("--pipe")) {
-      return success("probe output\n");
+      return { ...success("probe output\n"), exitCode: 7 };
     }
     return success();
   };
@@ -271,10 +325,10 @@ describe("LinuxIsolationBackend service command", () => {
       options,
       dependencies(async (request) => {
         if (request.args.includes("--pipe")) {
-          return success("x".repeat(70_000));
+          return { ...success("x".repeat(70_000)), exitCode: 1 };
         }
         if (request.args.includes("show") && request.args.includes("--property=Result")) {
-          return success(initialProperties.replace("Result=success", "Result=timeout"));
+          return success(initialProperties.replace("Result=exit-code", "Result=timeout"));
         }
         return execute(request);
       }),
@@ -330,7 +384,7 @@ describe("LinuxIsolationBackend cleanup", () => {
     );
 
     await expect(backend.run("filesystem", {})).rejects.toThrow(
-      "Unable to inspect the transient isolation service",
+      "Unable to identify failed service outcome",
     );
     expect(requests.some((request) => request.args.includes("kill"))).toBe(true);
     expect(requests.some((request) => request.args.includes("stop"))).toBe(true);

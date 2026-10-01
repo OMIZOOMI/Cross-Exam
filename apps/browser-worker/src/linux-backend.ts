@@ -5,6 +5,15 @@ import { access, lstat, readdir, readFile, realpath } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 import { BrowserIsolationUnavailableError } from "./isolation";
+import {
+  type ActiveCgroup,
+  activeIdentity,
+  CgroupVerificationError,
+  cgroupDirectory,
+  readCgroupFile,
+  verifyActiveCgroup,
+  verifyControlGroupEmpty,
+} from "./linux-cgroup";
 
 const GETENT = "/usr/bin/getent";
 const SUDO = "/usr/bin/sudo";
@@ -41,6 +50,7 @@ export type LinuxIsolationResult = {
   stderr?: string;
   timedOut: boolean;
   properties: Record<string, string>;
+  active: { properties: Record<string, string>; cgroup: ActiveCgroup };
   cleaned: boolean;
 };
 
@@ -58,21 +68,42 @@ type CommandResult = {
   timedOut: boolean;
 };
 
+type RunningCommand = {
+  completion: Promise<CommandResult>;
+  readonly finished: boolean;
+  release(input?: string): void;
+  terminate(): void;
+};
+
 type LinuxBackendDependencies = {
   platform: NodeJS.Platform;
   execute: (request: CommandRequest) => Promise<CommandResult>;
+  start: (request: CommandRequest) => RunningCommand;
+  readCgroupFile: (file: string) => Promise<string>;
+  pause: () => Promise<void>;
   validateEnvironment: (options: Required<LinuxIsolationOptions>) => Promise<string | null>;
   verifyControlGroupEmpty: (controlGroup: string) => Promise<boolean>;
   uuid: () => string;
 };
 
-const REQUIRED_PROPERTIES = [
-  "Result",
+const ACTIVE_PROPERTIES = [
+  "LoadState",
+  "ActiveState",
+  "SubState",
+  "InvocationID",
   "MemoryMax",
+  "MemorySwapMax",
   "TasksMax",
   "CPUQuotaPerSecUSec",
   "ControlGroup",
   "MainPID",
+] as const;
+const TERMINAL_PROPERTIES = [
+  "LoadState",
+  "ActiveState",
+  "InvocationID",
+  "Result",
+  "ExecMainCode",
   "ExecMainStatus",
 ] as const;
 
@@ -87,6 +118,9 @@ const CLEANUP_PROPERTIES = [
 const productionDependencies: LinuxBackendDependencies = {
   platform: process.platform,
   execute: executeCommand,
+  start: startCommand,
+  readCgroupFile,
+  pause: () => new Promise((resolve) => setTimeout(resolve, 50)),
   validateEnvironment,
   verifyControlGroupEmpty,
   uuid: randomUUID,
@@ -152,40 +186,108 @@ export class LinuxIsolationBackend {
     }
 
     const unit = `crossexam-isolation-${this.#dependencies.uuid()}.service`;
-    const runRequest = this.#buildRunRequest(unit, mode, serializedInput);
+    const runRequest = this.#buildRunRequest(unit, mode);
+    let launcher: RunningCommand | undefined;
     let execution: CommandResult | undefined;
+    let activeProperties: Record<string, string> = {};
+    let cgroup: ActiveCgroup | undefined;
+    let capturedGroup: string | undefined;
     let properties: Record<string, string> = {};
     let cleaned = false;
+    let phase = "startup";
+    let failure: unknown;
 
     try {
-      execution = await this.#dependencies.execute(runRequest);
-      const shown = await this.#show(unit, REQUIRED_PROPERTIES);
-      if (shown.exitCode !== 0 || shown.timedOut) {
-        throw new Error("Unable to inspect the transient isolation service.");
+      launcher = this.#dependencies.start(runRequest);
+      const deadline = Date.now() + 5_000;
+      while (true) {
+        if (launcher.finished) throw new Error("Launcher exited before active verification.");
+        const shown = await this.#show(unit, ACTIVE_PROPERTIES);
+        activeProperties = parseProperties(shown.stdout);
+        if (shown.timedOut || Date.now() >= deadline)
+          throw new Error("Active-service startup deadline.");
+        if (shown.exitCode === 0 && activeProperties.ActiveState === "active") break;
+        if (
+          activeProperties.ActiveState === "failed" ||
+          activeProperties.ActiveState === "deactivating"
+        )
+          throw new Error("Service failed before active verification.");
+        await this.#dependencies.pause();
       }
+      phase = "active-cgroup";
+      // Capture only an actually observed, unit-specific path, including when a later check fails.
+      cgroupDirectory(activeProperties.ControlGroup ?? "", unit);
+      capturedGroup = activeProperties.ControlGroup;
+      cgroup = await verifyActiveCgroup(activeProperties, unit, this.#dependencies.readCgroupFile);
+      const confirmation = await this.#show(unit, ACTIVE_PROPERTIES);
+      const confirmed = activeIdentity(parseProperties(confirmation.stdout), unit);
+      if (
+        confirmation.exitCode !== 0 ||
+        confirmation.timedOut ||
+        launcher.finished ||
+        confirmed.controlGroup !== cgroup.controlGroup ||
+        confirmed.mainPID !== cgroup.mainPID ||
+        confirmed.invocationID !== cgroup.invocationID
+      )
+        throw new Error("Service identity changed before probe release.");
+      phase = "probe-completion";
+      // The fixed probe reads to stdin EOF. No probe operation can run before this point.
+      launcher.release(serializedInput);
+      execution = await launcher.completion;
+      phase = "terminal-evidence";
+      const shown = await this.#show(unit, TERMINAL_PROPERTIES);
+      if (shown.timedOut) throw new Error("Terminal evidence query timed out.");
       properties = parseProperties(shown.stdout);
-      assertAppliedLimits(properties, unit);
+      // A successful transient service may already be unloaded. Its launcher status is authoritative.
+      // Failed units are retained by systemd (no --collect): require their original invocation identity.
+      if (
+        execution.exitCode !== 0 &&
+        !execution.timedOut &&
+        (shown.exitCode !== 0 ||
+          properties.LoadState !== "loaded" ||
+          properties.InvocationID !== cgroup.invocationID ||
+          properties.ActiveState !== "failed")
+      )
+        throw new Error("Unable to identify failed service outcome.");
+    } catch (error) {
+      failure = error;
     } finally {
-      cleaned = await this.#cleanup(unit, properties.ControlGroup || `/system.slice/${unit}`);
+      cleaned = await this.#cleanup(unit, capturedGroup);
+      // Stop the launcher only after stopping its service, including startup/verification failures.
+      if (launcher && !launcher.finished) launcher.terminate();
+      if (launcher) execution ??= await launcher.completion;
     }
 
-    if (execution === undefined) {
-      throw new Error("The transient isolation service did not start.");
+    if (failure || !execution || !cgroup) {
+      throw new Error(
+        `Linux isolation failure: ${JSON.stringify({
+          phase,
+          unit,
+          activeProperties,
+          controlGroup: capturedGroup ?? null,
+          kernelValues:
+            failure instanceof CgroupVerificationError ? failure.values : cgroup?.values,
+          cleaned,
+          message: failure instanceof Error ? failure.message : "Incomplete execution",
+          launcher: execution,
+        })}`,
+      );
     }
-
-    const serviceExitCode = parseExitCode(properties.ExecMainStatus, execution.exitCode);
     return {
       unit,
-      exitCode: serviceExitCode,
+      exitCode: execution.exitCode,
       stdout: truncateUtf8(execution.stdout, MAX_OUTPUT_BYTES),
       ...(execution.stderr ? { stderr: truncateUtf8(execution.stderr, MAX_OUTPUT_BYTES) } : {}),
-      timedOut: execution.timedOut || properties.Result === "timeout",
+      timedOut:
+        execution.timedOut ||
+        (properties.InvocationID === cgroup.invocationID && properties.Result === "timeout"),
       properties,
+      active: { properties: activeProperties, cgroup },
       cleaned,
     };
   }
 
-  #buildRunRequest(unit: string, mode: ProbeMode, input: string): CommandRequest {
+  #buildRunRequest(unit: string, mode: ProbeMode): CommandRequest {
     const { browserDirectory, nodeExecutable, runtimeDirectory, socketDirectory } = this.#options;
     const systemdArgs = [
       "-n",
@@ -243,7 +345,6 @@ export class LinuxIsolationBackend {
     return {
       file: SUDO,
       args: systemdArgs,
-      input,
       timeoutMs: 50_000,
     };
   }
@@ -264,7 +365,7 @@ export class LinuxIsolationBackend {
     });
   }
 
-  async #cleanup(unit: string, originalControlGroup: string): Promise<boolean> {
+  async #cleanup(unit: string, originalControlGroup: string | undefined): Promise<boolean> {
     try {
       await this.#dependencies.execute({
         file: SUDO,
@@ -279,11 +380,9 @@ export class LinuxIsolationBackend {
 
       const shown = await this.#show(unit, CLEANUP_PROPERTIES);
       let inactive = false;
-      let controlGroup = originalControlGroup;
       if (shown.exitCode === 0 && !shown.timedOut) {
         const finalProperties = parseProperties(shown.stdout);
         inactive = isInactiveAndEmpty(finalProperties);
-        controlGroup = finalProperties.ControlGroup || controlGroup;
       } else {
         const active = await this.#dependencies.execute({
           file: SUDO,
@@ -293,7 +392,9 @@ export class LinuxIsolationBackend {
         inactive = !active.timedOut && (active.exitCode === 3 || active.exitCode === 4);
       }
 
-      const cgroupEmpty = await this.#dependencies.verifyControlGroupEmpty(controlGroup);
+      const cgroupEmpty =
+        originalControlGroup !== undefined &&
+        (await this.#dependencies.verifyControlGroupEmpty(originalControlGroup));
       const reset = await this.#dependencies.execute({
         file: SUDO,
         args: ["-n", "--", SYSTEMCTL, "reset-failed", unit],
@@ -315,65 +416,79 @@ export class LinuxIsolationBackend {
 }
 
 async function executeCommand(request: CommandRequest): Promise<CommandResult> {
-  return new Promise((resolve) => {
-    const child = spawn(request.file, [...request.args], {
-      cwd: "/",
-      env: { LANG: "C", LC_ALL: "C", PATH: "/usr/bin:/bin" },
-      shell: false,
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-    const chunks: Buffer[] = [];
-    const errorChunks: Buffer[] = [];
-    let capturedBytes = 0;
-    let observedBytes = 0;
-    let timedOut = false;
-    let settled = false;
+  const running = startCommand(request);
+  running.release(request.input);
+  return running.completion;
+}
 
-    const consume = (chunk: Buffer, retain: boolean) => {
-      observedBytes += chunk.length;
-      if (retain && capturedBytes < MAX_OUTPUT_BYTES) {
-        const remaining = MAX_OUTPUT_BYTES - capturedBytes;
-        const portion = chunk.subarray(0, remaining);
-        chunks.push(portion);
-        capturedBytes += portion.length;
-      }
-      if (
-        !retain &&
-        errorChunks.reduce((sum, item) => sum + item.byteLength, 0) < MAX_OUTPUT_BYTES
-      ) {
-        errorChunks.push(chunk.subarray(0, MAX_OUTPUT_BYTES));
-      }
-      if (observedBytes > MAX_OUTPUT_BYTES) {
-        child.kill("SIGKILL");
-      }
-    };
-
-    child.stdout.on("data", (chunk: Buffer) => consume(chunk, true));
-    child.stderr.on("data", (chunk: Buffer) => consume(chunk, false));
-
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill("SIGKILL");
-    }, request.timeoutMs);
-    timer.unref();
-
-    const finish = (exitCode: number) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve({
-        exitCode,
-        stdout: Buffer.concat(chunks, capturedBytes).toString("utf8"),
-        stderr: Buffer.concat(errorChunks).subarray(0, MAX_OUTPUT_BYTES).toString("utf8"),
-        timedOut,
-      });
-    };
-
-    child.once("error", () => finish(127));
-    child.once("close", (code, signal) => finish(code ?? (signal === "SIGKILL" ? 137 : 1)));
-    child.stdin.on("error", () => undefined);
-    child.stdin.end(request.input);
+/** Starts with stdin held open. Completion and input release are deliberately separate. */
+export function startCommand(request: CommandRequest): RunningCommand {
+  const child = spawn(request.file, [...request.args], {
+    cwd: "/",
+    env: { LANG: "C", LC_ALL: "C", PATH: "/usr/bin:/bin" },
+    shell: false,
+    stdio: ["pipe", "pipe", "pipe"],
   });
+  const chunks: Buffer[] = [];
+  const errorChunks: Buffer[] = [];
+  let capturedBytes = 0;
+  let errorBytes = 0;
+  let observedBytes = 0;
+  let timedOut = false;
+  let finished = false;
+  let released = false;
+  let finish: (result: CommandResult) => void = () => {};
+  const completion = new Promise<CommandResult>((resolve) => {
+    finish = resolve;
+  });
+  const consume = (chunk: Buffer, stderr: boolean) => {
+    observedBytes += chunk.length;
+    const retained = stderr ? errorBytes : capturedBytes;
+    const portion = chunk.subarray(0, Math.max(0, MAX_OUTPUT_BYTES - retained));
+    (stderr ? errorChunks : chunks).push(portion);
+    if (stderr) errorBytes += portion.length;
+    else capturedBytes += portion.length;
+    if (observedBytes > MAX_OUTPUT_BYTES) terminate();
+  };
+  child.stdout.on("data", (chunk: Buffer) => consume(chunk, false));
+  child.stderr.on("data", (chunk: Buffer) => consume(chunk, true));
+  const terminate = () => {
+    child.kill("SIGKILL");
+    child.stdin.destroy();
+    child.stdout.destroy();
+    child.stderr.destroy();
+  };
+  const timer = setTimeout(() => {
+    timedOut = true;
+    terminate();
+  }, request.timeoutMs);
+  timer.unref();
+  const settle = (exitCode: number) => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    finish({
+      exitCode,
+      stdout: Buffer.concat(chunks, capturedBytes).toString("utf8"),
+      stderr: Buffer.concat(errorChunks, errorBytes).toString("utf8"),
+      timedOut,
+    });
+  };
+  child.once("error", () => settle(127));
+  child.once("close", (code, signal) => settle(code ?? (signal === "SIGKILL" ? 137 : 1)));
+  child.stdin.on("error", () => undefined);
+  return {
+    completion,
+    get finished() {
+      return finished;
+    },
+    release(input) {
+      if (released || finished) throw new Error("Launcher input cannot be released.");
+      released = true;
+      child.stdin.end(input);
+    },
+    terminate,
+  };
 }
 
 async function validateEnvironment(
@@ -536,26 +651,6 @@ async function assertNoSymlinks(root: string, limit: number): Promise<void> {
   }
 }
 
-async function verifyControlGroupEmpty(controlGroup: string): Promise<boolean> {
-  if (controlGroup === "") return true;
-  if (
-    !controlGroup.startsWith("/") ||
-    controlGroup.includes("..") ||
-    !/^\/[A-Za-z0-9_.@:/\\-]+$/.test(controlGroup)
-  ) {
-    return false;
-  }
-  try {
-    const processes = await readFile(
-      path.join("/sys/fs/cgroup", controlGroup, "cgroup.procs"),
-      "utf8",
-    );
-    return processes.trim() === "";
-  } catch (error) {
-    return (error as NodeJS.ErrnoException).code === "ENOENT";
-  }
-}
-
 function isUnprivilegedWorkerRecord(record: string): boolean {
   const fields = record.trim().split(":");
   return fields[0] === WORKER_USER && /^\d+$/.test(fields[2] ?? "") && Number(fields[2]) > 0;
@@ -606,26 +701,6 @@ function parseProperties(output: string): Record<string, string> {
   return properties;
 }
 
-function assertAppliedLimits(properties: Record<string, string>, unit: string): void {
-  for (const name of REQUIRED_PROPERTIES) {
-    if (!(name in properties)) {
-      throw new Error(`Missing transient service property: ${name}.`);
-    }
-  }
-  if (
-    properties.MemoryMax !== "1073741824" ||
-    properties.TasksMax !== "128" ||
-    !["1s", "1000000us", "1000000"].includes(properties.CPUQuotaPerSecUSec ?? "") ||
-    !/^\/[A-Za-z0-9_.@:/\\-]+$/.test(properties.ControlGroup || `/system.slice/${unit}`) ||
-    !/^\d+$/.test(properties.MainPID ?? "") ||
-    !/^\d+$/.test(properties.ExecMainStatus ?? "")
-  ) {
-    throw new Error(
-      `Transient service limits were not applied as requested: ${JSON.stringify(properties)}`,
-    );
-  }
-}
-
 function isInactiveAndEmpty(properties: Record<string, string>): boolean {
   const state = properties.ActiveState;
   const tasks = properties.TasksCurrent;
@@ -635,11 +710,6 @@ function isInactiveAndEmpty(properties: Record<string, string>): boolean {
     properties.MainPID === "0" &&
     (tasks === "0" || tasks === "" || tasks === "[not set]")
   );
-}
-
-function parseExitCode(value: string | undefined, fallback: number): number {
-  if (value === undefined || !/^\d+$/.test(value)) return fallback;
-  return Math.min(Number(value), 255);
 }
 
 function truncateUtf8(value: string, maximumBytes: number): string {
