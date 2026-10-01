@@ -1,0 +1,39 @@
+name: Linux browser isolation
+
+on:
+  push:
+    branches: [main, "validation/**"]
+  pull_request:
+    paths:
+      - "apps/browser-worker/**"
+      - "packages/engine/src/browser-egress/**"
+      - "tests/linux-isolation/**"
+      - "scripts/linux-isolation-harness.ts"
+      - "scripts/prepare-linux-isolation.sh"
+      - ".github/workflows/linux-isolation.yml"
+      - "pnpm-lock.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  isolation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: sudo apt-get update
+      - run: sudo apt-get install --yes bubblewrap systemd dbus-user-session
+      - run: pnpm lint
+      - run: pnpm --filter @crossexam/browser-worker typecheck
+      - run: bash scripts/prepare-linux-isolation.sh
+      - run: pnpm exec tsx scripts/linux-isolation-harness.ts

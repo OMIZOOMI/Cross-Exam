@@ -2,7 +2,7 @@
 
 Updated 2026-10-01. Task: **Browser egress proxy and worker isolation**.
 
-**Proxy and fixture worker validated; mandatory OS/network isolation unavailable. Arbitrary browser scanning remains disabled. Task 9a is partial, not a production-security sign-off.**
+**Proxy and fixture worker validated; Linux isolation backend and focused CI harness added, but the Linux workflow has not yet executed from this macOS session. Arbitrary browser scanning remains disabled. Task 9a is pending verification, not a production-security sign-off.**
 
 ## Recovered baseline
 
@@ -17,6 +17,7 @@ The baseline's example.com verification remains historical: one fetched HTML pag
 - `apps/browser-worker`: public `launchBrowserWorker()` always fails closed with `ISOLATION_UNAVAILABLE`. Immutable status enumerates the missing external process/network/filesystem/resource enforcement. No public API/form browser execution was added.
 - Internal direct-file fixture harness launches fresh sandbox-enabled Chromium with explicit proxy, subtractive `<-loopback>` bypass rule, no DIRECT fallback, browser DNS blocked, QUIC/non-proxied WebRTC UDP disabled, clean environment/context, no credentials or granted permissions, blocked service workers/downloads/WS/WSS, bounded page/request/deadline behavior.
 - New `test:browser-security` suite combines proxy/worker unit/integration tests with a separate serial Chromium/protocol suite. Existing product E2E configuration remains unchanged. Existing Playwright version is reused; the lockfile adds only the new workspace importer.
+- `apps/browser-worker/src/linux-backend.ts` adds a fixed Linux-only systemd/cgroup-v2 + bubblewrap backend. `scripts/prepare-linux-isolation.sh` creates the sanitized runtime; `scripts/linux-isolation-harness.ts` owns only controlled fixture proxy/TLS relay setup; `tests/linux-isolation/probe.ts` contains fixed adversarial modes. Public worker launch remains fail-closed until CI verifies the backend.
 
 Detailed enforcement boundaries, primary research references, exact budgets and limitations are in `docs/SECURITY.md`; component design is in `docs/ARCHITECTURE.md`; decisions 023–025 record the tradeoffs.
 
@@ -31,6 +32,8 @@ Playwright 1.63.0 / Chromium 153.0.8010.12 on macOS:
 - A WebRTC data-channel ICE attempt sends zero packets to an owned UDP STUN sentinel. This is a bounded browser observation, not proof of general UDP containment.
 - Private IPv4, unspecified, link-local, metadata, IPv6 loopback/ULA/link-local/mapped literals and non-default ports are tested as proxy HTTP/CONNECT input, never by probing real infrastructure.
 - Fresh context state, ungranted geolocation, popup closure and deadline shutdown work in real Chromium. Configuration/unit tests cover service-worker/download blocking and request caps; full hostile secure-origin service-worker/download lifecycle tests remain a coverage gap.
+
+Linux execution is **pending**. The supported workflow is `.github/workflows/linux-isolation.yml` on Ubuntu 24.04; it installs bubblewrap/systemd, prepares a root-owned runtime with no repository/home mounts, starts the existing proxy behind a single AF_UNIX relay, and runs network/filesystem/PID/memory/timeout/browser/TLS/proxy-down probes. This Mac has no Linux runtime, so no Linux OS claim is made yet.
 
 ## Validation
 
@@ -47,6 +50,7 @@ Executed 2026-10-01 on Node.js 24.18.1 / pnpm 11.19.0:
 | `pnpm scanner:smoke` | PASS; 1 selected test; 33 deliberately filtered |
 | `pnpm test:browser-security` | PASS; 50 unit/integration tests plus 25 serial adversarial browser/protocol checks |
 | `E2E_PRODUCTION=1 pnpm test:e2e` | PASS; 22 desktop/mobile product checks against freshly built production server |
+| Linux isolation workflow | NOT RUN LOCALLY; pending execution on Ubuntu 24.04 |
 
 The previous local production preview was deliberately terminated (SIGTERM/143) before E2E started the new build; this is not a validation failure. No public targets, real private services, cloud metadata services, model APIs, deployments or paid services were used.
 
@@ -54,7 +58,7 @@ The previous local production preview was deliberately terminated (SIGTERM/143) 
 
 Normal application workflow is unchanged: `pnpm dev` at `http://127.0.0.1:3000`; production preview is `pnpm build && pnpm start`. The form continues deterministic HTTP collection only. No browser worker HTTP endpoint, arbitrary URL CLI or feature-enable environment variable exists. Run `pnpm test:browser-security` for the controlled boundary checks with the already installed Chromium.
 
-No Docker/Podman runtime exists on this macOS host; no container, namespace, firewall, hard memory/PID quota, disposable host filesystem or independently enforced process-tree cleanup was implemented/verified. Chromium sandbox/context isolation and proxy settings are not substitutes. Direct socket/UDP/IPv6 escape by other browser facilities or a compromised subprocess remains outside the proof. Proxy CONNECT cannot inspect encrypted methods/headers/URLs/WSS or public forwarding services; public IP pinning does not prevent deployment-specific DNAT. Worker cleanup is cooperative. All of this is why the arbitrary launch gate refuses execution even though fixture tests pass.
+No Docker/Podman or Linux runtime exists on this macOS host; the new Linux backend is not locally executable. Its systemd/bubblewrap/cgroup claims remain unverified until CI. Chromium sandbox/context isolation and proxy settings are not substitutes. Direct socket/UDP/IPv6 escape by other browser facilities or a compromised subprocess remains outside the proof until the Linux probes pass. Proxy CONNECT cannot inspect encrypted methods/headers/URLs/WSS or public forwarding services; public IP pinning does not prevent deployment-specific DNAT. The public launcher therefore still refuses execution.
 
 No full browser collector, Lighthouse, axe browser execution, AI agents/providers, authentication, billing, AWS, WhatIf, screenshots as product evidence or automatic fixes were implemented. No UI changes.
 
@@ -64,4 +68,4 @@ The existing validated-task review/document/commit/fetch/push definition of done
 
 Final scope/privacy review: 26 changed/new source, test, manifest and documentation files; no new secret-like files or credential/machine-path pattern matches. Existing disposable PEM bytes are unchanged. Git confirms no changes under web, deterministic scanner, contracts, agents or product E2E configuration. Reports, `.next` and test output are ignored; whitespace validation and final lint pass. Fetched origin/main still matched the baseline before publication, so no unrelated remote history needed reconciliation.
 
-**Exactly one recommended next task:** implement and verify the missing Linux process/network isolation backend for this proxy/worker, with external TCP/UDP/IPv6/DNS bypass tests and process/filesystem/resource confinement, before enabling any arbitrary-target browser collector. It was not started here.
+**Exactly one recommended next task:** execute and, if needed, repair the Ubuntu 24.04 Linux isolation workflow until every OS/network/process/filesystem/resource probe passes; only then consider Task 10. This verification task was not executed here.
