@@ -24,8 +24,9 @@ phase=modules
 sudo -n install -m 0755 "$probe_bundle" "$runtime/probe.cjs"
 sudo -n mkdir -p "$runtime/node_modules/@playwright"
 playwright_test_dir=$(readlink -f node_modules/@playwright/test)
-playwright_dir=$(readlink -f node_modules/playwright)
-playwright_core_dir=$(readlink -f node_modules/playwright-core)
+playwright_dir=$(find node_modules/.pnpm -path '*/node_modules/playwright' -type d -print -quit)
+playwright_core_dir=$(find node_modules/.pnpm -path '*/node_modules/playwright-core' -type d -print -quit)
+test -n "$playwright_dir" -a -n "$playwright_core_dir"
 sudo -n cp -aL "$playwright_test_dir" "$runtime/node_modules/@playwright/test"
 sudo -n cp -aL "$playwright_dir" "$runtime/node_modules/playwright"
 sudo -n cp -aL "$playwright_core_dir" "$runtime/node_modules/playwright-core"
