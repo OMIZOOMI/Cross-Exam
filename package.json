@@ -22,7 +22,7 @@
     "test:security": "vitest run packages/engine/src/security",
     "test:scanner": "vitest run apps/scanner/src",
     "test:browser-security": "vitest run packages/engine/src/browser-egress apps/browser-worker/src && playwright test -c browser-security.config.ts",
-    "test:linux-isolation": "test \"$(uname -s)\" = Linux && bash scripts/prepare-linux-isolation.sh && pnpm exec tsx scripts/linux-isolation-harness.ts"
+    "test:linux-isolation": "test \"$(uname -s)\" = Linux && bash scripts/prepare-linux-isolation.sh && sudo -n \"$(command -v node)\" node_modules/tsx/dist/cli.mjs scripts/linux-isolation-harness.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

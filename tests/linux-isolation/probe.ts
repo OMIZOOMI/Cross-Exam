@@ -57,6 +57,7 @@ const SENTINEL_ADDRESSES = Object.freeze([
   "::1",
   "10.203.0.1",
   "198.18.0.1",
+  "169.254.169.254",
   "fd00:ce::1",
   "fe80::1",
 ]);
@@ -270,7 +271,9 @@ function hasIpv6DefaultRoute(routes: string): boolean {
   const zero = "0".repeat(32);
   return routes.split("\n").some((line) => {
     const fields = line.trim().split(/\s+/);
-    return fields[0] === zero && fields[1] === "00";
+    // Linux exposes an unreachable/reject ::/0 cache entry on lo without any egress route.
+    const rejected = (Number.parseInt(fields[8] ?? "0", 16) & 0x200) !== 0;
+    return fields[0] === zero && fields[1] === "00" && !rejected;
   });
 }
 

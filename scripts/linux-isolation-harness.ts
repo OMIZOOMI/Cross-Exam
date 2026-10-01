@@ -10,6 +10,7 @@ import {
 import { startProxy } from "../packages/engine/src/browser-egress/core";
 import type { EgressProxy } from "../packages/engine/src/browser-egress/types";
 import { EgressError } from "../packages/engine/src/security/types";
+import { startSentinels } from "./linux-sentinels";
 
 const root = "/var/lib/crossexam";
 const runtimeDirectory = `${root}/runtime`;
@@ -91,6 +92,7 @@ function fixtureResponse(pathname: string): {
 
 async function run() {
   if (process.platform !== "linux") throw new Error("Linux isolation harness must run on Linux.");
+  const sentinels = await startSentinels();
   const [cert, privateKey] = await Promise.all([readFile(certificate), readFile(key)]);
   const tlsServer = https.createServer({ cert, key: privateKey }, (_request, response) =>
     response.end("TLS fixture"),
@@ -175,10 +177,15 @@ async function run() {
     if (down.exitCode !== 0 || !down.cleaned)
       throw new Error("proxy-down probe failed or was not cleaned.");
     await proxyDownRelay.close();
+    results["proxy-down"] = down;
+    const sentinelCounts = sentinels.counts();
+    if (sentinelCounts.tcpHits || sentinelCounts.udpHits)
+      throw new Error("Owned sentinel observed network escape");
     console.log(
       JSON.stringify(
         {
           detected,
+          sentinelCounts,
           modes: Object.fromEntries(
             Object.entries(results).map(([mode, result]) => [
               mode,
@@ -195,6 +202,7 @@ async function run() {
     await proxy?.close();
     tlsServer.closeAllConnections();
     await new Promise<void>((resolve) => tlsServer.close(() => resolve()));
+    await sentinels.close();
   }
 }
 
