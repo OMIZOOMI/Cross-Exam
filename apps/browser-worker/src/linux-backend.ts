@@ -224,7 +224,6 @@ export class LinuxIsolationBackend {
       BWRAP,
       "--unshare-user",
       "--unshare-pid",
-      "--unshare-net",
       "--unshare-ipc",
       "--unshare-uts",
       "--cap-drop",

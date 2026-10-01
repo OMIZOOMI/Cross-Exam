@@ -184,7 +184,6 @@ describe("LinuxIsolationBackend service command", () => {
         "--service-type=exec",
         "--unshare-user",
         "--unshare-pid",
-        "--unshare-net",
         "--unshare-ipc",
         "--unshare-uts",
         "--cap-drop",
