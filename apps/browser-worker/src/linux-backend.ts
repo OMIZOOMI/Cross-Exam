@@ -164,9 +164,9 @@ export class LinuxIsolationBackend {
         throw new Error("Unable to inspect the transient isolation service.");
       }
       properties = parseProperties(shown.stdout);
-      assertAppliedLimits(properties);
+      assertAppliedLimits(properties, unit);
     } finally {
-      cleaned = await this.#cleanup(unit, properties.ControlGroup ?? "");
+      cleaned = await this.#cleanup(unit, properties.ControlGroup || `/system.slice/${unit}`);
     }
 
     if (execution === undefined) {
@@ -653,7 +653,7 @@ function parseProperties(output: string): Record<string, string> {
   return properties;
 }
 
-function assertAppliedLimits(properties: Record<string, string>): void {
+function assertAppliedLimits(properties: Record<string, string>, unit: string): void {
   for (const name of REQUIRED_PROPERTIES) {
     if (!(name in properties)) {
       throw new Error(`Missing transient service property: ${name}.`);
@@ -663,7 +663,7 @@ function assertAppliedLimits(properties: Record<string, string>): void {
     properties.MemoryMax !== "1073741824" ||
     properties.TasksMax !== "128" ||
     !["1s", "1000000us", "1000000"].includes(properties.CPUQuotaPerSecUSec ?? "") ||
-    !/^\/[A-Za-z0-9_.@:/\\-]+$/.test(properties.ControlGroup ?? "") ||
+    !/^\/[A-Za-z0-9_.@:/\\-]+$/.test(properties.ControlGroup || `/system.slice/${unit}`) ||
     !/^\d+$/.test(properties.MainPID ?? "") ||
     !/^\d+$/.test(properties.ExecMainStatus ?? "")
   ) {
