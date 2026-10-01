@@ -17,7 +17,7 @@ The baseline's example.com verification remains historical: one fetched HTML pag
 - `apps/browser-worker`: public `launchBrowserWorker()` always fails closed with `ISOLATION_UNAVAILABLE`. Immutable status enumerates the missing external process/network/filesystem/resource enforcement. No public API/form browser execution was added.
 - Internal direct-file fixture harness launches fresh sandbox-enabled Chromium with explicit proxy, subtractive `<-loopback>` bypass rule, no DIRECT fallback, browser DNS blocked, QUIC/non-proxied WebRTC UDP disabled, clean environment/context, no credentials or granted permissions, blocked service workers/downloads/WS/WSS, bounded page/request/deadline behavior.
 - New `test:browser-security` suite combines proxy/worker unit/integration tests with a separate serial Chromium/protocol suite. Existing product E2E configuration remains unchanged. Existing Playwright version is reused; the lockfile adds only the new workspace importer.
-- `apps/browser-worker/src/linux-backend.ts` adds a fixed Linux-only systemd/cgroup-v2 + bubblewrap backend. `scripts/prepare-linux-isolation.sh` creates the sanitized runtime; `scripts/linux-isolation-harness.ts` owns only controlled fixture proxy/TLS relay setup; `tests/linux-isolation/probe.ts` contains fixed adversarial modes. Public worker launch remains fail-closed until CI verifies the backend.
+- `apps/browser-worker/src/linux-backend.ts` adds a fixed Linux-only systemd/cgroup-v2 backend. `scripts/prepare-linux-isolation.sh` creates the sanitized runtime; `scripts/linux-isolation-harness.ts` owns only controlled fixture proxy/TLS relay setup; `tests/linux-isolation/probe.ts` contains fixed adversarial modes. Public worker launch remains fail-closed until CI verifies the backend.
 
 Detailed enforcement boundaries, primary research references, exact budgets and limitations are in `docs/SECURITY.md`; component design is in `docs/ARCHITECTURE.md`; decisions 023–025 record the tradeoffs.
 
@@ -33,7 +33,7 @@ Playwright 1.63.0 / Chromium 153.0.8010.12 on macOS:
 - Private IPv4, unspecified, link-local, metadata, IPv6 loopback/ULA/link-local/mapped literals and non-default ports are tested as proxy HTTP/CONNECT input, never by probing real infrastructure.
 - Fresh context state, ungranted geolocation, popup closure and deadline shutdown work in real Chromium. Configuration/unit tests cover service-worker/download blocking and request caps; full hostile secure-origin service-worker/download lifecycle tests remain a coverage gap.
 
-Linux execution is **pending**. The supported workflow is `.github/workflows/linux-isolation.yml` on Ubuntu 24.04; it installs bubblewrap/systemd, prepares a root-owned runtime with no repository/home mounts, starts the existing proxy behind a single AF_UNIX relay, and runs network/filesystem/PID/memory/timeout/browser/TLS/proxy-down probes. This Mac has no Linux runtime, so no Linux OS claim is made yet.
+Linux execution is **pending**. The supported workflow is `.github/workflows/linux-isolation.yml` on Ubuntu 24.04; it installs systemd/iproute2, prepares a root-owned runtime with no repository/home mounts, starts the existing proxy behind a single AF_UNIX relay, and runs network/filesystem/PID/memory/timeout/browser/TLS/proxy-down probes. This Mac has no Linux runtime, so no Linux OS claim is made yet.
 
 ## Validation
 
@@ -58,7 +58,7 @@ The previous local production preview was deliberately terminated (SIGTERM/143) 
 
 Normal application workflow is unchanged: `pnpm dev` at `http://127.0.0.1:3000`; production preview is `pnpm build && pnpm start`. The form continues deterministic HTTP collection only. No browser worker HTTP endpoint, arbitrary URL CLI or feature-enable environment variable exists. Run `pnpm test:browser-security` for the controlled boundary checks with the already installed Chromium.
 
-No Docker/Podman or Linux runtime exists on this macOS host; the new Linux backend is not locally executable. Its systemd/bubblewrap/cgroup claims remain unverified until CI. Chromium sandbox/context isolation and proxy settings are not substitutes. Direct socket/UDP/IPv6 escape by other browser facilities or a compromised subprocess remains outside the proof until the Linux probes pass. Proxy CONNECT cannot inspect encrypted methods/headers/URLs/WSS or public forwarding services; public IP pinning does not prevent deployment-specific DNAT. The public launcher therefore still refuses execution.
+No Docker/Podman or Linux runtime exists on this macOS host; the new Linux backend is not locally executable. Its systemd/cgroup claims remain unverified until CI. Chromium sandbox/context isolation and proxy settings are not substitutes. Direct socket/UDP/IPv6 escape by other browser facilities or a compromised subprocess remains outside the proof until the Linux probes pass. Proxy CONNECT cannot inspect encrypted methods/headers/URLs/WSS or public forwarding services; public IP pinning does not prevent deployment-specific DNAT. The public launcher therefore still refuses execution.
 
 No full browser collector, Lighthouse, axe browser execution, AI agents/providers, authentication, billing, AWS, WhatIf, screenshots as product evidence or automatic fixes were implemented. No UI changes.
 

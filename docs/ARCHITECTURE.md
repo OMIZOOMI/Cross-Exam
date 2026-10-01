@@ -78,7 +78,7 @@ The new `apps/browser-worker` package has no web route or CLI. Its public `launc
 
 Future isolation backends must own the worker process tree, filesystem/resource limits and network namespace/firewall. The public launcher cannot accept a boolean assurance in place of enforcement. No backend is currently available, so browser browsing stays disabled. The main product flow remains the validated HTTP scanner; there are no changes to the UI, contracts, report store or collector.
 
-The Linux backend is intentionally an execution harness rather than a public worker service. `LinuxIsolationBackend` validates a fixed prepared runtime and provisions one systemd transient unit around a fixed bubblewrap probe. Its only control-plane attachment is a Unix socket mounted read-only into the private namespace; a host-side relay reaches the existing proxy. Probe modes are fixed and JSON-bounded. The backend reports the systemd/cgroup properties and verified teardown, while the public browser launcher remains unavailable until the Linux CI adversarial suite passes.
+The Linux backend is intentionally an execution harness rather than a public worker service. `LinuxIsolationBackend` validates a fixed prepared runtime and provisions one systemd transient unit around a fixed probe. Systemd supplies the private network/filesystem/device/tmp protections and cgroup limits; its only control-plane attachment is a Unix socket mounted read-only into the service. A host-side relay reaches the existing proxy. Probe modes are fixed and JSON-bounded. The backend reports the systemd/cgroup properties and verified teardown, while the public browser launcher remains unavailable until the Linux CI adversarial suite passes.
 
 ## Planned collector pipeline
 

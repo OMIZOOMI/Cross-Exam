@@ -31,7 +31,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: sudo apt-get update
-      - run: sudo apt-get install --yes bubblewrap systemd dbus-user-session
+      - run: sudo apt-get install --yes systemd dbus-user-session iproute2
       - run: pnpm lint
       - run: pnpm --filter @crossexam/browser-worker typecheck
       - run: bash scripts/prepare-linux-isolation.sh

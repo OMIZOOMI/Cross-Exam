@@ -98,15 +98,15 @@ describe("LinuxIsolationBackend detection", () => {
       reason: "invalid-trusted-paths",
     });
 
-    const missingBwrap = new LinuxIsolationBackend(
+    const missingSystemd = new LinuxIsolationBackend(
       options,
       dependencies(async (request) =>
-        request.file === "/usr/bin/bwrap" ? { ...success(), exitCode: 127 } : success(),
+        request.file === "/usr/bin/systemctl" ? { ...success(), exitCode: 127 } : success(),
       ),
     );
-    await expect(missingBwrap.detect()).resolves.toEqual({
+    await expect(missingSystemd.detect()).resolves.toEqual({
       available: false,
-      reason: "bwrap-unavailable",
+      reason: "systemd-unavailable",
     });
   });
 
@@ -132,7 +132,6 @@ describe("LinuxIsolationBackend detection", () => {
 
     await expect(backend.detect()).resolves.toEqual({ available: true, reason: "available" });
     expect(requests.map(({ file }) => file)).toEqual([
-      "/usr/bin/bwrap",
       "/usr/bin/systemctl",
       "/usr/bin/sudo",
       "/usr/bin/sudo",
@@ -182,14 +181,19 @@ describe("LinuxIsolationBackend service command", () => {
         "--property=NoNewPrivileges=yes",
         "--property=PrivateNetwork=yes",
         "--service-type=exec",
-        "--unshare-user",
-        "--unshare-pid",
-        "--unshare-ipc",
-        "--unshare-uts",
-        "--cap-drop",
-        "ALL",
-        "--new-session",
-        "--die-with-parent",
+        "--property=PrivateDevices=yes",
+        "--property=PrivateTmp=yes",
+        "--property=ProtectHome=yes",
+        "--property=ProtectSystem=strict",
+        "--property=TemporaryFileSystem=/tmp",
+        "--property=ReadWritePaths=/tmp",
+        "--property=BindReadOnlyPaths=/var/lib/crossexam/runtime:/app",
+        "--property=BindReadOnlyPaths=/var/lib/crossexam/browser:/browser",
+        "--property=BindReadOnlyPaths=/run/crossexam:/run/crossexam",
+        "/usr/bin/env",
+        "-i",
+        "HOME=/tmp",
+        "PATH=/runtime:/usr/bin:/bin",
         "/runtime/node",
         "/app/probe.cjs",
         "network",
@@ -199,17 +203,15 @@ describe("LinuxIsolationBackend service command", () => {
     const args = launch?.args ?? [];
     const readonlyPairs: string[][] = [];
     for (let index = 0; index < args.length; index += 1) {
-      if (args[index] === "--ro-bind" || args[index] === "--ro-bind-try") {
-        const source = args[index + 1];
-        const target = args[index + 2];
-        if (source !== undefined && target !== undefined) readonlyPairs.push([source, target]);
+      const arg = args[index];
+      if (arg?.startsWith("--property=BindReadOnlyPaths=")) {
+        const value = arg.slice("--property=BindReadOnlyPaths=".length);
+        const separator = value.lastIndexOf(":");
+        if (separator > 0)
+          readonlyPairs.push([value.slice(0, separator), value.slice(separator + 1)]);
       }
     }
     expect(readonlyPairs).toEqual([
-      ["/usr", "/usr"],
-      ["/lib", "/lib"],
-      ["/lib64", "/lib64"],
-      ["/bin", "/bin"],
       [options.runtimeDirectory, "/app"],
       [options.browserDirectory, "/browser"],
       [options.socketDirectory, "/run/crossexam"],

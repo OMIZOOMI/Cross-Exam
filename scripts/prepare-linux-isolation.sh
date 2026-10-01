@@ -44,5 +44,5 @@ sudo -n chmod -R a+rX "$runtime" "$browser"
 sudo -n chmod 0755 "$runtime/probe.cjs" "$node_target"
 
 phase=fixtures
-sentinel=/host-crossexam-sentinel
+sentinel=/home/crossexam-host-sentinel
 sudo -n sh -c "printf 'host-only sentinel\\n' > '$sentinel'; chmod 0600 '$sentinel'"

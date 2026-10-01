@@ -143,7 +143,7 @@ async function run() {
     const detected = await backend.detect();
     if (!detected.available) throw new Error(`Linux isolation unavailable: ${detected.reason}`);
     const input = {
-      hostSentinelPath: "/host-crossexam-sentinel",
+      hostSentinelPath: "/home/crossexam-host-sentinel",
       tcpPort: 41231,
       udpPort: 41232,
       proxyOrigin: origin,
