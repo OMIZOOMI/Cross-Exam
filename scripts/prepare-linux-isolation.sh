@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 phase=init
-trap 'echo "Linux isolation preparation failed at: $phase" >&2' ERR
+trap 'code=$?; echo "::error title=Linux isolation preparation::phase=$phase exit=$code" >&2; exit "$code"' ERR
 
 root=/var/lib/crossexam
 runtime="$root/runtime"

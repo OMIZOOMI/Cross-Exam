@@ -34,5 +34,11 @@ jobs:
       - run: sudo apt-get install --yes bubblewrap systemd dbus-user-session
       - run: pnpm lint
       - run: pnpm --filter @crossexam/browser-worker typecheck
+      - name: Inspect Linux runtime tools
+        run: |
+          command -v node pnpm sudo readlink install
+          node --version
+          ls -l node_modules/.bin/esbuild
+          node_modules/.bin/esbuild --version
       - run: bash scripts/prepare-linux-isolation.sh
       - run: pnpm exec tsx scripts/linux-isolation-harness.ts
