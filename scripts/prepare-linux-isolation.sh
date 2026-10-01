@@ -12,7 +12,8 @@ phase=account
 sudo -n useradd --system --user-group --home-dir /nonexistent --shell /usr/sbin/nologin crossexam-worker 2>/dev/null || true
 phase=directories
 sudo -n rm -rf "$root" /opt/crossexam-runtime /run/crossexam
-sudo -n install -d -m 0755 "$runtime" "$browser" /opt/crossexam-runtime /run/crossexam
+sudo -n install -d -m 0755 "$runtime" "$browser" /opt/crossexam-runtime
+sudo -n install -d -m 1777 /run/crossexam
 phase=node
 sudo -n install -m 0755 "$(readlink -f "$(command -v node)")" "$node_target"
 
