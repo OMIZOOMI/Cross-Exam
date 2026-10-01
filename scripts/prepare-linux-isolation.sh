@@ -15,10 +15,13 @@ probe_bundle=$(mktemp)
 trap 'rm -f "$probe_bundle"' EXIT
 pnpm exec esbuild tests/linux-isolation/probe.ts --bundle --platform=node --format=cjs --external:@playwright/test --outfile="$probe_bundle"
 sudo -n install -m 0755 "$probe_bundle" "$runtime/probe.cjs"
-sudo -n mkdir -p "$runtime/node_modules"
-sudo -n cp -aL node_modules/@playwright "$runtime/node_modules"
-sudo -n cp -aL node_modules/playwright "$runtime/node_modules"
-sudo -n cp -aL node_modules/playwright-core "$runtime/node_modules"
+sudo -n mkdir -p "$runtime/node_modules/@playwright"
+playwright_test_dir=$(dirname "$(node -p "require.resolve('@playwright/test/package.json')")")
+playwright_dir=$(dirname "$(node -p "require.resolve('playwright/package.json')")")
+playwright_core_dir=$(dirname "$(node -p "require.resolve('playwright-core/package.json')")")
+sudo -n cp -aL "$playwright_test_dir" "$runtime/node_modules/@playwright/test"
+sudo -n cp -aL "$playwright_dir" "$runtime/node_modules/playwright"
+sudo -n cp -aL "$playwright_core_dir" "$runtime/node_modules/playwright-core"
 browser_cache=$(find "$HOME/.cache/ms-playwright" -mindepth 1 -maxdepth 1 -type d | head -n 1)
 test -n "$browser_cache"
 sudo -n cp -aL "$browser_cache"/. "$browser"/
