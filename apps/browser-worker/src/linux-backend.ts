@@ -667,7 +667,9 @@ function assertAppliedLimits(properties: Record<string, string>): void {
     !/^\d+$/.test(properties.MainPID ?? "") ||
     !/^\d+$/.test(properties.ExecMainStatus ?? "")
   ) {
-    throw new Error("Transient service limits were not applied as requested.");
+    throw new Error(
+      `Transient service limits were not applied as requested: ${JSON.stringify(properties)}`,
+    );
   }
 }
 
