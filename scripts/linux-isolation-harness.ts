@@ -155,7 +155,7 @@ async function run() {
       const result = await backend.run(mode, input);
       if (result.exitCode !== 0 || !result.cleaned)
         throw new Error(
-          `${mode} probe failed or was not cleaned: ${result.stdout} ${JSON.stringify(result.properties)}`,
+          `${mode} probe failed or was not cleaned: ${result.stdout} ${result.stderr ?? ""} ${JSON.stringify(result.properties)}`,
         );
       results[mode] = result;
     }

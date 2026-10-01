@@ -39,6 +39,7 @@ export type LinuxIsolationResult = {
   unit: string;
   exitCode: number;
   stdout: string;
+  stderr?: string;
   timedOut: boolean;
   properties: Record<string, string>;
   cleaned: boolean;
@@ -54,6 +55,7 @@ type CommandRequest = {
 type CommandResult = {
   exitCode: number;
   stdout: string;
+  stderr?: string;
   timedOut: boolean;
 };
 
@@ -178,6 +180,7 @@ export class LinuxIsolationBackend {
       unit,
       exitCode: serviceExitCode,
       stdout: truncateUtf8(execution.stdout, MAX_OUTPUT_BYTES),
+      ...(execution.stderr ? { stderr: truncateUtf8(execution.stderr, MAX_OUTPUT_BYTES) } : {}),
       timedOut: execution.timedOut || properties.Result === "timeout",
       properties,
       cleaned,
@@ -378,6 +381,7 @@ async function executeCommand(request: CommandRequest): Promise<CommandResult> {
       stdio: ["pipe", "pipe", "pipe"],
     });
     const chunks: Buffer[] = [];
+    const errorChunks: Buffer[] = [];
     let capturedBytes = 0;
     let observedBytes = 0;
     let timedOut = false;
@@ -390,6 +394,12 @@ async function executeCommand(request: CommandRequest): Promise<CommandResult> {
         const portion = chunk.subarray(0, remaining);
         chunks.push(portion);
         capturedBytes += portion.length;
+      }
+      if (
+        !retain &&
+        errorChunks.reduce((sum, item) => sum + item.byteLength, 0) < MAX_OUTPUT_BYTES
+      ) {
+        errorChunks.push(chunk.subarray(0, MAX_OUTPUT_BYTES));
       }
       if (observedBytes > MAX_OUTPUT_BYTES) {
         child.kill("SIGKILL");
@@ -412,6 +422,7 @@ async function executeCommand(request: CommandRequest): Promise<CommandResult> {
       resolve({
         exitCode,
         stdout: Buffer.concat(chunks, capturedBytes).toString("utf8"),
+        stderr: Buffer.concat(errorChunks).subarray(0, MAX_OUTPUT_BYTES).toString("utf8"),
         timedOut,
       });
     };
