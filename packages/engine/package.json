@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./browser-egress": "./src/browser-egress/index.ts",
     "./security": "./src/security/index.ts",
     "./url-policy": "./src/security/url-policy.ts"
   },

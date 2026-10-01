@@ -14,7 +14,7 @@ Local CLI → apps/scanner → safeRequest → bounded HTTP/HTML investigation
 packages/agents → contracts (interfaces only; no provider)
 ```
 
-This is a pnpm workspace with two application boundaries, not a deployed microservice fleet. Node.js 24, TypeScript 5.9, Next.js 16, React 19, Tailwind CSS 4, React Flow, Recharts, and Zod. Versions are exact in manifests and locked in `pnpm-lock.yaml`.
+This is a pnpm workspace with two product application boundaries and an internal gated browser-worker package, not a deployed microservice fleet. Node.js 24, TypeScript 5.9, Next.js 16, React 19, Tailwind CSS 4, React Flow, Recharts, and Zod. Versions are exact in manifests and locked in `pnpm-lock.yaml`.
 
 | Module | Responsibility | Forbidden coupling |
 | --- | --- | --- |
@@ -23,6 +23,7 @@ This is a pnpm workspace with two application boundaries, not a deployed microse
 | `agents` | Typed role outputs, bounded state snapshots, provider-neutral interface | Direct browser/network authority |
 | `scanner` | Bounded HTTP/HTML collector, deterministic rules, CLI and typed runner | Fabricated live reports |
 | `web` | Report display, local scan API and bounded local report storage | Executing scanners in browser/event handlers |
+| `browser-worker` | Fail-closed public launch gate and internal controlled Chromium harness | Public scanning without verified OS/network isolation; product evidence extraction |
 
 ## Data boundary
 
@@ -69,8 +70,16 @@ A bounded synchronous Node route is sufficient for this local HTTP milestone: in
 
 `ReportView` reuses the approved report sections. Source-specific copy, live overview data, graph positions, timing axes and empty/partial states replace fixture assumptions. LIVE INVESTIGATION never renders the demo's paint comparison, fake measurements, agent activity or fixture recommendations. The demo module and its route remain separate and intact. Reference values are escaped text, never embedded target resources.
 
-## Planned pipeline
+## Browser boundary components (fixture-only launch)
+
+The engine's independent Node-only `./browser-egress` subpath implements a loopback HTTP/CONNECT proxy. `core.ts` handles framing, budgets, privacy-safe audit records and HTTP redirects; `connect.ts` pins raw tunnel sockets using the same URL/DNS/IP policy as the deterministic scanner. Its public starter fixes all production dependencies. Internal test seams are not package exports. CONNECT preserves end-to-end TLS; the proxy cannot inspect encrypted methods, paths or WSS.
+
+The new `apps/browser-worker` package has no web route or CLI. Its public `launchBrowserWorker()` refuses launches with `ISOLATION_UNAVAILABLE`. The direct-file fixture harness launches a fresh Chromium process/context through the proxy, blocks WebSockets/service workers/downloads and unsafe methods, removes implicit local bypass rules and bounds job/request activity. `tests/browser-security` uses controlled responses and local TCP/TLS/UDP sentinels to verify actual Chromium behavior. Root `test:browser-security` runs both proxy/worker unit tests and this isolated suite; ordinary UI E2E configuration is unchanged.
+
+Future isolation backends must own the worker process tree, filesystem/resource limits and network namespace/firewall. The public launcher cannot accept a boolean assurance in place of enforcement. No backend is currently available, so browser browsing stays disabled. The main product flow remains the validated HTTP scanner; there are no changes to the UI, contracts, report store or collector.
+
+## Planned collector pipeline
 
 Validated request → enforced browser proxy/network isolation using the destination policy → bounded Playwright collector → immutable evidence store → deterministic claims → optional tribunal → validated report. Start with in-process orchestration and local files. Add queue/storage abstractions only when a working pipeline needs them; never run a browser scan in a short-lived web request.
 
-Playwright + Chromium are installed for browser tests now and are the intended scanner foundation. The Node HTTP gate is implemented; Chromium egress enforcement, browser collection, durable scheduling/storage and provider implementations remain unimplemented. Local HTTP collection, cancellation, limited report persistence and live rendering now work. No cloud service is required.
+Playwright + Chromium support application tests and controlled browser-boundary fixtures. The destination proxy is implemented, but mandatory OS-level egress enforcement, browser collection, durable scheduling/storage and provider implementations remain unimplemented. Local HTTP collection, cancellation, limited report persistence and live rendering still work. No cloud service is required.

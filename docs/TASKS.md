@@ -16,7 +16,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 ## Day 2 — safe deterministic collection
 
 9. [x] Implement the URL/egress safety gate: shared early input policy, conservative IPv4/IPv6 classification, complete A/AAAA validation, literal-address-pinned Node HTTP(S), manual redirect checks, structured denials, request limits, and deterministic/TLS tests. This protects the HTTP primitive; it does not constrain Chromium.
-9a. [ ] **NEXT:** Implement and verify an enforcing browser egress proxy plus worker network isolation using controlled adversarial fixtures, including TCP/UDP/IPv6 and proxy-bypass tests. Keep arbitrary public browsing disabled until this boundary passes.
+9a. [ ] **PARTIAL; NEXT:** Destination-enforcing HTTP/CONNECT proxy, gated Chromium harness and controlled adversarial tests are implemented (50 unit/integration + 25 browser/protocol checks). Complete a verified OS-level process/network isolation backend with direct TCP/UDP/IPv6, DNS, subprocess and proxy-bypass negative tests. Current public launcher fails closed with ISOLATION_UNAVAILABLE; arbitrary browser scanning remains disabled.
 10. [ ] After task 9a, add a bounded Playwright page collector behind the enforced proxy/network boundary; use controlled local fixtures with an explicit test-only policy. Capture navigation, headers, network/console observations, and cleanup/cancellation.
 11. [x] Persist schema-validated local HTTP reports with IDs, timestamps, compact evidence, redaction, retention, and size bounds. Public storage/access control remains deferred.
 

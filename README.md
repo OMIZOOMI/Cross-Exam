@@ -26,6 +26,7 @@ pnpm lint
 pnpm test
 pnpm test:security
 pnpm test:scanner
+pnpm test:browser-security
 pnpm build
 pnpm scanner:smoke
 pnpm exec playwright install chromium
@@ -38,6 +39,7 @@ pnpm test:e2e
 
 - `apps/web`: local scan form/API, bounded file storage, live reports, and the separate interactive demo.
 - `apps/scanner`: bounded deterministic HTML collector, discovery policy, compact evidence, rule engine, and real CLI; all target requests use the engine security boundary.
+- `apps/browser-worker`: fail-closed public launch gate and internal Chromium fixture harness. The HTTP/CONNECT proxy is tested, but external OS/network isolation is unavailable; arbitrary browser scanning stays disabled. See SECURITY.md for tested paths and gaps.
 - `packages/contracts`: Zod schemas and referential report validation.
 - `packages/engine`: ScanRunner interface, deterministic verdict summary, and isolated URL/pinned HTTP egress boundary. Browser traffic is not yet protected; see `docs/SECURITY.md`.
 - `packages/agents`: role-specific provider interfaces; no model execution.

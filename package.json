@@ -20,7 +20,8 @@
     "scanner:smoke": "pnpm --filter @crossexam/scanner smoke",
     "check": "pnpm lint && pnpm test && pnpm build",
     "test:security": "vitest run packages/engine/src/security",
-    "test:scanner": "vitest run apps/scanner/src"
+    "test:scanner": "vitest run apps/scanner/src",
+    "test:browser-security": "vitest run packages/engine/src/browser-egress apps/browser-worker/src && playwright test -c browser-security.config.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

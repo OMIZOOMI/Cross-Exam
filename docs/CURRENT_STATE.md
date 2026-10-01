@@ -1,81 +1,67 @@
 # Current state
 
-Updated 2026-10-01. Task: **First real deterministic website investigation — validated locally**.
+Updated 2026-10-01. Task: **Browser egress proxy and worker isolation**.
 
-## Recovered state
+**Proxy and fixture worker validated; mandatory OS/network isolation unavailable. Arbitrary browser scanning remains disabled. Task 9a is partial, not a production-security sign-off.**
 
-The interrupted implementation already contained the bounded HTTP/HTML scanner, safe-request integration, deterministic evidence/rules, local scan API and report store, live report UI, observed-link graph, and tests. No implementation was restarted. The previous CURRENT_STATE described the older security-only milestone and was stale.
+## Recovered baseline
 
-Git was initialized on main with no commits, all project files untracked, and no remote. The canonical remote `https://github.com/OMIZOOMI/Cross-Exam.git` was added and fetched; it advertised no refs/history. This delivery therefore includes the existing foundation as an initial commit, not just the scanner delta. There is no committed baseline with which to independently prove earlier fixture changes; the resumed work did not edit the demo module or route, and all demo checks passed.
+Started with a clean working tree on main. HEAD and fetched origin/main both matched `1e04ce051c81090c3356e83ab370c5623d5140ed` (`feat: deliver safe deterministic website investigations`). Read the state/security/architecture/decisions/tasks/workflow and AGENTS instructions, inspected the shared destination gate, package structure and existing Playwright product tests before implementation. No UI redesign or changes to the deterministic scanner, contracts, demo, live report store/API or existing security policy were made.
 
-The only functional configuration correction during recovery was excluding generated `.crossexam` reports from Biome. The first lint run attempted to format an existing ignored report; final lint passes with real reports still present. No application source, dependencies, design, security policy or tests were changed during recovery.
-Staged whitespace validation also found surplus EOF blank lines in `.nvmrc`, PRODUCT.md and ARCHITECTURE.md; these were removed without changing their content.
+The baseline's example.com verification remains historical: one fetched HTML page, seven real observations, two deterministic findings, and separate unchanged fixture demo. No new live public scan was performed for this task; all adversarial tests are controlled fixtures.
 
-## PEM fixture privacy review
+## Implemented
 
-Only the two explicitly authorized PEM files were inspected. `packages/engine/src/security/fixtures/test-cert.pem` is self-signed, with matching issuer/subject `CN=example.com, O=CrossExam TEST FIXTURE` and SAN `DNS:example.com`; valid 2026-10-01 through 2036-09-28. Its self-signature verifies. `test-key.pem` matches that certificate's public key.
+- `packages/engine/src/browser-egress`: bounded loopback HTTP/CONNECT proxy; reuses existing URL validation, all-answer DNS/IP validation and pinned HTTP transport. CONNECT adds literal TCP pinning and peer validation before acknowledging/forwarding. No TLS MITM or certificate verification bypass. Strict authority/port checks, HTTP redirect validation, upgrade/body/method rejection, cleanup and resource limits.
+- Structured proxy audit decisions contain only allow/block, classification, reason and request type. Browser decisions add bounded sequencing/type/reason without target URLs, queries, headers or payloads.
+- `apps/browser-worker`: public `launchBrowserWorker()` always fails closed with `ISOLATION_UNAVAILABLE`. Immutable status enumerates the missing external process/network/filesystem/resource enforcement. No public API/form browser execution was added.
+- Internal direct-file fixture harness launches fresh sandbox-enabled Chromium with explicit proxy, subtractive `<-loopback>` bypass rule, no DIRECT fallback, browser DNS blocked, QUIC/non-proxied WebRTC UDP disabled, clean environment/context, no credentials or granted permissions, blocked service workers/downloads/WS/WSS, bounded page/request/deadline behavior.
+- New `test:browser-security` suite combines proxy/worker unit/integration tests with a separate serial Chromium/protocol suite. Existing product E2E configuration remains unchanged. Existing Playwright version is reused; the lockfile adds only the new workspace importer.
 
-The only code references are in `transport.integration.test.ts`: an ephemeral loopback HTTPS server and a test-scoped TLS mock add explicit fixture trust. Negative cases reject untrusted TLS, hostname mismatch and the actual loopback peer. Production transport retains standard certificate verification and has no custom CA/dialer override. The fixture README already identifies both files as public disposable test data. Local/remote history was empty, so historical provenance cannot be established from Git. Current source/configuration provides no production use or external trust.
+Detailed enforcement boundaries, primary research references, exact budgets and limitations are in `docs/SECURITY.md`; component design is in `docs/ARCHITECTURE.md`; decisions 023–025 record the tradeoffs.
 
-**Safe to commit publicly: YES**, as disposable test data, never as a credential for any real service or globally trusted CA. Do not reuse or install this key/certificate outside the controlled tests. No PEM contents or raw private inputs are reproduced in documentation. Filename-only preflight found no other secret-like project files; generated reports/build output remain ignored.
+## Verification evidence
 
-## Run locally
+Playwright 1.63.0 / Chromium 153.0.8010.12 on macOS:
 
-Requires Node.js 24 and pnpm 11.19.0; no accounts, keys, cloud services or database.
-
-```sh
-pnpm install --frozen-lockfile
-pnpm dev
-```
-
-Open `http://127.0.0.1:3000`. Production preview: `pnpm build`, then `pnpm start` with port 3000 free. A temporary loopback production preview was started for this validation. Routes: `/`, `/report/demo`, and `/report/<id>`; local `POST /api/scans` runs the investigation. Reports under `apps/web/.crossexam/reports` expire after 24 hours and are not committed.
-
-## One live verification
-
-One new submission through the actual local production landing form targeted **https://example.com** at 2026-10-01T08:17:01.174Z. No mocked scan response or direct target browser navigation was used. Existing Playwright was used only to exercise the local application; target HTTP requests came from the production scanner through `safeRequest`.
-
-- API returned 201; source `live`, status `completed`, duration 373 ms.
-- Report ID: `819b6099-6414-4283-8d6a-294ff9a9199b`.
-- Local report: `http://127.0.0.1:3000/report/819b6099-6414-4283-8d6a-294ff9a9199b`.
-- One page: `/`, title `Example Domain`, HTTP 200, `text/html; charset=utf-8`, 713 body bytes, 158 ms fetch duration, zero redirects.
-- Three safe-request operations: entry page plus robots.txt and sitemap.xml; both metadata endpoints returned 404. Completed response bodies totalled 2,139 bytes.
-- Seven OBSERVED live evidence records: HTTP status, response headers, document metadata, structure, declared resources, robots and sitemap observations.
-- Two DERIVED findings: missing meta description (E-003) and absent Content-Security-Policy response header (E-002). These are narrow rule matches, not vulnerability or ranking conclusions.
-- Observed zero internal links and one external IANA link. The map correctly showed one node and zero edges; no third-party navigation occurred. A declared script reference was recorded but never fetched/executed.
-- Stored report loaded and exported through the UI. Evidence references were intact; metrics, agent runs, challenges and experiments were empty; no acme.example fixture data leaked.
-- Desktop 1440px and mobile 390px rendering passed, with no document overflow, page errors or outbound browser requests. `/report/demo` returned 200 with its explicit fixture disclosure and eight nodes.
-
-No second live scan was required. Automated tests use controlled responses/local TLS fixtures rather than public target requests.
+- Allowed public-style fixture HTML, scripts, fetch/XHR and frames load through the real local proxy. A closed fake resolver and response transport prevent all real target DNS/HTTP requests.
+- Browser-created images/scripts/fetch/XHR/iframes to private-resolving names are blocked; mixed IPv4/IPv6 DNS answers fail closed. Redirect and window.location escapes are blocked.
+- Owned IPv4/IPv6 loopback sentinels receive zero hits for proxy-bypass attempts (localhost, loopback, shorthand IPv4, ::1, mapped IPv6). A stopped proxy causes ERR_PROXY_CONNECTION_FAILED without direct fallback.
+- WS/WSS and unsafe POST are denied by worker routing; cleartext upgrades are independently denied by proxy tests. Chromium rejects the self-signed test certificate through CONNECT; a separately scoped Node TLS test verifies an explicitly trusted fixture tunnel.
+- A WebRTC data-channel ICE attempt sends zero packets to an owned UDP STUN sentinel. This is a bounded browser observation, not proof of general UDP containment.
+- Private IPv4, unspecified, link-local, metadata, IPv6 loopback/ULA/link-local/mapped literals and non-default ports are tested as proxy HTTP/CONNECT input, never by probing real infrastructure.
+- Fresh context state, ungranted geolocation, popup closure and deadline shutdown work in real Chromium. Configuration/unit tests cover service-worker/download blocking and request caps; full hostile secure-origin service-worker/download lifecycle tests remain a coverage gap.
 
 ## Validation
 
-Executed on Node.js 24.18.1 / pnpm 11.19.0, macOS, 2026-10-01:
+Executed 2026-10-01 on Node.js 24.18.1 / pnpm 11.19.0:
 
-| Command/check | Actual result |
+| Command | Actual result |
 | --- | --- |
-| `pnpm lint` | PASS; 76 files; initial generated-report inclusion failure corrected and rerun after live/E2E validation |
-| `pnpm test:security` | PASS; 288 tests, 6 files, including 4 real local TLS tests |
-| `pnpm test:scanner` | PASS; 94 tests, 4 files |
-| `pnpm test` | PASS; 420 tests, 14 files |
-| `pnpm build` | PASS; root and all 5 workspace typechecks, optimized Next.js production build |
-| `pnpm scanner:smoke` | PASS; 1 selected controlled-response test, 33 intentionally filtered tests |
-| `E2E_PRODUCTION=1 pnpm test:e2e` | PASS; all 22 desktop/mobile checks against the freshly built/restarted production server |
-| Live form → API → collector → storage → report/export | PASS; one real example.com investigation, desktop/mobile, demo regression |
+| `pnpm install --frozen-lockfile` | PASS; existing dependency versions reused |
+| `pnpm lint` | PASS; 92 files |
+| `pnpm test:security` | PASS; 288 tests / 6 files |
+| `pnpm test:scanner` | PASS; 94 tests / 4 files |
+| `pnpm test` | PASS; 470 tests / 19 files (all original 420 retained) |
+| `pnpm build` | PASS; root + six workspace typechecks and Next.js production build |
+| `pnpm scanner:smoke` | PASS; 1 selected test; 33 deliberately filtered |
+| `pnpm test:browser-security` | PASS; 50 unit/integration tests plus 25 serial adversarial browser/protocol checks |
+| `E2E_PRODUCTION=1 pnpm test:e2e` | PASS; 22 desktop/mobile product checks against freshly built production server |
 
-## Capabilities and limitations
+The previous local production preview was deliberately terminated (SIGTERM/143) before E2E started the new build; this is not a validation failure. No public targets, real private services, cloud metadata services, model APIs, deployments or paid services were used.
 
-The existing URL/DNS/all-answer IP policy, literal-address-pinned HTTP(S) transport, peer/TLS checks and redirect revalidation protect every scanner request. Collection is bounded to 8 page attempts, depth 2, sequential requests, final entry origin, 1 MiB/page, 10 operations and 45 seconds. Query/action/account navigation is skipped. No forms are submitted. Cheerio parses returned bytes; no target resources or scripts execute. See SECURITY.md for exact budgets, conservative robots behavior and network assumptions.
+## Run and limitations
 
-The local adapter has same-origin/loopback admission controls and bounded schema-validated file storage. The report reuses the approved design for real evidence, findings, recommendations and observed relationships. The separate synthetic demo remains available. Missing reports return HTTP 404.
+Normal application workflow is unchanged: `pnpm dev` at `http://127.0.0.1:3000`; production preview is `pnpm build && pnpm start`. The form continues deterministic HTTP collection only. No browser worker HTTP endpoint, arbitrary URL CLI or feature-enable environment variable exists. Run `pnpm test:browser-security` for the controlled boundary checks with the already installed Chromium.
 
-Still unavailable: target browser scanning/egress proxy/worker isolation, Lighthouse, browser axe execution, browser performance/runtime observations, AI/provider execution, authentication, billing, cloud deployment/AWS, WhatIf and automatic fixes. Existing Playwright/Chromium is solely application test infrastructure. This HTTP gate is not an OS firewall or independent security audit. Storage/admission are local single-process features, not a public multi-tenant service or durable queue. Partial scans and conservative policy exclusions are intentional.
+No Docker/Podman runtime exists on this macOS host; no container, namespace, firewall, hard memory/PID quota, disposable host filesystem or independently enforced process-tree cleanup was implemented/verified. Chromium sandbox/context isolation and proxy settings are not substitutes. Direct socket/UDP/IPv6 escape by other browser facilities or a compromised subprocess remains outside the proof. Proxy CONNECT cannot inspect encrypted methods/headers/URLs/WSS or public forwarding services; public IP pinning does not prevent deployment-specific DNAT. Worker cleanup is cooperative. All of this is why the arbitrary launch gate refuses execution even though fixture tests pass.
 
-## Delivery
+No full browser collector, Lighthouse, axe browser execution, AI agents/providers, authentication, billing, AWS, WhatIf, screenshots as product evidence or automatic fixes were implemented. No UI changes.
 
-Publication review covered 97 staged project files (the entire previously uncommitted foundation/milestone). Filename and content-pattern checks found no additional credentials or machine-specific paths. The two reviewed disposable PEM fixtures are the only approved private-key material. Build/cache output, screenshots/test results, dependencies and local investigation reports are excluded; staged whitespace validation passes. The recovery made no unrelated application changes.
+## Delivery and next task
 
-The permanent validation → privacy/scope review → documentation → commit → fetch/preserve history → push workflow already exists in AGENTS.md and AI_WORKFLOW.md; it was verified rather than duplicated. Delivery targets origin/main without force. The final handoff supplies the actual commit SHA and push receipt; a commit cannot contain its own resulting SHA. No validation blocker remains; Git publication is verified separately after committing.
+The existing validated-task review/document/commit/fetch/push definition of done in AGENTS.md and AI_WORKFLOW.md was preserved. The final handoff reports the actual commit and remote verification; a commit cannot contain its own SHA. Generated reports, browser artifacts, caches and credentials must remain excluded. Reviewed public TLS fixture PEM files are reused unchanged in controlled tests only.
 
-## Single recommended next task
+Final scope/privacy review: 26 changed/new source, test, manifest and documentation files; no new secret-like files or credential/machine-path pattern matches. Existing disposable PEM bytes are unchanged. Git confirms no changes under web, deterministic scanner, contracts, agents or product E2E configuration. Reports, `.next` and test output are ignored; whitespace validation and final lint pass. Fetched origin/main still matched the baseline before publication, so no unrelated remote history needed reconciliation.
 
-**Task 9a: implement and verify an enforcing browser egress proxy plus worker network isolation using controlled adversarial fixtures**, including direct TCP/UDP/IPv6 and proxy-bypass checks. Keep arbitrary target browsing disabled until that boundary passes. This task was not started.
+**Exactly one recommended next task:** implement and verify the missing Linux process/network isolation backend for this proxy/worker, with external TCP/UDP/IPv6/DNS bypass tests and process/filesystem/resource confinement, before enabling any arbitrary-target browser collector. It was not started here.
