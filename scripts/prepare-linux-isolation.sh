@@ -16,9 +16,9 @@ trap 'rm -f "$probe_bundle"' EXIT
 pnpm exec esbuild tests/linux-isolation/probe.ts --bundle --platform=node --format=cjs --external:@playwright/test --outfile="$probe_bundle"
 sudo -n install -m 0755 "$probe_bundle" "$runtime/probe.cjs"
 sudo -n mkdir -p "$runtime/node_modules/@playwright"
-playwright_test_dir=$(dirname "$(node -p "require.resolve('@playwright/test/package.json')")")
-playwright_dir=$(dirname "$(node -p "require.resolve('playwright/package.json')")")
-playwright_core_dir=$(dirname "$(node -p "require.resolve('playwright-core/package.json')")")
+playwright_test_dir=$(readlink -f node_modules/@playwright/test)
+playwright_dir=$(readlink -f node_modules/playwright)
+playwright_core_dir=$(readlink -f node_modules/playwright-core)
 sudo -n cp -aL "$playwright_test_dir" "$runtime/node_modules/@playwright/test"
 sudo -n cp -aL "$playwright_dir" "$runtime/node_modules/playwright"
 sudo -n cp -aL "$playwright_core_dir" "$runtime/node_modules/playwright-core"
