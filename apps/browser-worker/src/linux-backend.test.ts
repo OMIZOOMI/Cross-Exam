@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { LinuxIsolationBackend, type LinuxIsolationOptions, type ProbeMode } from "./linux-backend";
+import {
+  assessCleanup,
+  LinuxIsolationBackend,
+  type LinuxIsolationOptions,
+  type ProbeMode,
+} from "./linux-backend";
 
 type Request = Parameters<
   NonNullable<ConstructorParameters<typeof LinuxIsolationBackend>[1]>["execute"]
@@ -97,7 +102,7 @@ function dependencies(
     },
     pause: async () => {},
     validateEnvironment: async () => null,
-    verifyControlGroupEmpty: async () => true,
+    inspectControlGroup: async () => "empty",
     uuid: () => "test",
     ...overrides,
   };
@@ -361,7 +366,7 @@ describe("LinuxIsolationBackend cleanup", () => {
     const backend = new LinuxIsolationBackend(
       options,
       dependencies(successfulExecutor(requests), {
-        verifyControlGroupEmpty: async () => false,
+        inspectControlGroup: async () => "populated",
       }),
     );
 
@@ -389,5 +394,74 @@ describe("LinuxIsolationBackend cleanup", () => {
     expect(requests.some((request) => request.args.includes("kill"))).toBe(true);
     expect(requests.some((request) => request.args.includes("stop"))).toBe(true);
     expect(requests.some((request) => request.args.includes("reset-failed"))).toBe(true);
+  });
+});
+
+describe("cleanup evidence assessment", () => {
+  const unloaded = {
+    LoadState: "not-found",
+    ActiveState: "inactive",
+    MainPID: "0",
+  };
+  const command = { exitCode: 0, timedOut: false };
+
+  function evidence(overrides: Partial<Parameters<typeof assessCleanup>[0]> = {}) {
+    return assessCleanup({
+      kill: command,
+      stop: command,
+      finalQuery: command,
+      finalState: unloaded,
+      capturedCgroup: "/system.slice/crossexam-isolation-test.service",
+      cgroup: "absent",
+      resetFailed: command,
+      ...overrides,
+    });
+  }
+
+  it("passes an already-unloaded unit when its captured cgroup is absent", () => {
+    expect(evidence()).toMatchObject({ inactive: true, cgroup: "absent", finalCleaned: true });
+  });
+
+  it("passes an inactive unit with a populated-zero cgroup", () => {
+    expect(evidence({ cgroup: "empty" }).finalCleaned).toBe(true);
+  });
+
+  it.each([
+    ["populated cgroup", { cgroup: "populated" as const }],
+    ["cleanup read error", { cgroup: "error" as const }],
+    ["malformed/no captured cgroup", { cgroup: "not-checked" as const, capturedCgroup: null }],
+    [
+      "active unit",
+      { finalState: { ...unloaded, LoadState: "loaded", ActiveState: "active", MainPID: "4321" } },
+    ],
+    ["stop timeout", { stop: { exitCode: 137, timedOut: true } }],
+    ["final query failure", { finalQuery: { exitCode: 4, timedOut: false } }],
+  ] as const)("fails closed for %s", (_label, override) => {
+    expect(evidence(override).finalCleaned).toBe(false);
+  });
+
+  it("does not fail solely because kill/reset housekeeping is unnecessary after unload", () => {
+    expect(
+      evidence({
+        kill: { exitCode: 4, timedOut: false },
+        resetFailed: { exitCode: 4, timedOut: false },
+      }).finalCleaned,
+    ).toBe(true);
+  });
+
+  it("retains diagnostic evidence for each cleanup subcheck", () => {
+    expect(
+      evidence({
+        kill: { exitCode: 4, timedOut: false },
+        stop: { exitCode: 4, timedOut: false },
+        resetFailed: { exitCode: 4, timedOut: false },
+      }),
+    ).toMatchObject({
+      kill: { exitCode: 4 },
+      stop: { exitCode: 4 },
+      resetFailed: { exitCode: 4 },
+      capturedCgroup: "/system.slice/crossexam-isolation-test.service",
+      finalCleaned: true,
+    });
   });
 });

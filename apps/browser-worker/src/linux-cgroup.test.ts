@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { verifyActiveCgroup } from "./linux-cgroup";
+import { inspectControlGroup, verifyActiveCgroup } from "./linux-cgroup";
 
 const unit = "crossexam-isolation-test.service";
 const group = `/custom.slice/${unit}`;
@@ -113,5 +113,66 @@ describe("active cgroup kernel verification", () => {
     await expect(verifyActiveCgroup(properties, unit, read)).rejects.toMatchObject({
       values: expect.objectContaining({ "memory.max": null, "pids.max": "128" }),
     });
+  });
+});
+
+describe("post-exit cgroup inspection", () => {
+  const cleanupGroup = `/custom.slice/${unit}`;
+  const directory = `/sys/fs/cgroup${cleanupGroup}`;
+
+  function inspect(read: () => Promise<string>, resolvePath = async () => directory) {
+    return inspectControlGroup(cleanupGroup, { read, resolvePath });
+  }
+
+  it("treats an absent captured cgroup as successful teardown", async () => {
+    const error = Object.assign(new Error("gone"), { code: "ENOENT" });
+    await expect(
+      inspect(
+        async () => "",
+        async () => {
+          throw error;
+        },
+      ),
+    ).resolves.toBe("absent");
+  });
+
+  it("accepts populated 0 and rejects populated 1, including descendants", async () => {
+    await expect(inspect(async () => "populated 0\n")).resolves.toBe("empty");
+    await expect(inspect(async () => "populated 1\n")).resolves.toBe("populated");
+  });
+
+  it.each([
+    ["malformed captured path", "/custom.slice/../escape", "error"],
+    ["permission error resolving cgroup", cleanupGroup, "error"],
+    ["permission error reading cgroup.events", cleanupGroup, "error"],
+    ["malformed cgroup.events", cleanupGroup, "error"],
+  ] as const)("fails closed on %s", async (label, pathValue, expected) => {
+    const result =
+      label === "malformed captured path"
+        ? await inspectControlGroup(pathValue, {
+            resolvePath: async () => directory,
+            read: async () => "populated 0\n",
+          })
+        : label === "permission error resolving cgroup"
+          ? await inspect(
+              async () => "",
+              async () => {
+                throw Object.assign(new Error("denied"), { code: "EACCES" });
+              },
+            )
+          : label === "permission error reading cgroup.events"
+            ? await inspect(async () => {
+                throw Object.assign(new Error("denied"), { code: "EACCES" });
+              })
+            : await inspect(async () => "populated yes\n");
+    expect(result).toBe(expected);
+  });
+
+  it("treats an ENOENT race while reading events as teardown", async () => {
+    await expect(
+      inspect(async () => {
+        throw Object.assign(new Error("gone"), { code: "ENOENT" });
+      }),
+    ).resolves.toBe("absent");
   });
 });

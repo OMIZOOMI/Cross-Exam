@@ -85,9 +85,9 @@ function harness(
       },
     };
   });
-  const verifyControlGroupEmpty = vi.fn(async (value: string) => {
+  const inspectControlGroup = vi.fn(async (value: string) => {
     events.push(`cleanup:${value}`);
-    return !options.lingering;
+    return options.lingering ? ("populated" as const) : ("empty" as const);
   });
   const execute = vi.fn(async (request: { file: string; args: readonly string[] }) => {
     if (request.file === "/usr/bin/getent")
@@ -150,7 +150,7 @@ function harness(
       start,
       readCgroupFile,
       validateEnvironment: async () => null,
-      verifyControlGroupEmpty,
+      inspectControlGroup,
       uuid: () => "test",
       pause: async () => {
         if (options.active?.ActiveState === "inactive") {
@@ -160,7 +160,7 @@ function harness(
       },
     },
   );
-  return { backend, events, start, readCgroupFile, verifyControlGroupEmpty };
+  return { backend, events, start, readCgroupFile, inspectControlGroup };
 }
 it("verifies ACTIVE kernel limits before release/completion, retaining proof when a fast-success unit unloads", async () => {
   const h = harness();
@@ -172,7 +172,8 @@ it("verifies ACTIVE kernel limits before release/completion, retaining proof whe
   expect(result.active.cgroup.pidMember).toBe(true);
   expect(result.properties.MemoryMax).toBe("infinity"); // terminal defaults are diagnostic only
   expect(result.exitCode).toBe(0);
-  expect(h.verifyControlGroupEmpty).toHaveBeenCalledWith(group);
+  expect(h.inspectControlGroup).toHaveBeenCalledWith(group);
+  expect(result.cleanup.capturedCgroup).toBe(group);
   expect(result.cleaned).toBe(true);
 });
 it.each<Record<string, string>>([{ ControlGroup: "" }, { MainPID: "0" }, defaults])(
@@ -209,7 +210,7 @@ it("kernel mismatch stops and cleans the observed cgroup before any operation ex
   const h = harness({ kernel: { "memory.max": "max" } });
   await expect(h.backend.run("network", { fixture: true })).rejects.toThrow();
   expect(h.events).not.toContain("release");
-  expect(h.verifyControlGroupEmpty).toHaveBeenCalledWith(group);
+  expect(h.inspectControlGroup).toHaveBeenCalledWith(group);
 });
 it("startup failure attempts unit cleanup without inventing a cgroup path", async () => {
   const h = harness({ startupFailure: true });
@@ -217,7 +218,7 @@ it("startup failure attempts unit cleanup without inventing a cgroup path", asyn
   expect(h.events).toContain("kill");
   expect(h.events).toContain("stop");
   expect(h.events).not.toContain("release");
-  expect(h.verifyControlGroupEmpty).not.toHaveBeenCalled();
+  expect(h.inspectControlGroup).not.toHaveBeenCalled();
 });
 it("retains a genuine terminal timeout and kills/cleans the entire captured cgroup", async () => {
   const h = harness({
@@ -238,7 +239,7 @@ it("retains a genuine terminal timeout and kills/cleans the entire captured cgro
   expect(result.exitCode).not.toBe(0);
   expect(result.cleaned).toBe(true);
   expect(h.events).toContain("kill");
-  expect(h.verifyControlGroupEmpty).toHaveBeenCalledWith(group);
+  expect(h.inspectControlGroup).toHaveBeenCalledWith(group);
 });
 it("never claims cleanup if descendants remain", async () => {
   const h = harness({ lingering: true });

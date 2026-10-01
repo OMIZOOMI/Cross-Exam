@@ -11,6 +11,7 @@ export type ActiveCgroup = {
   pidMember: true;
   values: CgroupValues;
 };
+export type ControlGroupCleanupState = "absent" | "empty" | "populated" | "error";
 export class CgroupVerificationError extends Error {
   constructor(
     message: string,
@@ -121,24 +122,43 @@ export async function verifyActiveCgroup(
   return { ...identity, pidMember: true, values };
 }
 
-export async function verifyControlGroupEmpty(controlGroup: string): Promise<boolean> {
+type ControlGroupInspectionDependencies = {
+  resolvePath: (directory: string) => Promise<string>;
+  read: (file: string) => Promise<string>;
+};
+
+const productionInspectionDependencies: ControlGroupInspectionDependencies = {
+  resolvePath: realpath,
+  read: readCgroupFile,
+};
+
+export async function inspectControlGroup(
+  controlGroup: string,
+  dependencies: ControlGroupInspectionDependencies = productionInspectionDependencies,
+): Promise<ControlGroupCleanupState> {
   let directory: string;
   try {
     directory = cgroupDirectory(controlGroup, path.posix.basename(controlGroup));
-    await realpath(directory);
+    await dependencies.resolvePath(directory);
   } catch (error) {
-    return (error as NodeJS.ErrnoException).code === "ENOENT";
+    return (error as NodeJS.ErrnoException).code === "ENOENT" ? "absent" : "error";
   }
   try {
     // populated covers all descendants, unlike reading only this group's cgroup.procs.
-    const events = await readCgroupFile(`${directory}/cgroup.events`);
-    return (
-      events
-        .split("\n")
-        .filter((line) => line.startsWith("populated "))
-        .join("") === "populated 0"
-    );
-  } catch {
-    return false;
+    const events = await dependencies.read(`${directory}/cgroup.events`);
+    const populated = events
+      .split("\n")
+      .filter((line) => line.startsWith("populated "))
+      .join("");
+    if (populated === "populated 0") return "empty";
+    if (populated === "populated 1") return "populated";
+    return "error";
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "ENOENT" ? "absent" : "error";
   }
+}
+
+export async function verifyControlGroupEmpty(controlGroup: string): Promise<boolean> {
+  const state = await inspectControlGroup(controlGroup);
+  return state === "absent" || state === "empty";
 }

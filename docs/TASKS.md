@@ -16,7 +16,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 ## Day 2 — safe deterministic collection
 
 9. [x] Implement the URL/egress safety gate: shared early input policy, conservative IPv4/IPv6 classification, complete A/AAAA validation, literal-address-pinned Node HTTP(S), manual redirect checks, structured denials, request limits, and deterministic/TLS tests. This protects the HTTP primitive; it does not constrain Chromium.
-9a. [ ] **PARTIAL:** Fixed systemd/cgroup-v2 harness and controlled probes exist; earlier Linux CI failed at post-exit limit inspection. Task 10A adds an active stdin barrier, direct kernel limit/PID-membership checks and cleanup of the captured actual cgroup. Its one authorized validation run must be assessed separately from local mocks. The filesystem/PID confinement mismatch remains unresolved and its test is not weakened. Public launch still fails closed with ISOLATION_UNAVAILABLE.
+9a. [ ] **PARTIAL:** Fixed systemd/cgroup-v2 harness and controlled probes exist; Task 10A proves active limits before probe release and Task 10B verifies cleanup using the captured cgroup. The filesystem/PID confinement mismatch remains unresolved and its test is not weakened. Public launch still fails closed with ISOLATION_UNAVAILABLE.
 10. [ ] After task 9a, add a bounded Playwright page collector behind the enforced proxy/network boundary; use controlled local fixtures with an explicit test-only policy. Capture navigation, headers, network/console observations, and cleanup/cancellation.
 11. [x] Persist schema-validated local HTTP reports with IDs, timestamps, compact evidence, redaction, retention, and size bounds. Public storage/access control remains deferred.
 
@@ -65,3 +65,10 @@ The real HTTP investigation deliberately precedes tasks 9a/10. Browser scanning 
 - [x] Separate active enforcement evidence from terminal outcome and captured-cgroup cleanup; add malformed/missing value, startup, timeout and real-child barrier regressions.
 - [ ] Single Linux validation run after local checks. The commit's Actions result and final handoff are authoritative; stop on failure without another patch/run.
 - Next task: **Resolve filesystem/PID confinement mismatch.** Do not begin browser collection.
+
+## Task 10B — cleanup verification
+
+- [x] Represent kill/stop/final-state/captured-cgroup/reset-failed evidence separately from the final cleanup boolean.
+- [x] Treat successful transient-unit unload and absent captured cgroup as valid teardown proof; preserve fail-closed behavior for active units, populated descendants, malformed paths, permission/read errors and timeouts.
+- [x] Add focused regression coverage for cleanup semantics and actual captured-cgroup usage.
+- [ ] One authorized Linux validation run after local checks. Stop immediately on failure; do not retry.

@@ -9,10 +9,11 @@ import {
   type ActiveCgroup,
   activeIdentity,
   CgroupVerificationError,
+  type ControlGroupCleanupState,
   cgroupDirectory,
+  inspectControlGroup,
   readCgroupFile,
   verifyActiveCgroup,
-  verifyControlGroupEmpty,
 } from "./linux-cgroup";
 
 const GETENT = "/usr/bin/getent";
@@ -51,7 +52,25 @@ export type LinuxIsolationResult = {
   timedOut: boolean;
   properties: Record<string, string>;
   active: { properties: Record<string, string>; cgroup: ActiveCgroup };
+  cleanup: CleanupEvidence;
   cleaned: boolean;
+};
+
+export type CleanupCommandEvidence = {
+  exitCode: number;
+  timedOut: boolean;
+};
+
+export type CleanupEvidence = {
+  kill: CleanupCommandEvidence;
+  stop: CleanupCommandEvidence;
+  finalQuery: CleanupCommandEvidence;
+  finalState: Record<string, string>;
+  inactive: boolean;
+  capturedCgroup: string | null;
+  cgroup: ControlGroupCleanupState | "not-checked";
+  resetFailed: CleanupCommandEvidence;
+  finalCleaned: boolean;
 };
 
 type CommandRequest = {
@@ -82,7 +101,7 @@ type LinuxBackendDependencies = {
   readCgroupFile: (file: string) => Promise<string>;
   pause: () => Promise<void>;
   validateEnvironment: (options: Required<LinuxIsolationOptions>) => Promise<string | null>;
-  verifyControlGroupEmpty: (controlGroup: string) => Promise<boolean>;
+  inspectControlGroup: (controlGroup: string) => Promise<ControlGroupCleanupState>;
   uuid: () => string;
 };
 
@@ -108,6 +127,7 @@ const TERMINAL_PROPERTIES = [
 ] as const;
 
 const CLEANUP_PROPERTIES = [
+  "LoadState",
   "ActiveState",
   "SubState",
   "ControlGroup",
@@ -122,7 +142,7 @@ const productionDependencies: LinuxBackendDependencies = {
   readCgroupFile,
   pause: () => new Promise((resolve) => setTimeout(resolve, 50)),
   validateEnvironment,
-  verifyControlGroupEmpty,
+  inspectControlGroup,
   uuid: randomUUID,
 };
 
@@ -193,7 +213,7 @@ export class LinuxIsolationBackend {
     let cgroup: ActiveCgroup | undefined;
     let capturedGroup: string | undefined;
     let properties: Record<string, string> = {};
-    let cleaned = false;
+    let cleanup = emptyCleanupEvidence();
     let phase = "startup";
     let failure: unknown;
 
@@ -252,7 +272,7 @@ export class LinuxIsolationBackend {
     } catch (error) {
       failure = error;
     } finally {
-      cleaned = await this.#cleanup(unit, capturedGroup);
+      cleanup = await this.#cleanup(unit, capturedGroup);
       // Stop the launcher only after stopping its service, including startup/verification failures.
       if (launcher && !launcher.finished) launcher.terminate();
       if (launcher) execution ??= await launcher.completion;
@@ -267,7 +287,8 @@ export class LinuxIsolationBackend {
           controlGroup: capturedGroup ?? null,
           kernelValues:
             failure instanceof CgroupVerificationError ? failure.values : cgroup?.values,
-          cleaned,
+          cleanup,
+          cleaned: cleanup.finalCleaned,
           message: failure instanceof Error ? failure.message : "Incomplete execution",
           launcher: execution,
         })}`,
@@ -283,7 +304,8 @@ export class LinuxIsolationBackend {
         (properties.InvocationID === cgroup.invocationID && properties.Result === "timeout"),
       properties,
       active: { properties: activeProperties, cgroup },
-      cleaned,
+      cleanup,
+      cleaned: cleanup.finalCleaned,
     };
   }
 
@@ -365,54 +387,83 @@ export class LinuxIsolationBackend {
     });
   }
 
-  async #cleanup(unit: string, originalControlGroup: string | undefined): Promise<boolean> {
+  async #cleanup(unit: string, originalControlGroup: string | undefined): Promise<CleanupEvidence> {
+    const capturedCgroup = originalControlGroup ?? null;
+    let kill: CleanupCommandEvidence = { exitCode: 127, timedOut: false };
+    let stop: CleanupCommandEvidence = { exitCode: 127, timedOut: false };
+    let finalQuery: CleanupCommandEvidence = { exitCode: 127, timedOut: false };
+    let finalState: Record<string, string> = {};
+    let cgroup: ControlGroupCleanupState | "not-checked" = "not-checked";
+    let resetFailed: CleanupCommandEvidence = { exitCode: 127, timedOut: false };
     try {
-      await this.#dependencies.execute({
+      const killResult = await this.#dependencies.execute({
         file: SUDO,
         args: ["-n", "--", SYSTEMCTL, "kill", "--kill-who=all", "--signal=SIGKILL", unit],
         timeoutMs: 5_000,
       });
-      const stop = await this.#dependencies.execute({
+      kill = commandEvidence(killResult);
+      const stopResult = await this.#dependencies.execute({
         file: SUDO,
         args: ["-n", "--", SYSTEMCTL, "stop", unit],
         timeoutMs: 5_000,
       });
+      stop = commandEvidence(stopResult);
 
       const shown = await this.#show(unit, CLEANUP_PROPERTIES);
-      let inactive = false;
-      if (shown.exitCode === 0 && !shown.timedOut) {
-        const finalProperties = parseProperties(shown.stdout);
-        inactive = isInactiveAndEmpty(finalProperties);
-      } else {
-        const active = await this.#dependencies.execute({
-          file: SUDO,
-          args: ["-n", "--", SYSTEMCTL, "is-active", "--quiet", unit],
-          timeoutMs: 5_000,
-        });
-        inactive = !active.timedOut && (active.exitCode === 3 || active.exitCode === 4);
-      }
+      finalQuery = commandEvidence(shown);
+      if (shown.exitCode === 0 && !shown.timedOut) finalState = parseProperties(shown.stdout);
 
-      const cgroupEmpty =
-        originalControlGroup !== undefined &&
-        (await this.#dependencies.verifyControlGroupEmpty(originalControlGroup));
-      const reset = await this.#dependencies.execute({
+      if (originalControlGroup !== undefined)
+        cgroup = await this.#dependencies.inspectControlGroup(originalControlGroup);
+      const resetResult = await this.#dependencies.execute({
         file: SUDO,
         args: ["-n", "--", SYSTEMCTL, "reset-failed", unit],
         timeoutMs: 5_000,
       });
-
-      return (
-        !stop.timedOut &&
-        (stop.exitCode === 0 || stop.exitCode === 5) &&
-        inactive &&
-        cgroupEmpty &&
-        !reset.timedOut &&
-        (reset.exitCode === 0 || reset.exitCode === 5)
-      );
+      resetFailed = commandEvidence(resetResult);
     } catch {
-      return false;
+      // The structured result below records the last completed proof step.
     }
+    return assessCleanup({
+      kill,
+      stop,
+      finalQuery,
+      finalState,
+      capturedCgroup,
+      cgroup,
+      resetFailed,
+    });
   }
+}
+
+type CleanupAssessmentInput = Omit<CleanupEvidence, "inactive" | "finalCleaned">;
+
+export function assessCleanup(input: CleanupAssessmentInput): CleanupEvidence {
+  const inactive = isInactiveAndEmpty(input.finalState);
+  const cgroupEmpty = input.cgroup === "absent" || input.cgroup === "empty";
+  const finalCleaned =
+    !input.stop.timedOut &&
+    !input.finalQuery.timedOut &&
+    input.finalQuery.exitCode === 0 &&
+    inactive &&
+    cgroupEmpty;
+  return { ...input, inactive, finalCleaned };
+}
+
+function commandEvidence(result: CommandResult): CleanupCommandEvidence {
+  return { exitCode: result.exitCode, timedOut: result.timedOut };
+}
+
+function emptyCleanupEvidence(): CleanupEvidence {
+  return assessCleanup({
+    kill: { exitCode: 127, timedOut: false },
+    stop: { exitCode: 127, timedOut: false },
+    finalQuery: { exitCode: 127, timedOut: false },
+    finalState: {},
+    capturedCgroup: null,
+    cgroup: "not-checked",
+    resetFailed: { exitCode: 127, timedOut: false },
+  });
 }
 
 async function executeCommand(request: CommandRequest): Promise<CommandResult> {
@@ -708,7 +759,7 @@ function isInactiveAndEmpty(properties: Record<string, string>): boolean {
     state !== undefined &&
     !["active", "activating", "deactivating", "reloading"].includes(state) &&
     properties.MainPID === "0" &&
-    (tasks === "0" || tasks === "" || tasks === "[not set]")
+    (tasks === undefined || tasks === "0" || tasks === "" || tasks === "[not set]")
   );
 }
 

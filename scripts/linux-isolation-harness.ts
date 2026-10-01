@@ -161,6 +161,7 @@ async function run() {
           active: result.active,
           terminal: result.properties,
           exitCode: result.exitCode,
+          cleanup: result.cleanup,
           cleaned: result.cleaned,
         }),
       );
