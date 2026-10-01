@@ -19,7 +19,7 @@ sudo -n install -m 0755 "$(readlink -f "$(command -v node)")" "$node_target"
 probe_bundle=$(mktemp)
 trap 'rm -f "$probe_bundle"' EXIT
 phase=bundle
-./node_modules/.bin/esbuild tests/linux-isolation/probe.ts --bundle --platform=node --format=cjs --external:@playwright/test --outfile="$probe_bundle"
+pnpm exec esbuild tests/linux-isolation/probe.ts --bundle --platform=node --format=cjs --external:@playwright/test --outfile="$probe_bundle"
 phase=modules
 sudo -n install -m 0755 "$probe_bundle" "$runtime/probe.cjs"
 sudo -n mkdir -p "$runtime/node_modules/@playwright"
