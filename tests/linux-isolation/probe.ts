@@ -42,6 +42,11 @@ import {
   ROOT_MANIFEST_NAME,
   rootLayoutIssues,
 } from "../../apps/browser-worker/src/linux-root-layout";
+import {
+  type ProcStatusIdentity,
+  parseProcStatusIdentity,
+  supplementaryGroupsAreEmptyOrPrimary,
+} from "../../apps/browser-worker/src/proc-status";
 
 const MAX_INPUT_BYTES = 4 * 1024;
 const MAX_RESULT_BYTES = 8 * 1024;
@@ -463,15 +468,13 @@ async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
   const capBnd = Number.parseInt(capBndText, 16);
   const capabilitiesEmpty =
     Number.isFinite(capEff) && capEff === 0 && Number.isFinite(capBnd) && capBnd === 0;
-  const groups = /^Groups:\s*(.*)$/imu.exec(ownProcStatus)?.[1]?.trim() ?? "";
-  const primaryGid = /^Gid:\s*(\d+)$/imu.exec(ownProcStatus)?.[1];
-  const groupList = (groups ?? "").split(/\s+/u).filter(Boolean);
-  // systemd may represent an empty supplementary group list either as an
-  // empty Groups line or as the primary group alone. Any other list fails.
-  const supplementaryGroupsEmpty =
-    primaryGid !== undefined &&
-    Number(primaryGid) > 0 &&
-    (groupList.length === 0 || (groupList.length === 1 && groupList[0] === primaryGid));
+  let identity: ProcStatusIdentity;
+  try {
+    identity = parseProcStatusIdentity(ownProcStatus);
+  } catch {
+    throw new ProbeFailure("PROC_STATUS_INVALID");
+  }
+  const supplementaryGroupsEmpty = supplementaryGroupsAreEmptyOrPrimary(identity);
   const rootEntries = await readdir("/");
   const layoutIssues = rootLayoutIssues(rootEntries);
   const runtimeLayout = layoutIssues.length === 0;
