@@ -35,6 +35,9 @@ async function buildRoot(): Promise<string> {
   }
   for (const dir of ["proc", "dev", "tmp", "run/crossexam", "sys", "var/tmp"])
     await mkdir(path.join(root, dir), { recursive: true });
+  await mkdir(path.join(root, "root"), { mode: 0o750 });
+  await chmod(path.join(root, "root"), 0o750);
+  await symlink("usr/bin", path.join(root, "bin"));
   return root;
 }
 async function fixture() {
@@ -225,5 +228,59 @@ describe("diffPreparedRoot", () => {
     expect(JSON.stringify(diff)).not.toContain("SUPER-SECRET-CONTENT");
     for (const entry of diff.added)
       expect(Object.keys(entry).sort()).toEqual(["kind", "mode", "path", "size"]);
+  });
+});
+
+describe("deterministic base-filesystem entries", () => {
+  const uid = process.getuid?.() ?? 0;
+
+  it("accepts the canonical bin -> usr/bin symlink and root directory", async () => {
+    const root = await fixture();
+    await expect(validatePreparedRoot(root, uid)).resolves.toBeUndefined();
+    const diff = await diffPreparedRoot(root);
+    expect(diff.changed.map((entry) => entry.path)).not.toContain("bin");
+    expect(diff.changed.map((entry) => entry.path)).not.toContain("root");
+  });
+
+  it("repeated validation of an unchanged canonical root passes", async () => {
+    const root = await fixture();
+    await validatePreparedRoot(root, uid);
+    await expect(validatePreparedRoot(root, uid)).resolves.toBeUndefined();
+  });
+
+  it.each([
+    ["absolute target", "/usr/bin"],
+    ["traversal target", "../etc/passwd"],
+    ["other internal target", "usr/lib"],
+  ])("rejects bin with %s", async (_label, target) => {
+    const root = await buildRoot();
+    await rm(path.join(root, "bin"));
+    await symlink(target, path.join(root, "bin"));
+    await expect(sealRoot(root)).rejects.toThrow();
+  });
+
+  it("rejects a symlink at any path other than bin", async () => {
+    const root = await buildRoot();
+    await symlink("usr/bin", path.join(root, "app/link"));
+    await expect(sealRoot(root)).rejects.toThrow();
+  });
+
+  it("fails validation when the bin target changes after sealing", async () => {
+    const root = await fixture();
+    await rm(path.join(root, "bin"));
+    await symlink("usr/lib", path.join(root, "bin"));
+    await expect(validatePreparedRoot(root, uid)).rejects.toThrow();
+  });
+
+  it("rejects a worker-writable root directory", async () => {
+    const root = await fixture();
+    await chmod(path.join(root, "root"), 0o777);
+    await expect(validatePreparedRoot(root, uid)).rejects.toThrow(/worker-writable/);
+  });
+
+  it("rejects an arbitrary extra top-level entry", async () => {
+    const root = await buildRoot();
+    await mkdir(path.join(root, "unexpected"));
+    await expect(sealRoot(root)).rejects.toThrow(/unexpected prepared-root entry/);
   });
 });

@@ -46,6 +46,8 @@ sudo -n chmod 0755 "$runtime/probe.cjs" "$node_target"
 
 phase=root
 sudo -n install -d -m 0755 "$prepared_root" "$prepared_root/app" "$prepared_root/browser" "$prepared_root/runtime" "$prepared_root/etc" "$prepared_root/run/crossexam" "$prepared_root/tmp" "$prepared_root/var/tmp" "$prepared_root/proc" "$prepared_root/dev" "$prepared_root/sys" "$prepared_root/usr/bin" "$prepared_root/usr/share/fonts" "$prepared_root/etc/fonts"
+sudo -n install -d -m 0750 "$prepared_root/root"
+sudo -n ln -s usr/bin "$prepared_root/bin"
 sudo -n cp -aL "$runtime/probe.cjs" "$runtime/node_modules" "$runtime/test-cert.pem" "$prepared_root/app/"
 sudo -n cp -aL "$node_target" "$prepared_root/runtime/node"
 sudo -n cp -aL "$browser"/. "$prepared_root/browser/"
@@ -88,6 +90,7 @@ sudo -n find "$prepared_root" -type d -exec chmod 0755 {} +
 sudo -n find "$prepared_root" -type f -exec chmod a-w {} +
 sudo -n chown -R root:root "$prepared_root"
 sudo -n chmod 0755 "$prepared_root" "$prepared_root/tmp" "$prepared_root/var/tmp"
+sudo -n chmod 0750 "$prepared_root/root"
 phase=verify-exec
 for executable in "$prepared_root/usr/bin/env" "$prepared_root/runtime/node"; do
   test -f "$executable" && test -x "$executable" || {

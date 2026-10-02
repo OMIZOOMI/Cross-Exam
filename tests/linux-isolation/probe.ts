@@ -461,12 +461,14 @@ async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
   const rootEntries = await readdir("/");
   const allowedRootEntries = new Set([
     "app",
+    "bin",
     "browser",
     "dev",
     "etc",
     "lib",
     "lib64",
     "proc",
+    "root",
     "run",
     "runtime",
     "sys",

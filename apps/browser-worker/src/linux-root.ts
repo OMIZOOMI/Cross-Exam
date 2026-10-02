@@ -1,19 +1,24 @@
 import { createHash } from "node:crypto";
 import type { Dirent, Stats } from "node:fs";
-import { chmod, lstat, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { chmod, lstat, readdir, readFile, readlink, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const MANIFEST = ".crossexam-root-manifest.json";
 const MAX_DIFF_ENTRIES = 100;
 const MAX_DIFF_VISITED = 10_000;
+// The single permitted top-level compatibility symlink (systemd base-filesystem
+// /bin -> usr/bin). Its target must be exactly this relative, in-root value.
+const ALLOWED_SYMLINK = Object.freeze({ path: "bin", target: "usr/bin" });
 const TOP_LEVEL = new Set([
   "app",
+  "bin",
   "browser",
   "dev",
   "etc",
   "lib",
   "lib64",
   "proc",
+  "root",
   "run",
   "runtime",
   "sys",
@@ -22,7 +27,13 @@ const TOP_LEVEL = new Set([
   "var",
 ]);
 
-type Entry = { mode: number; size: number; digest: string; kind: "file" | "directory" };
+type Entry = {
+  mode: number;
+  size: number;
+  digest: string;
+  kind: "file" | "directory" | "symlink";
+  target?: string;
+};
 type Manifest = { version: 1; entries: Record<string, Entry> };
 
 export type PreparedRootDiffEntry = {
@@ -30,6 +41,7 @@ export type PreparedRootDiffEntry = {
   kind: string;
   mode?: number;
   size?: number;
+  target?: string;
 };
 
 export type PreparedRootDiff = {
@@ -42,7 +54,7 @@ export type PreparedRootDiff = {
   changed: PreparedRootDiffEntry[];
 };
 
-type WalkEntry = { kind: string; mode: number; size: number };
+type WalkEntry = { kind: string; mode: number; size: number; target?: string };
 
 export async function sealRoot(root: string): Promise<void> {
   const entries = await inventory(root, true);
@@ -88,13 +100,22 @@ async function inventory(root: string, allowManifest: boolean): Promise<Record<s
       const full = path.join(current, item.name);
       const relative = path.relative(root, full);
       const info = await lstat(full);
-      if (
-        info.isSymbolicLink() ||
-        info.isSocket() ||
-        info.isFIFO() ||
-        info.isBlockDevice() ||
-        info.isCharacterDevice()
-      )
+      if (info.isSymbolicLink()) {
+        if (relative !== ALLOWED_SYMLINK.path)
+          throw new Error(`unsupported prepared-root entry: ${relative}`);
+        const target = await readlink(full);
+        if (target !== ALLOWED_SYMLINK.target)
+          throw new Error(`unsupported prepared-root symlink target: ${relative} -> ${target}`);
+        output[relative] = {
+          mode: info.mode & 0o7777,
+          size: 0,
+          digest: "",
+          kind: "symlink",
+          target,
+        };
+        continue;
+      }
+      if (info.isSocket() || info.isFIFO() || info.isBlockDevice() || info.isCharacterDevice())
         throw new Error(`unsupported prepared-root entry: ${relative}`);
       if ((info.mode & 0o022) !== 0)
         throw new Error(`worker-writable prepared-root entry: ${relative}`);
@@ -146,15 +167,13 @@ export async function diffPreparedRoot(root: string): Promise<PreparedRootDiff> 
     const reference = sealed[relative];
     if (reference === undefined) {
       addedCount += 1;
-      if (added.length < MAX_DIFF_ENTRIES)
-        added.push({ path: relative, kind: entry.kind, mode: entry.mode, size: entry.size });
+      if (added.length < MAX_DIFF_ENTRIES) added.push(diffEntry(relative, entry));
       continue;
     }
     manifestPaths.delete(relative);
     if (!(await entryMatches(root, relative, entry, reference))) {
       changedCount += 1;
-      if (changed.length < MAX_DIFF_ENTRIES)
-        changed.push({ path: relative, kind: entry.kind, mode: entry.mode, size: entry.size });
+      if (changed.length < MAX_DIFF_ENTRIES) changed.push(diffEntry(relative, entry));
     }
   }
 
@@ -162,13 +181,7 @@ export async function diffPreparedRoot(root: string): Promise<PreparedRootDiff> 
     const reference = sealed[relative];
     if (reference === undefined) continue;
     removedCount += 1;
-    if (removed.length < MAX_DIFF_ENTRIES)
-      removed.push({
-        path: relative,
-        kind: reference.kind,
-        mode: reference.mode,
-        size: reference.size,
-      });
+    if (removed.length < MAX_DIFF_ENTRIES) removed.push(diffEntry(relative, reference));
   }
 
   return {
@@ -182,6 +195,21 @@ export async function diffPreparedRoot(root: string): Promise<PreparedRootDiff> 
   };
 }
 
+function diffEntry(
+  relative: string,
+  entry: { kind: string; mode: number; size: number; target?: string },
+): PreparedRootDiffEntry {
+  return entry.target === undefined
+    ? { path: relative, kind: entry.kind, mode: entry.mode, size: entry.size }
+    : {
+        path: relative,
+        kind: entry.kind,
+        mode: entry.mode,
+        size: entry.size,
+        target: entry.target,
+      };
+}
+
 async function entryMatches(
   root: string,
   relative: string,
@@ -191,6 +219,9 @@ async function entryMatches(
   if (current.kind !== reference.kind) return false;
   if (reference.kind === "directory") {
     return current.mode === reference.mode;
+  }
+  if (current.kind === "symlink" && reference.kind === "symlink") {
+    return current.mode === reference.mode && current.target === reference.target;
   }
   if (current.kind === "file" && reference.kind === "file") {
     if (current.mode !== reference.mode || current.size !== reference.size) return false;
@@ -236,7 +267,13 @@ async function walkRoot(
       } else if (info.isFile()) {
         entries[relative] = { kind: "file", mode: info.mode & 0o7777, size: info.size };
       } else if (info.isSymbolicLink()) {
-        entries[relative] = { kind: "symlink", mode: info.mode & 0o7777, size: 0 };
+        let target = "";
+        try {
+          target = await readlink(full);
+        } catch {
+          // Diagnostic only: an unreadable link target is still reported as a symlink.
+        }
+        entries[relative] = { kind: "symlink", mode: info.mode & 0o7777, size: 0, target };
       } else if (info.isSocket()) {
         entries[relative] = { kind: "socket", mode: info.mode & 0o7777, size: 0 };
       } else if (info.isFIFO()) {
