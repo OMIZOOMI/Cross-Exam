@@ -18,17 +18,7 @@
 
 import { type ChildProcess, spawn } from "node:child_process";
 import dgram from "node:dgram";
-import { constants as fsConstants } from "node:fs";
-import {
-  access,
-  open,
-  readdir,
-  readFile,
-  readlink,
-  stat,
-  unlink,
-  writeFile,
-} from "node:fs/promises";
+import { open, readdir, readFile, readlink, stat, unlink, writeFile } from "node:fs/promises";
 import net, { type AddressInfo, type Socket } from "node:net";
 import os from "node:os";
 import { posix as path } from "node:path";
@@ -37,6 +27,7 @@ import {
   type FixtureWorker,
   launchFixtureWorker,
 } from "../../apps/browser-worker/src/fixture-worker";
+import { AccessDeniedError, expectDeniedPath } from "../../apps/browser-worker/src/linux-access";
 
 const MAX_INPUT_BYTES = 4 * 1024;
 const MAX_RESULT_BYTES = 8 * 1024;
@@ -77,6 +68,11 @@ type Mode = (typeof MODES)[number];
 
 type ProbeInput = Readonly<{
   hostSentinelPath: string;
+  repositorySentinelPath: string;
+  homeSentinelPath: string;
+  worldSentinelPath: string;
+  unrelatedSocketPath: string;
+  unrelatedPid: number;
   tcpPort: number;
   udpPort: number;
   proxyOrigin: typeof FIXTURE_ORIGIN;
@@ -129,7 +125,17 @@ function validPort(value: unknown, fallback: number, code: string): number {
 function parseInput(value: unknown): ProbeInput {
   ensure(value !== null && typeof value === "object" && !Array.isArray(value), "INVALID_INPUT");
   const record = value as Record<string, unknown>;
-  const allowedKeys = new Set(["hostSentinelPath", "tcpPort", "udpPort", "proxyOrigin"]);
+  const allowedKeys = new Set([
+    "hostSentinelPath",
+    "repositorySentinelPath",
+    "homeSentinelPath",
+    "worldSentinelPath",
+    "unrelatedSocketPath",
+    "unrelatedPid",
+    "tcpPort",
+    "udpPort",
+    "proxyOrigin",
+  ]);
   ensure(
     Object.keys(record).every((key) => allowedKeys.has(key)),
     "UNKNOWN_INPUT_FIELD",
@@ -148,9 +154,37 @@ function parseInput(value: unknown): ProbeInput {
 
   const proxyOrigin = record.proxyOrigin ?? FIXTURE_ORIGIN;
   ensure(proxyOrigin === FIXTURE_ORIGIN, "INVALID_FIXTURE_ORIGIN");
+  const pathFields = [
+    "repositorySentinelPath",
+    "homeSentinelPath",
+    "worldSentinelPath",
+    "unrelatedSocketPath",
+  ] as const;
+  const pathValues = Object.fromEntries(pathFields.map((key) => [key, record[key]])) as Record<
+    (typeof pathFields)[number],
+    unknown
+  >;
+  for (const key of pathFields) {
+    const value = pathValues[key];
+    ensure(
+      typeof value === "string" &&
+        value.length >= 2 &&
+        value.startsWith("/") &&
+        path.normalize(value) === value &&
+        !value.includes("\0"),
+      `INVALID_${key}`,
+    );
+  }
+  const unrelatedPid = record.unrelatedPid;
+  ensure(Number.isSafeInteger(unrelatedPid) && Number(unrelatedPid) > 1, "INVALID_UNRELATED_PID");
 
   return Object.freeze({
     hostSentinelPath: sentinel,
+    repositorySentinelPath: pathValues.repositorySentinelPath as string,
+    homeSentinelPath: pathValues.homeSentinelPath as string,
+    worldSentinelPath: pathValues.worldSentinelPath as string,
+    unrelatedSocketPath: pathValues.unrelatedSocketPath as string,
+    unrelatedPid: Number(unrelatedPid),
     tcpPort: validPort(record.tcpPort, DEFAULT_TCP_PORT, "INVALID_TCP_PORT"),
     udpPort: validPort(record.udpPort, DEFAULT_UDP_PORT, "INVALID_UDP_PORT"),
     proxyOrigin,
@@ -328,21 +362,36 @@ async function runNetwork(input: ProbeInput): Promise<SafeDetails> {
   };
 }
 
-async function exists(file: string): Promise<boolean> {
+async function deniedPath(file: string, label: string): Promise<string> {
   try {
-    await access(file, fsConstants.F_OK);
-    return true;
-  } catch {
-    return false;
+    return await expectDeniedPath(file, "access", label);
+  } catch (error) {
+    if (!(error instanceof AccessDeniedError)) throw error;
+    const code =
+      error.code === "ACCESS_SUCCEEDED"
+        ? `ACCESS_SUCCEEDED_${label}`
+        : `ACCESS_${label}_${error.code}`;
+    throw new ProbeFailure(code);
   }
 }
 
-async function directoryIsEmpty(directory: string): Promise<boolean> {
-  try {
-    return (await readdir(directory)).length === 0;
-  } catch {
-    return true;
-  }
+async function connectUnixSocket(socketPath: string): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const socket = net.createConnection(socketPath);
+    const timer = setTimeout(() => {
+      socket.destroy();
+      reject(new ProbeFailure("PROXY_SOCKET_TIMEOUT"));
+    }, 2_000);
+    socket.once("connect", () => {
+      clearTimeout(timer);
+      socket.end();
+      resolve();
+    });
+    socket.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+  });
 }
 
 async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
@@ -352,7 +401,9 @@ async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
   try {
     await writeFile(appProbe, "probe", { flag: "wx", mode: 0o600 });
     await unlink(appProbe).catch(() => undefined);
-  } catch {
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code ?? "UNKNOWN";
+    if (!["EROFS", "EACCES", "EPERM"].includes(code)) throw new ProbeFailure(`APP_WRITE_${code}`);
     appWriteBlocked = true;
   }
 
@@ -360,45 +411,68 @@ async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
   try {
     await writeFile(temporaryProbe, "probe", { flag: "wx", mode: 0o600 });
     tmpWritable = true;
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code ?? "UNKNOWN";
+    throw new ProbeFailure(`TMP_WRITE_${code}`);
   } finally {
     await unlink(temporaryProbe).catch(() => undefined);
   }
 
-  const [rootStat, pidOneRootStat, pidOneRootLink] = await Promise.all([
-    stat("/"),
-    stat("/proc/1/root"),
-    readlink("/proc/1/root"),
+  const [repositoryDenied, homeDenied, worldDenied, socketDenied] = await Promise.all([
+    deniedPath(input.repositorySentinelPath, "REPOSITORY"),
+    deniedPath(input.homeSentinelPath, "HOME"),
+    deniedPath(input.worldSentinelPath, "WORLD_HOST"),
+    deniedPath(input.unrelatedSocketPath, "UNRELATED_SOCKET"),
   ]);
-  const pidOneUsesConfinedRoot =
-    rootStat.dev === pidOneRootStat.dev &&
-    rootStat.ino === pidOneRootStat.ino &&
-    pidOneRootLink.length > 0;
-  const sentinelHidden = !(await exists(input.hostSentinelPath));
-  const sentinelHiddenFromPidOne = !(await exists(`/proc/1/root${input.hostSentinelPath}`));
-
-  const forbiddenPaths = [
-    "/var/run/docker.sock",
-    "/run/docker.sock",
-    "/run/containerd/containerd.sock",
-    "/Users",
-    "/workspace",
-    "/repo",
-    "/app/.git",
-    "/app/apps",
-    "/app/packages",
-    "/app/pnpm-workspace.yaml",
-    "/root/.ssh",
-    "/root/.aws",
-    "/root/.config",
-  ];
-  const forbiddenPathHits = (await Promise.all(forbiddenPaths.map(exists))).filter(Boolean).length;
-  const homeEmpty = await directoryIsEmpty("/home");
+  await connectUnixSocket(UNIX_PROXY_SOCKET);
   const proxySocketStat = await stat(UNIX_PROXY_SOCKET);
-  const relayDirectoryEntries = await readdir("/run/crossexam");
-  const onlyProxySocketExposed =
-    proxySocketStat.isSocket() &&
-    relayDirectoryEntries.length === 1 &&
-    relayDirectoryEntries[0] === "proxy.sock";
+  const ownProcStatus = await readFile("/proc/self/status", "utf8");
+  const ownNamespace = await readlink("/proc/self/ns/net");
+  ensure(ownProcStatus.includes("Name:"), "OWN_PROC_UNAVAILABLE");
+  ensure(/^net:\[[0-9]+\]$/u.test(ownNamespace), "OWN_NAMESPACE_UNAVAILABLE");
+  const procPaths = ["root", "cwd", "fd", "environ", "ns/net"];
+  const unrelatedProc = Object.fromEntries(
+    await Promise.all(
+      procPaths.map(async (entry) => [
+        entry,
+        await deniedPath(
+          `/proc/${input.unrelatedPid}/${entry}`,
+          `PROC_${entry.replaceAll("/", "_").toUpperCase()}`,
+        ),
+      ]),
+    ),
+  ) as Record<string, string>;
+  const capEffText = /^CapEff:\s*([0-9a-f]+)$/imu.exec(ownProcStatus)?.[1];
+  const capBndText = /^CapBnd:\s*([0-9a-f]+)$/imu.exec(ownProcStatus)?.[1];
+  ensure(capEffText !== undefined && capBndText !== undefined, "PROC_STATUS_MISSING_CAPABILITIES");
+  const capEff = Number.parseInt(capEffText, 16);
+  const capBnd = Number.parseInt(capBndText, 16);
+  const capabilitiesEmpty =
+    Number.isFinite(capEff) && capEff === 0 && Number.isFinite(capBnd) && capBnd === 0;
+  const groups = /^Groups:\s*(.*)$/imu.exec(ownProcStatus)?.[1]?.trim() ?? "";
+  const primaryGid = /^Gid:\s*(\d+)$/imu.exec(ownProcStatus)?.[1];
+  const groupList = (groups ?? "").split(/\s+/u).filter(Boolean);
+  // systemd may represent an empty supplementary group list either as an
+  // empty Groups line or as the primary group alone. Any other list fails.
+  const supplementaryGroupsEmpty =
+    primaryGid !== undefined &&
+    Number(primaryGid) > 0 &&
+    (groupList.length === 0 || (groupList.length === 1 && groupList[0] === primaryGid));
+  const rootEntries = await readdir("/");
+  const allowedRootEntries = new Set([
+    "app",
+    "browser",
+    "dev",
+    "etc",
+    "proc",
+    "run",
+    "runtime",
+    "sys",
+    "tmp",
+    "usr",
+    "var",
+  ]);
+  const runtimeLayout = rootEntries.every((entry) => allowedRootEntries.has(entry));
 
   const sensitiveName =
     /(?:^|_)(?:API_?KEY|AUTH|COOKIE|CREDENTIAL|JWT|PASS(?:WORD|WD)?|PRIVATE_?KEY|SECRET|SSH_AUTH_SOCK|TOKEN)(?:$|_)/i;
@@ -411,22 +485,31 @@ async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
 
   ensure(appWriteBlocked, "APP_WRITABLE");
   ensure(tmpWritable, "TMP_NOT_WRITABLE");
-  ensure(pidOneUsesConfinedRoot, "PID1_ROOT_MISMATCH");
-  ensure(sentinelHidden && sentinelHiddenFromPidOne, "HOST_SENTINEL_VISIBLE");
-  ensure(forbiddenPathHits === 0 && homeEmpty, "HOST_PATH_VISIBLE");
-  ensure(onlyProxySocketExposed, "UNEXPECTED_CONTROL_SOCKET");
+  ensure(proxySocketStat.isSocket(), "PROXY_SOCKET_NOT_SOCKET");
+  ensure(runtimeLayout, "UNEXPECTED_ROOT_ENTRY");
+  ensure(capabilitiesEmpty, "UNEXPECTED_CAPABILITIES");
+  ensure(supplementaryGroupsEmpty, "UNEXPECTED_SUPPLEMENTARY_GROUPS");
   ensure(sensitiveEnvironmentEntries === 0, "SENSITIVE_ENVIRONMENT_PRESENT");
   ensure(fixedRuntime && fixedWorkingDirectory, "UNEXPECTED_RUNTIME_LAYOUT");
 
   return {
     appWriteBlocked,
     tmpWritable,
-    pidOneUsesConfinedRoot,
-    sentinelHidden,
-    sentinelHiddenFromPidOne,
-    forbiddenPathHits,
-    homeEmpty,
-    onlyProxySocketExposed,
+    repositoryDenied,
+    homeDenied,
+    worldDenied,
+    socketDenied,
+    proxySocketAccessible: true,
+    unrelatedPidRootDenied: unrelatedProc.root ?? "UNKNOWN",
+    unrelatedPidCwdDenied: unrelatedProc.cwd ?? "UNKNOWN",
+    unrelatedPidFdDenied: unrelatedProc.fd ?? "UNKNOWN",
+    unrelatedPidEnvironDenied: unrelatedProc.environ ?? "UNKNOWN",
+    unrelatedPidNamespaceDenied: unrelatedProc["ns/net"] ?? "UNKNOWN",
+    ownProc: true,
+    ownNamespace,
+    capabilitiesEmpty,
+    supplementaryGroupsEmpty,
+    runtimeLayout,
     sensitiveEnvironmentEntries,
     fixedRuntime,
     fixedWorkingDirectory,

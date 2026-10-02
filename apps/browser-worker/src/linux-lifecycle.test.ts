@@ -150,6 +150,7 @@ function harness(
       start,
       readCgroupFile,
       validateEnvironment: async () => null,
+      validatePreparedRoot: async () => {},
       inspectControlGroup,
       uuid: () => "test",
       pause: async () => {

@@ -1,4 +1,5 @@
-import { chmod, readFile, rm } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { access, chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import https from "node:https";
 import net, { type AddressInfo, type Socket } from "node:net";
 import path from "node:path";
@@ -15,6 +16,7 @@ import { startSentinels } from "./linux-sentinels";
 const root = "/var/lib/crossexam";
 const runtimeDirectory = `${root}/runtime`;
 const browserDirectory = `${root}/browser`;
+const preparedRoot = `${root}/root`;
 const socketDirectory = "/run/crossexam";
 const nodeExecutable = "/opt/crossexam-runtime/node";
 const socketPath = `${socketDirectory}/proxy.sock`;
@@ -29,7 +31,67 @@ const key = path.resolve(
 );
 
 type Relay = { close(): Promise<void> };
+type FilesystemFixtures = {
+  repository: string;
+  home: string;
+  world: string;
+  socket: string;
+  pid: number;
+  close(): Promise<void>;
+  socketHits(): number;
+};
 let currentStage = "startup";
+
+async function startFilesystemFixtures(): Promise<FilesystemFixtures> {
+  // Deliberately outside the prepared root and outside PrivateTmp coverage,
+  // so only RootDirectory confinement can hide these host files/sockets.
+  const directory = "/opt/crossexam-fixtures";
+  await rm(directory, { recursive: true, force: true });
+  await mkdir(directory, { recursive: true, mode: 0o755 });
+  const repository = `${directory}/repository-sentinel`;
+  const home = `${directory}/home-sentinel`;
+  const world = `${directory}/world-readable-sentinel`;
+  const socket = `${directory}/unrelated.sock`;
+  await writeFile(repository, "owned repository fixture\n", { mode: 0o600 });
+  await writeFile(home, "owned home fixture\n", { mode: 0o600 });
+  await writeFile(world, "world readable fixture\n", { mode: 0o644 });
+  await access(repository);
+  await access(home);
+  await access(world);
+  let hits = 0;
+  const server = net.createServer((client) => {
+    hits++;
+    client.end();
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(socket, resolve);
+  });
+  const positiveSocket = await new Promise<Socket>((resolve, reject) => {
+    const client = net.connect(socket);
+    client.once("connect", () => resolve(client));
+    client.once("error", reject);
+  });
+  positiveSocket.destroy();
+  hits = 0;
+  const child = spawn("/bin/sleep", ["300"], { stdio: "ignore" });
+  if (!child.pid) throw new Error("fixture PID did not start");
+  process.kill(child.pid, 0);
+  return {
+    repository,
+    home,
+    world,
+    socket,
+    pid: child.pid,
+    close: async () => {
+      child.kill("SIGKILL");
+      await new Promise<void>((resolve) => child.once("close", () => resolve()));
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      await rm(directory, { recursive: true, force: true });
+    },
+    socketHits: () => hits,
+  };
+}
 
 async function createRelay(proxy: EgressProxy): Promise<Relay> {
   await rm(socketPath, { force: true });
@@ -93,6 +155,7 @@ function fixtureResponse(pathname: string): {
 async function run() {
   if (process.platform !== "linux") throw new Error("Linux isolation harness must run on Linux.");
   const sentinels = await startSentinels();
+  const filesystemFixtures = await startFilesystemFixtures();
   const [cert, privateKey] = await Promise.all([readFile(certificate), readFile(key)]);
   const tlsServer = https.createServer({ cert, key: privateKey }, (_request, response) =>
     response.end("TLS fixture"),
@@ -138,12 +201,18 @@ async function run() {
       runtimeDirectory,
       browserDirectory,
       socketDirectory,
+      rootDirectory: preparedRoot,
       nodeExecutable,
     });
     const detected = await backend.detect();
     if (!detected.available) throw new Error(`Linux isolation unavailable: ${detected.reason}`);
     const input = {
       hostSentinelPath: "/home/crossexam-host-sentinel",
+      repositorySentinelPath: filesystemFixtures.repository,
+      homeSentinelPath: filesystemFixtures.home,
+      worldSentinelPath: filesystemFixtures.world,
+      unrelatedSocketPath: filesystemFixtures.socket,
+      unrelatedPid: filesystemFixtures.pid,
       tcpPort: 41231,
       udpPort: 41232,
       proxyOrigin: origin,
@@ -193,7 +262,7 @@ async function run() {
     await proxyDownRelay.close();
     results["proxy-down"] = down;
     const sentinelCounts = sentinels.counts();
-    if (sentinelCounts.tcpHits || sentinelCounts.udpHits)
+    if (sentinelCounts.tcpHits || sentinelCounts.udpHits || filesystemFixtures.socketHits())
       throw new Error("Owned sentinel observed network escape");
     console.log(
       JSON.stringify(
@@ -217,6 +286,7 @@ async function run() {
     tlsServer.closeAllConnections();
     await new Promise<void>((resolve) => tlsServer.close(() => resolve()));
     await sentinels.close();
+    await filesystemFixtures.close();
   }
 }
 

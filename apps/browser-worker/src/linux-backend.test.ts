@@ -102,6 +102,7 @@ function dependencies(
     },
     pause: async () => {},
     validateEnvironment: async () => null,
+    validatePreparedRoot: async () => {},
     inspectControlGroup: async () => "empty",
     uuid: () => "test",
     ...overrides,
@@ -229,6 +230,8 @@ describe("LinuxIsolationBackend service command", () => {
       expect.arrayContaining([
         "-n",
         "--property=User=crossexam-worker",
+        "--property=Group=crossexam-worker",
+        "--property=SupplementaryGroups=",
         "--property=KillMode=control-group",
         "--property=MemoryMax=1073741824",
         "--property=MemorySwapMax=0",
@@ -238,17 +241,19 @@ describe("LinuxIsolationBackend service command", () => {
         "--property=RuntimeMaxSec=45s",
         "--property=LimitNOFILE=1024",
         "--property=NoNewPrivileges=yes",
+        "--property=CapabilityBoundingSet=",
+        "--property=AmbientCapabilities=",
+        "--property=PrivateIPC=yes",
+        "--property=ProtectProc=invisible",
         "--property=PrivateNetwork=yes",
-        "--service-type=exec",
         "--property=PrivateDevices=yes",
         "--property=PrivateTmp=yes",
         "--property=ProtectHome=yes",
         "--property=ProtectSystem=strict",
+        "--property=RootDirectory=/var/lib/crossexam/runtime/root",
         "--property=TemporaryFileSystem=/tmp",
         "--property=ReadWritePaths=/tmp",
-        "--property=BindReadOnlyPaths=/var/lib/crossexam/runtime:/app",
-        "--property=BindReadOnlyPaths=/var/lib/crossexam/browser:/browser",
-        "--property=BindReadOnlyPaths=/run/crossexam:/run/crossexam",
+        "--property=BindReadOnlyPaths=/run/crossexam/proxy.sock:/run/crossexam/proxy.sock",
         "/usr/bin/env",
         "-i",
         "HOME=/tmp",
@@ -271,15 +276,11 @@ describe("LinuxIsolationBackend service command", () => {
       }
     }
     expect(readonlyPairs).toEqual([
-      [options.runtimeDirectory, "/app"],
-      [options.browserDirectory, "/browser"],
-      [options.socketDirectory, "/run/crossexam"],
-      [options.nodeExecutable, "/runtime/node"],
-      [`${options.runtimeDirectory}/resolv.conf`, "/etc/resolv.conf"],
-      [`${options.runtimeDirectory}/hosts`, "/etc/hosts"],
+      [`${options.socketDirectory}/proxy.sock`, "/run/crossexam/proxy.sock"],
     ]);
     expect(args.join(" ")).not.toContain("public.test");
     expect(args).not.toContain(process.cwd());
+    expect(args).not.toContain("--property=ProcSubset=pid");
     expect(result).toMatchObject({
       unit: "crossexam-isolation-test.service",
       exitCode: 7,
@@ -305,6 +306,21 @@ describe("LinuxIsolationBackend service command", () => {
     await backend.run(mode, {});
     const launch = requests.find((request) => request.args.includes("--pipe"));
     expect(launch?.args.at(-1)).toBe(mode);
+  });
+
+  it("scopes the pid proc subset to the filesystem probe so /proc/net stays readable", async () => {
+    const requests: Request[] = [];
+    const backend = new LinuxIsolationBackend(options, dependencies(successfulExecutor(requests)));
+
+    await backend.run("network", {});
+    const networkLaunch = requests.find((request) => request.args.includes("--pipe"));
+    expect(networkLaunch?.args).not.toContain("--property=ProcSubset=pid");
+
+    await backend.run("filesystem", {});
+    const filesystemLaunch = [...requests]
+      .reverse()
+      .find((request) => request.args.includes("--pipe"));
+    expect(filesystemLaunch?.args).toContain("--property=ProcSubset=pid");
   });
 
   it("rejects arbitrary modes and non-JSON or oversized input before detection", async () => {

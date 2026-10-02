@@ -6,6 +6,7 @@ trap 'code=$?; echo "::error title=Linux isolation preparation::phase=$phase exi
 root=/var/lib/crossexam
 runtime="$root/runtime"
 browser="$root/browser"
+prepared_root="$root/root"
 node_target=/opt/crossexam-runtime/node
 
 phase=account
@@ -42,6 +43,45 @@ sudo -n install -m 0644 packages/engine/src/security/fixtures/test-cert.pem "$ru
 : | sudo -n tee "$runtime/hosts" >/dev/null
 sudo -n chmod -R a+rX "$runtime" "$browser"
 sudo -n chmod 0755 "$runtime/probe.cjs" "$node_target"
+
+phase=root
+sudo -n install -d -m 0755 "$prepared_root" "$prepared_root/app" "$prepared_root/browser" "$prepared_root/runtime" "$prepared_root/etc" "$prepared_root/run/crossexam" "$prepared_root/tmp" "$prepared_root/var/tmp" "$prepared_root/proc" "$prepared_root/dev" "$prepared_root/sys" "$prepared_root/usr/bin" "$prepared_root/usr/share/fonts" "$prepared_root/etc/fonts"
+sudo -n cp -aL "$runtime/probe.cjs" "$runtime/node_modules" "$runtime/test-cert.pem" "$prepared_root/app/"
+sudo -n cp -aL "$node_target" "$prepared_root/runtime/node"
+sudo -n cp -aL "$browser"/. "$prepared_root/browser/"
+sudo -n cp -aL /usr/bin/env /usr/bin/sleep /bin/sh "$prepared_root/usr/bin/"
+sudo -n cp -aL /etc/fonts/. "$prepared_root/etc/fonts/" 2>/dev/null || true
+sudo -n cp -aL /usr/share/fonts/. "$prepared_root/usr/share/fonts/" 2>/dev/null || true
+: | sudo -n tee "$prepared_root/etc/hosts" "$prepared_root/etc/resolv.conf" >/dev/null
+for executable in "$prepared_root/runtime/node" "$prepared_root/usr/bin/env" "$prepared_root/usr/bin/sleep" "$prepared_root/usr/bin/sh" "$prepared_root"/browser/*/*/*/chrome "$prepared_root"/browser/*/*/chrome; do
+  test -f "$executable" || continue
+  ldd "$executable" | awk '/=> \/|^\// { for (i=1; i<=NF; i++) if ($i ~ /^\//) print $i }' | while read -r dependency; do
+    test -f "$dependency" || continue
+    sudo -n cp -aL --parents "$dependency" "$prepared_root"
+  done
+done
+while IFS= read -r executable; do
+  ldd "$executable" | awk '/=> \/|^\// { for (i=1; i<=NF; i++) if ($i ~ /^\//) print $i }' | while read -r dependency; do
+    test -f "$dependency" || continue
+    sudo -n cp -aL --parents "$dependency" "$prepared_root"
+  done
+done < <(find "$prepared_root/browser" -type f -name chrome -perm -111 -print)
+for library in libnss3.so libnssutil3.so libsmime3.so libnspr4.so libplc4.so libplds4.so libsoftokn3.so libfreebl3.so libnssckbi.so; do
+  for candidate in "/usr/lib/x86_64-linux-gnu/$library" "/lib/x86_64-linux-gnu/$library" "/usr/lib/$library"; do
+    test -f "$candidate" || continue
+    ldd "$candidate" | awk '/=> \/|^\// { for (i=1; i<=NF; i++) if ($i ~ /^\//) print $i }' | while read -r dependency; do
+      test -f "$dependency" || continue
+      sudo -n cp -aL --parents "$dependency" "$prepared_root"
+    done
+    sudo -n cp -aL --parents "$candidate" "$prepared_root"
+  done
+done
+sudo -n find "$prepared_root" -type d -exec chmod 0755 {} +
+sudo -n find "$prepared_root" -type f -exec chmod a-w {} +
+sudo -n chown -R root:root "$prepared_root"
+sudo -n chmod 0755 "$prepared_root" "$prepared_root/tmp" "$prepared_root/var/tmp"
+sudo -n "$(command -v node)" node_modules/tsx/dist/cli.mjs scripts/seal-prepared-root.ts "$prepared_root"
+sudo -n chmod 0444 "$prepared_root/.crossexam-root-manifest.json"
 
 phase=fixtures
 sentinel=/home/crossexam-host-sentinel

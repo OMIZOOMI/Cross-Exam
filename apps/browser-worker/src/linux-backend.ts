@@ -15,6 +15,7 @@ import {
   readCgroupFile,
   verifyActiveCgroup,
 } from "./linux-cgroup";
+import { validatePreparedRoot } from "./linux-root";
 
 const GETENT = "/usr/bin/getent";
 const SUDO = "/usr/bin/sudo";
@@ -41,6 +42,7 @@ export type LinuxIsolationOptions = {
   runtimeDirectory: string;
   browserDirectory: string;
   socketDirectory: string;
+  rootDirectory?: string;
   nodeExecutable?: string;
 };
 
@@ -101,6 +103,7 @@ type LinuxBackendDependencies = {
   readCgroupFile: (file: string) => Promise<string>;
   pause: () => Promise<void>;
   validateEnvironment: (options: Required<LinuxIsolationOptions>) => Promise<string | null>;
+  validatePreparedRoot: (root: string, owner: number) => Promise<void>;
   inspectControlGroup: (controlGroup: string) => Promise<ControlGroupCleanupState>;
   uuid: () => string;
 };
@@ -142,6 +145,7 @@ const productionDependencies: LinuxBackendDependencies = {
   readCgroupFile,
   pause: () => new Promise((resolve) => setTimeout(resolve, 50)),
   validateEnvironment,
+  validatePreparedRoot,
   inspectControlGroup,
   uuid: randomUUID,
 };
@@ -160,6 +164,7 @@ export class LinuxIsolationBackend {
   ) {
     this.#options = {
       ...options,
+      rootDirectory: options.rootDirectory ?? path.join(options.runtimeDirectory, "root"),
       nodeExecutable: options.nodeExecutable ?? process.execPath,
     };
     this.#dependencies = dependencies;
@@ -190,6 +195,12 @@ export class LinuxIsolationBackend {
       if (file === GETENT && !isUnprivilegedWorkerRecord(result.stdout)) {
         return { available: false, reason };
       }
+    }
+
+    try {
+      await this.#dependencies.validatePreparedRoot(this.#options.rootDirectory, 0);
+    } catch {
+      return { available: false, reason: "prepared-root-unavailable" };
     }
 
     return { available: true, reason: "available" };
@@ -310,7 +321,7 @@ export class LinuxIsolationBackend {
   }
 
   #buildRunRequest(unit: string, mode: ProbeMode): CommandRequest {
-    const { browserDirectory, nodeExecutable, runtimeDirectory, socketDirectory } = this.#options;
+    const { socketDirectory } = this.#options;
     const systemdArgs = [
       "-n",
       "--",
@@ -322,6 +333,7 @@ export class LinuxIsolationBackend {
       `--unit=${unit}`,
       "--property=User=crossexam-worker",
       "--property=Group=crossexam-worker",
+      "--property=SupplementaryGroups=",
       "--property=KillMode=control-group",
       "--property=MemoryMax=1073741824",
       "--property=MemorySwapMax=0",
@@ -332,6 +344,14 @@ export class LinuxIsolationBackend {
       "--property=LimitNOFILE=1024",
       "--property=TimeoutStopSec=5s",
       "--property=NoNewPrivileges=yes",
+      "--property=CapabilityBoundingSet=",
+      "--property=AmbientCapabilities=",
+      "--property=PrivateIPC=yes",
+      "--property=ProtectProc=invisible",
+      // ProcSubset=pid hides /proc/net etc. The network probe must read the
+      // private namespace route files, so the pid subset applies only to the
+      // filesystem probe, which verifies restricted /proc behavior.
+      ...(mode === "filesystem" ? ["--property=ProcSubset=pid"] : []),
       "--property=PrivateDevices=yes",
       "--property=PrivateNetwork=yes",
       "--property=PrivateTmp=yes",
@@ -343,13 +363,9 @@ export class LinuxIsolationBackend {
       "--property=RestrictSUIDSGID=yes",
       "--property=LockPersonality=yes",
       "--property=UMask=0077",
+      `--property=RootDirectory=${this.#options.rootDirectory}`,
       "--property=TemporaryFileSystem=/tmp",
-      `--property=BindReadOnlyPaths=${runtimeDirectory}:/app`,
-      `--property=BindReadOnlyPaths=${browserDirectory}:/browser`,
-      `--property=BindReadOnlyPaths=${socketDirectory}:/run/crossexam`,
-      `--property=BindReadOnlyPaths=${nodeExecutable}:/runtime/node`,
-      `--property=BindReadOnlyPaths=${path.join(runtimeDirectory, "resolv.conf")}:/etc/resolv.conf`,
-      `--property=BindReadOnlyPaths=${path.join(runtimeDirectory, "hosts")}:/etc/hosts`,
+      `--property=BindReadOnlyPaths=${path.join(socketDirectory, "proxy.sock")}:/run/crossexam/proxy.sock`,
       "--property=ReadWritePaths=/tmp",
       "--property=WorkingDirectory=/app",
       "/usr/bin/env",

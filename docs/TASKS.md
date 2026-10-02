@@ -72,3 +72,11 @@ The real HTTP investigation deliberately precedes tasks 9a/10. Browser scanning 
 - [x] Treat successful transient-unit unload and absent captured cgroup as valid teardown proof; preserve fail-closed behavior for active units, populated descendants, malformed paths, permission/read errors and timeouts.
 - [x] Add focused regression coverage for cleanup semantics and actual captured-cgroup usage.
 - [ ] One authorized Linux validation run after local checks. Stop immediately on failure; do not retry.
+
+## Task 10C-B — prepared root and proc/filesystem isolation
+
+- [x] Add deterministic prepared-root inventory, immutable manifest validation, dependency parsing and identity/group tests.
+- [x] Add systemd 255 `RootDirectory`, `ProtectProc=invisible`, `ProcSubset=pid` (filesystem probe only; `/proc/net` stays readable for the network probe), empty capabilities/ambient/supplementary groups and narrow proxy-socket bind.
+- [x] Replace the invalid PID1-root filesystem assertion with owned sentinel, socket, proc, capability, identity and runtime-layout probes.
+- [x] Add owned host fixture positive controls (sentinels outside PrivateTmp coverage) and structured errno classification.
+- [ ] One authorized Linux validation run. Stop on the first failure; no retry.
