@@ -2,8 +2,8 @@ import { createHash } from "node:crypto";
 import type { Dirent, Stats } from "node:fs";
 import { chmod, lstat, readdir, readFile, readlink, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { ROOT_MANIFEST_NAME as MANIFEST } from "./linux-root-layout";
 
-const MANIFEST = ".crossexam-root-manifest.json";
 const MAX_DIFF_ENTRIES = 100;
 const MAX_DIFF_VISITED = 10_000;
 // The single permitted top-level compatibility symlink (systemd base-filesystem

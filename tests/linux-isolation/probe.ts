@@ -18,7 +18,16 @@
 
 import { type ChildProcess, spawn } from "node:child_process";
 import dgram from "node:dgram";
-import { open, readdir, readFile, readlink, stat, unlink, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  open,
+  readdir,
+  readFile,
+  readlink,
+  stat,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
 import net, { type AddressInfo, type Socket } from "node:net";
 import os from "node:os";
 import { posix as path } from "node:path";
@@ -28,6 +37,11 @@ import {
   launchFixtureWorker,
 } from "../../apps/browser-worker/src/fixture-worker";
 import { AccessDeniedError, expectDeniedPath } from "../../apps/browser-worker/src/linux-access";
+import {
+  manifestEntryIssue,
+  ROOT_MANIFEST_NAME,
+  rootLayoutIssues,
+} from "../../apps/browser-worker/src/linux-root-layout";
 
 const MAX_INPUT_BYTES = 4 * 1024;
 const MAX_RESULT_BYTES = 8 * 1024;
@@ -459,24 +473,16 @@ async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
     Number(primaryGid) > 0 &&
     (groupList.length === 0 || (groupList.length === 1 && groupList[0] === primaryGid));
   const rootEntries = await readdir("/");
-  const allowedRootEntries = new Set([
-    "app",
-    "bin",
-    "browser",
-    "dev",
-    "etc",
-    "lib",
-    "lib64",
-    "proc",
-    "root",
-    "run",
-    "runtime",
-    "sys",
-    "tmp",
-    "usr",
-    "var",
-  ]);
-  const runtimeLayout = rootEntries.every((entry) => allowedRootEntries.has(entry));
+  const layoutIssues = rootLayoutIssues(rootEntries);
+  const runtimeLayout = layoutIssues.length === 0;
+  const manifestPath = `/${ROOT_MANIFEST_NAME}`;
+  const manifestInfo = await lstat(manifestPath);
+  const manifestIssue = manifestEntryIssue({
+    isFile: manifestInfo.isFile(),
+    isSymbolicLink: manifestInfo.isSymbolicLink(),
+    mode: manifestInfo.mode,
+  });
+  const manifestIsTrustedMetadata = manifestIssue === null;
 
   const sensitiveName =
     /(?:^|_)(?:API_?KEY|AUTH|COOKIE|CREDENTIAL|JWT|PASS(?:WORD|WD)?|PRIVATE_?KEY|SECRET|SSH_AUTH_SOCK|TOKEN)(?:$|_)/i;
@@ -491,6 +497,7 @@ async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
   ensure(tmpWritable, "TMP_NOT_WRITABLE");
   ensure(proxySocketStat.isSocket(), "PROXY_SOCKET_NOT_SOCKET");
   ensure(runtimeLayout, "UNEXPECTED_ROOT_ENTRY");
+  ensure(manifestIsTrustedMetadata, manifestIssue ?? "MANIFEST_INVALID");
   ensure(capabilitiesEmpty, "UNEXPECTED_CAPABILITIES");
   ensure(supplementaryGroupsEmpty, "UNEXPECTED_SUPPLEMENTARY_GROUPS");
   ensure(sensitiveEnvironmentEntries === 0, "SENSITIVE_ENVIRONMENT_PRESENT");
@@ -514,6 +521,7 @@ async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
     capabilitiesEmpty,
     supplementaryGroupsEmpty,
     runtimeLayout,
+    manifestIsTrustedMetadata,
     sensitiveEnvironmentEntries,
     fixedRuntime,
     fixedWorkingDirectory,
