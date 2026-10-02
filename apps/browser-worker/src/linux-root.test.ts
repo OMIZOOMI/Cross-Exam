@@ -14,7 +14,7 @@ const roots: string[] = [];
 afterEach(async () => {
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
 });
-async function fixture() {
+async function buildRoot(): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), "ce-root-test-"));
   roots.push(root);
   for (const file of [
@@ -34,11 +34,31 @@ async function fixture() {
   }
   for (const dir of ["proc", "dev", "tmp", "run/crossexam", "sys", "var/tmp"])
     await mkdir(path.join(root, dir), { recursive: true });
+  return root;
+}
+async function fixture() {
+  const root = await buildRoot();
   await sealRoot(root);
   return root;
 }
 it("validates a sealed immutable root and hash inventory", async () => {
   await validatePreparedRoot(await fixture(), process.getuid?.() ?? 0);
+});
+it.each(["lib", "lib64"])(
+  "accepts %s as an intentional prepared-root runtime library directory",
+  async (directory) => {
+    const root = await buildRoot();
+    await mkdir(path.join(root, directory, "x86_64-linux-gnu"), { recursive: true });
+    await writeFile(path.join(root, directory, "x86_64-linux-gnu/libc.so.6"), "fixture");
+    await sealRoot(root);
+    await validatePreparedRoot(root, process.getuid?.() ?? 0);
+  },
+);
+it("rejects arbitrary other top-level runtime library lookalikes", async () => {
+  const root = await buildRoot();
+  await mkdir(path.join(root, "lib32"), { recursive: true });
+  await writeFile(path.join(root, "lib32/libc.so.6"), "fixture");
+  await expect(sealRoot(root)).rejects.toThrow(/unexpected prepared-root entry: lib32/);
 });
 it.each(["unexpected", "etc/shadow", "run/admin.sock", "home/user", "app/../secret"])(
   "rejects unexpected asset %s even during sealing",

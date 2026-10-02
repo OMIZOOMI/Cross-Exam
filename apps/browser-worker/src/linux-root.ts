@@ -8,6 +8,8 @@ const TOP_LEVEL = new Set([
   "browser",
   "dev",
   "etc",
+  "lib",
+  "lib64",
   "proc",
   "run",
   "runtime",

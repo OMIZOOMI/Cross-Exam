@@ -464,6 +464,8 @@ async function runFilesystem(input: ProbeInput): Promise<SafeDetails> {
     "browser",
     "dev",
     "etc",
+    "lib",
+    "lib64",
     "proc",
     "run",
     "runtime",
