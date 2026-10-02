@@ -33,6 +33,10 @@ import os from "node:os";
 import { posix as path } from "node:path";
 import tls from "node:tls";
 import {
+  BrowserRuntimeError,
+  toBrowserRuntimeError,
+} from "../../apps/browser-worker/src/browser-diagnostics";
+import {
   type FixtureWorker,
   launchFixtureWorker,
 } from "../../apps/browser-worker/src/fixture-worker";
@@ -111,6 +115,10 @@ type ProbeRecord =
       mode: Mode | "invalid";
       status: "failed";
       code: string;
+      stage?: string;
+      errorClass?: string;
+      errorCode?: string;
+      message?: string;
     }>
   | Readonly<{
       version: 1;
@@ -633,11 +641,13 @@ async function startUnixRelay(): Promise<Relay> {
 async function runBrowser(input: ProbeInput): Promise<SafeDetails> {
   const relay = await startUnixRelay();
   let worker: FixtureWorker | undefined;
+  let stage = "chromium-launch";
   try {
     worker = await launchFixtureWorker({
       proxyServer: relay.url,
       timeoutMs: WORKER_TIMEOUT_MS,
     });
+    stage = "navigation";
     const response = await worker.page.goto(`${input.proxyOrigin}/`, {
       waitUntil: "load",
       timeout: BROWSER_OPERATION_TIMEOUT_MS,
@@ -645,6 +655,7 @@ async function runBrowser(input: ProbeInput): Promise<SafeDetails> {
     ensure(response?.status() === 200, "FIXTURE_NAVIGATION_FAILED");
     ensure((await worker.page.title()) === "Linux isolation fixture", "FIXTURE_TITLE_MISMATCH");
 
+    stage = "resource-check";
     const resources = await worker.page.evaluate(async () => {
       const scriptLoaded = new Promise<boolean>((resolve) => {
         const script = document.createElement("script");
@@ -681,6 +692,7 @@ async function runBrowser(input: ProbeInput): Promise<SafeDetails> {
     });
     ensure(Object.values(resources).every(Boolean), "FIXTURE_RESOURCE_FAILED");
 
+    stage = "private-target-check";
     const deniedTargets = await worker.page.evaluate(async () => {
       const targets = [
         "http://private.crossexam-fixture.com/",
@@ -713,6 +725,9 @@ async function runBrowser(input: ProbeInput): Promise<SafeDetails> {
       privateTargetsDenied: deniedTargets.filter(Boolean).length,
       screenshotsCaptured: 0,
     };
+  } catch (error) {
+    if (error instanceof ProbeFailure) throw error;
+    throw toBrowserRuntimeError(stage, error);
   } finally {
     await worker?.close();
     await relay.close();
@@ -977,6 +992,21 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     if (wroteResult) {
       process.stderr.write("probe failed after readiness marker\n");
+      return;
+    }
+    if (error instanceof BrowserRuntimeError) {
+      await writeResult({
+        version: 1,
+        mode: isMode(modeArgument) ? modeArgument : "invalid",
+        status: "failed",
+        code: "BROWSER_RUNTIME_FAILURE",
+        stage: error.stage,
+        errorClass: error.errorClass,
+        errorCode: error.errorCode,
+        message: error.causeMessage,
+      }).catch(() => {
+        process.stderr.write("probe result write failed\n");
+      });
       return;
     }
     const code = error instanceof ProbeFailure ? error.code : "UNEXPECTED_FAILURE";
