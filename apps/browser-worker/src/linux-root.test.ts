@@ -1,9 +1,10 @@
-import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import net from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
+  diffPreparedRoot,
   parseDependencies,
   sealRoot,
   validatePreparedRoot,
@@ -133,4 +134,96 @@ it.each(["0", "991 27", "991 999", "", "991x"])(
 );
 it("accepts only the dedicated primary group", () => {
   expect(validateWorkerIdentity("991", "991", "991")).toEqual({ uid: 991, gid: 991 });
+});
+
+describe("diffPreparedRoot", () => {
+  it("reports no differences for an identical sealed root", async () => {
+    const root = await fixture();
+    const diff = await diffPreparedRoot(root);
+    expect(diff).toMatchObject({
+      truncated: false,
+      addedCount: 0,
+      removedCount: 0,
+      changedCount: 0,
+      added: [],
+      removed: [],
+      changed: [],
+    });
+  });
+
+  it("reports an added file and directory", async () => {
+    const root = await buildRoot();
+    await sealRoot(root);
+    await writeFile(path.join(root, "app/extra.txt"), "extra");
+    await mkdir(path.join(root, "app/extra-dir"), { recursive: true });
+    const diff = await diffPreparedRoot(root);
+    const addedPaths = diff.added.map((entry) => entry.path);
+    expect(addedPaths).toContain("app/extra.txt");
+    expect(addedPaths).toContain("app/extra-dir");
+    expect(diff.added.find((entry) => entry.path === "app/extra.txt")?.kind).toBe("file");
+  });
+
+  it("reports a removed path", async () => {
+    const root = await fixture();
+    await unlink(path.join(root, "app/probe.cjs"));
+    const diff = await diffPreparedRoot(root);
+    expect(diff.removed.map((entry) => entry.path)).toContain("app/probe.cjs");
+    expect(diff.removedCount).toBeGreaterThanOrEqual(1);
+  });
+
+  it("reports a changed file content of equal size via hash", async () => {
+    const root = await fixture();
+    await writeFile(path.join(root, "app/probe.cjs"), "XXXXXXX"); // same length as "fixture"
+    const diff = await diffPreparedRoot(root);
+    expect(diff.changed.map((entry) => entry.path)).toContain("app/probe.cjs");
+  });
+
+  it("reports a changed mode", async () => {
+    const root = await fixture();
+    await chmod(path.join(root, "app/probe.cjs"), 0o600);
+    const diff = await diffPreparedRoot(root);
+    expect(diff.changed.map((entry) => entry.path)).toContain("app/probe.cjs");
+  });
+
+  it("reports a socket added by a hypothetical mount target", async () => {
+    const root = await fixture();
+    const server = net.createServer();
+    await new Promise<void>((resolve) =>
+      server.listen(path.join(root, "run/crossexam/proxy.sock"), resolve),
+    );
+    try {
+      const diff = await diffPreparedRoot(root);
+      const entry = diff.added.find((item) => item.path === "run/crossexam/proxy.sock");
+      expect(entry?.kind).toBe("socket");
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
+  it("bounds reported paths while preserving total counts", async () => {
+    const root = await buildRoot();
+    await sealRoot(root);
+    for (let index = 0; index < 150; index += 1)
+      await writeFile(path.join(root, `app/extra-${index}.txt`), "x");
+    const diff = await diffPreparedRoot(root);
+    expect(diff.added.length).toBeLessThanOrEqual(100);
+    expect(diff.addedCount).toBeGreaterThanOrEqual(150);
+  });
+
+  it("does not treat the manifest itself as a mutation", async () => {
+    const root = await fixture();
+    const diff = await diffPreparedRoot(root);
+    for (const entry of [...diff.added, ...diff.removed, ...diff.changed])
+      expect(entry.path).not.toBe(".crossexam-root-manifest.json");
+  });
+
+  it("never includes file contents in diagnostics", async () => {
+    const root = await buildRoot();
+    await sealRoot(root);
+    await writeFile(path.join(root, "app/secret.txt"), "SUPER-SECRET-CONTENT");
+    const diff = await diffPreparedRoot(root);
+    expect(JSON.stringify(diff)).not.toContain("SUPER-SECRET-CONTENT");
+    for (const entry of diff.added)
+      expect(Object.keys(entry).sort()).toEqual(["kind", "mode", "path", "size"]);
+  });
 });

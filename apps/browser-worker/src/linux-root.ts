@@ -1,8 +1,11 @@
 import { createHash } from "node:crypto";
+import type { Dirent, Stats } from "node:fs";
 import { chmod, lstat, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const MANIFEST = ".crossexam-root-manifest.json";
+const MAX_DIFF_ENTRIES = 100;
+const MAX_DIFF_VISITED = 10_000;
 const TOP_LEVEL = new Set([
   "app",
   "browser",
@@ -21,6 +24,25 @@ const TOP_LEVEL = new Set([
 
 type Entry = { mode: number; size: number; digest: string; kind: "file" | "directory" };
 type Manifest = { version: 1; entries: Record<string, Entry> };
+
+export type PreparedRootDiffEntry = {
+  path: string;
+  kind: string;
+  mode?: number;
+  size?: number;
+};
+
+export type PreparedRootDiff = {
+  truncated: boolean;
+  addedCount: number;
+  removedCount: number;
+  changedCount: number;
+  added: PreparedRootDiffEntry[];
+  removed: PreparedRootDiffEntry[];
+  changed: PreparedRootDiffEntry[];
+};
+
+type WalkEntry = { kind: string; mode: number; size: number };
 
 export async function sealRoot(root: string): Promise<void> {
   const entries = await inventory(root, true);
@@ -92,6 +114,143 @@ async function inventory(root: string, allowManifest: boolean): Promise<Record<s
     }
   }
   return Object.fromEntries(Object.entries(output).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+/**
+ * Compares the current prepared-root tree against the sealed manifest without
+ * mutating anything. Reports only structural metadata (added/removed/changed
+ * relative paths, entry kind, mode, size) and never file contents. Bounded to a
+ * small number of reported paths and visited entries so it cannot explode on a
+ * populated /proc or /sys mount. This is a diagnostic helper, not a relaxed
+ * validation path; validatePreparedRoot remains unchanged.
+ */
+export async function diffPreparedRoot(root: string): Promise<PreparedRootDiff> {
+  const raw = await readFile(path.join(root, MANIFEST), "utf8");
+  const manifest = JSON.parse(raw) as Manifest;
+  if (manifest.version !== 1 || !manifest.entries)
+    throw new Error("prepared root manifest is invalid");
+  const sealed = manifest.entries;
+  const walk = await walkRoot(root);
+  const current = walk.entries;
+
+  const added: PreparedRootDiffEntry[] = [];
+  const removed: PreparedRootDiffEntry[] = [];
+  const changed: PreparedRootDiffEntry[] = [];
+  let addedCount = 0;
+  let removedCount = 0;
+  let changedCount = 0;
+
+  const manifestPaths = new Set(Object.keys(sealed));
+
+  for (const [relative, entry] of Object.entries(current)) {
+    const reference = sealed[relative];
+    if (reference === undefined) {
+      addedCount += 1;
+      if (added.length < MAX_DIFF_ENTRIES)
+        added.push({ path: relative, kind: entry.kind, mode: entry.mode, size: entry.size });
+      continue;
+    }
+    manifestPaths.delete(relative);
+    if (!(await entryMatches(root, relative, entry, reference))) {
+      changedCount += 1;
+      if (changed.length < MAX_DIFF_ENTRIES)
+        changed.push({ path: relative, kind: entry.kind, mode: entry.mode, size: entry.size });
+    }
+  }
+
+  for (const relative of manifestPaths) {
+    const reference = sealed[relative];
+    if (reference === undefined) continue;
+    removedCount += 1;
+    if (removed.length < MAX_DIFF_ENTRIES)
+      removed.push({
+        path: relative,
+        kind: reference.kind,
+        mode: reference.mode,
+        size: reference.size,
+      });
+  }
+
+  return {
+    truncated: walk.truncated,
+    addedCount,
+    removedCount,
+    changedCount,
+    added,
+    removed,
+    changed,
+  };
+}
+
+async function entryMatches(
+  root: string,
+  relative: string,
+  current: WalkEntry,
+  reference: Entry,
+): Promise<boolean> {
+  if (current.kind !== reference.kind) return false;
+  if (reference.kind === "directory") {
+    return current.mode === reference.mode;
+  }
+  if (current.kind === "file" && reference.kind === "file") {
+    if (current.mode !== reference.mode || current.size !== reference.size) return false;
+    const digest = createHash("sha256")
+      .update(await readFile(path.join(root, relative)))
+      .digest("hex");
+    return digest === reference.digest;
+  }
+  return false;
+}
+
+async function walkRoot(
+  root: string,
+): Promise<{ truncated: boolean; entries: Record<string, WalkEntry> }> {
+  const entries: Record<string, WalkEntry> = {};
+  let visited = 0;
+  const pending = [root];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (current === undefined) break;
+    let items: Dirent[];
+    try {
+      items = await readdir(current, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const item of items) {
+      if (visited >= MAX_DIFF_VISITED) return { truncated: true, entries };
+      visited += 1;
+      if (item.name === MANIFEST && current === root) continue;
+      const full = path.join(current, item.name);
+      const relative = path.relative(root, full);
+      let info: Stats;
+      try {
+        info = await lstat(full);
+      } catch {
+        entries[relative] = { kind: "unreadable", mode: 0, size: 0 };
+        continue;
+      }
+      if (info.isDirectory()) {
+        entries[relative] = { kind: "directory", mode: info.mode & 0o7777, size: 0 };
+        pending.push(full);
+      } else if (info.isFile()) {
+        entries[relative] = { kind: "file", mode: info.mode & 0o7777, size: info.size };
+      } else if (info.isSymbolicLink()) {
+        entries[relative] = { kind: "symlink", mode: info.mode & 0o7777, size: 0 };
+      } else if (info.isSocket()) {
+        entries[relative] = { kind: "socket", mode: info.mode & 0o7777, size: 0 };
+      } else if (info.isFIFO()) {
+        entries[relative] = { kind: "fifo", mode: info.mode & 0o7777, size: 0 };
+      } else if (info.isBlockDevice()) {
+        entries[relative] = { kind: "block", mode: info.mode & 0o7777, size: 0 };
+      } else if (info.isCharacterDevice()) {
+        entries[relative] = { kind: "char", mode: info.mode & 0o7777, size: 0 };
+      } else {
+        entries[relative] = { kind: "other", mode: info.mode & 0o7777, size: 0 };
+      }
+    }
+  }
+  return { truncated: false, entries };
 }
 
 export function parseDependencies(output: string): string[] {

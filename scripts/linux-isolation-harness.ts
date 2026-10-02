@@ -8,6 +8,7 @@ import {
   LinuxIsolationBackend,
   type LinuxIsolationResult,
 } from "../apps/browser-worker/src/linux-backend";
+import { diffPreparedRoot } from "../apps/browser-worker/src/linux-root";
 import { startProxy } from "../packages/engine/src/browser-egress/core";
 import type { EgressProxy } from "../packages/engine/src/browser-egress/types";
 import { EgressError } from "../packages/engine/src/security/types";
@@ -239,6 +240,33 @@ async function run() {
           `${mode} probe failed or was not cleaned: ${result.stdout} ${result.stderr ?? ""} ${JSON.stringify(result.properties)}`,
         );
       results[mode] = result;
+      if (mode === "network") {
+        // Record the exact second-detect reason before the next probe can mask it.
+        const postNetworkDetect = await backend.detect();
+        console.log(
+          JSON.stringify({
+            phase: "post-network-detect",
+            available: postNetworkDetect.available,
+            reason: postNetworkDetect.reason,
+          }),
+        );
+        if (
+          !postNetworkDetect.available &&
+          postNetworkDetect.reason === "prepared-root-unavailable"
+        ) {
+          try {
+            const diff = await diffPreparedRoot(preparedRoot);
+            console.log(JSON.stringify({ phase: "prepared-root-diff", ...diff }));
+          } catch (error) {
+            console.log(
+              JSON.stringify({
+                phase: "prepared-root-diff",
+                error: error instanceof Error ? error.message : "unknown",
+              }),
+            );
+          }
+        }
+      }
     }
     currentStage = "probe-memory";
     const memory = await backend.run("memory", input);
