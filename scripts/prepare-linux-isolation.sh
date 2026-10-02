@@ -53,26 +53,34 @@ sudo -n cp -aL /usr/bin/env /usr/bin/sleep /bin/sh "$prepared_root/usr/bin/"
 sudo -n cp -aL /etc/fonts/. "$prepared_root/etc/fonts/" 2>/dev/null || true
 sudo -n cp -aL /usr/share/fonts/. "$prepared_root/usr/share/fonts/" 2>/dev/null || true
 : | sudo -n tee "$prepared_root/etc/hosts" "$prepared_root/etc/resolv.conf" >/dev/null
-for executable in "$prepared_root/runtime/node" "$prepared_root/usr/bin/env" "$prepared_root/usr/bin/sleep" "$prepared_root/usr/bin/sh" "$prepared_root"/browser/*/*/*/chrome "$prepared_root"/browser/*/*/chrome; do
-  test -f "$executable" || continue
-  ldd "$executable" | awk '/=> \/|^\// { for (i=1; i<=NF; i++) if ($i ~ /^\//) print $i }' | while read -r dependency; do
-    test -f "$dependency" || continue
+copy_deps() {
+  local executable="$1"
+  local dependency
+  local deps
+  deps=$(sudo -n "$(command -v node)" node_modules/tsx/dist/cli.mjs scripts/resolve-runtime-deps.ts "$executable") || {
+    echo "::error title=Linux isolation preparation::cannot resolve runtime dependencies for $executable" >&2
+    exit 1
+  }
+  while IFS= read -r dependency; do
+    test -n "$dependency" || continue
+    test -f "$dependency" || {
+      echo "::error title=Linux isolation preparation::missing runtime dependency $dependency for $executable" >&2
+      exit 1
+    }
     sudo -n cp -aL --parents "$dependency" "$prepared_root"
-  done
+  done <<< "$deps"
+}
+for executable in "$prepared_root/runtime/node" "$prepared_root/usr/bin/env" "$prepared_root/usr/bin/sleep" "$prepared_root/usr/bin/sh"; do
+  test -f "$executable" || continue
+  copy_deps "$executable"
 done
 while IFS= read -r executable; do
-  ldd "$executable" | awk '/=> \/|^\// { for (i=1; i<=NF; i++) if ($i ~ /^\//) print $i }' | while read -r dependency; do
-    test -f "$dependency" || continue
-    sudo -n cp -aL --parents "$dependency" "$prepared_root"
-  done
+  copy_deps "$executable"
 done < <(find "$prepared_root/browser" -type f -name chrome -perm -111 -print)
 for library in libnss3.so libnssutil3.so libsmime3.so libnspr4.so libplc4.so libplds4.so libsoftokn3.so libfreebl3.so libnssckbi.so; do
   for candidate in "/usr/lib/x86_64-linux-gnu/$library" "/lib/x86_64-linux-gnu/$library" "/usr/lib/$library"; do
     test -f "$candidate" || continue
-    ldd "$candidate" | awk '/=> \/|^\// { for (i=1; i<=NF; i++) if ($i ~ /^\//) print $i }' | while read -r dependency; do
-      test -f "$dependency" || continue
-      sudo -n cp -aL --parents "$dependency" "$prepared_root"
-    done
+    copy_deps "$candidate"
     sudo -n cp -aL --parents "$candidate" "$prepared_root"
   done
 done
@@ -80,6 +88,18 @@ sudo -n find "$prepared_root" -type d -exec chmod 0755 {} +
 sudo -n find "$prepared_root" -type f -exec chmod a-w {} +
 sudo -n chown -R root:root "$prepared_root"
 sudo -n chmod 0755 "$prepared_root" "$prepared_root/tmp" "$prepared_root/var/tmp"
+phase=verify-exec
+for executable in "$prepared_root/usr/bin/env" "$prepared_root/runtime/node"; do
+  test -f "$executable" && test -x "$executable" || {
+    echo "::error title=Linux isolation preparation::missing or non-executable runtime binary $executable" >&2
+    exit 1
+  }
+done
+sudo -n chroot "$prepared_root" /usr/bin/env /runtime/node -e "process.exit(0)" || {
+  echo "::error title=Linux isolation preparation::prepared-root exec chain failed inside chroot" >&2
+  exit 1
+}
+phase=seal
 sudo -n "$(command -v node)" node_modules/tsx/dist/cli.mjs scripts/seal-prepared-root.ts "$prepared_root"
 sudo -n chmod 0444 "$prepared_root/.crossexam-root-manifest.json"
 

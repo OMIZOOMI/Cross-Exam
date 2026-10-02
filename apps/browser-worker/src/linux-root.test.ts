@@ -106,11 +106,24 @@ it("rejects unintended Unix sockets", async () => {
 });
 it("fails on missing required runtime dependency", () => {
   expect(() => parseDependencies("libx.so => not found\n")).toThrow();
+  expect(() => parseDependencies("libx.so => not found\n")).toThrow(/missing/);
+});
+it("extracts resolved dependencies and standalone interpreter paths", () => {
   expect(
     parseDependencies(
-      "linux-vdso.so.1 (0x1)\nlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x2)\n/lib64/ld-linux-x86-64.so.2 (0x3)\n",
+      "\tlinux-vdso.so.1 (0x1)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x2)\n\t/lib64/ld-linux-x86-64.so.2 (0x3)\n",
     ),
-  ).toHaveLength(2);
+  ).toEqual(["/lib/x86_64-linux-gnu/libc.so.6", "/lib64/ld-linux-x86-64.so.2"]);
+});
+it("deduplicates repeated dependency paths", () => {
+  expect(
+    parseDependencies(
+      "libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x1)\nlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x2)\n",
+    ),
+  ).toEqual(["/lib/x86_64-linux-gnu/libc.so.6"]);
+});
+it("ignores unrelated lines without absolute paths", () => {
+  expect(parseDependencies("linux-vdso.so.1 (0x1)\nnot a library line\n")).toEqual([]);
 });
 it.each(["0", "991 27", "991 999", "", "991x"])(
   "rejects privileged or unexpected group identity %s",
