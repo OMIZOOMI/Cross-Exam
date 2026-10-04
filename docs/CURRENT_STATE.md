@@ -2,7 +2,7 @@
 
 Updated 2026-10-05. Task: **Stage 12 — Performance + Runtime Analysis**.
 
-**Stage 12 is PARTIAL pending Linux acceptance. Public arbitrary browser scanning remains DISABLED.** Stage 11 and Task 9a remain accepted for controlled fixtures. No UI, public admission, browser launch configuration, AppArmor, proxy or outer isolation policy changed.
+**Stage 12 is COMPLETE for owned fixtures inside the verified Linux boundary. Public arbitrary browser scanning remains DISABLED.** Stage 11 and Task 9a remain accepted for controlled fixtures. No UI, public admission, browser launch configuration, AppArmor, proxy or outer isolation policy changed.
 
 ## Stage 12 implementation
 
@@ -33,9 +33,33 @@ Focused checks passed: 18 performance unit tests and six real Chromium performan
 | Exact prepared-root esbuild probe bundle | PASS; 841.5 KiB |
 | `git diff --check` | PASS |
 
-No shell script changed. Linux acceptance is pending; macOS does not establish Linux isolation. The initial owned paint update was coalesced into one candidate; the fixture now separates two renders within the unchanged window. The Stage 11 form-value privacy assertion is scoped to forms so numeric metric `value` fields remain legitimate; schema-level form value rejection is retained.
+No shell script changed. Reviewed diff contains no UI changes, .env/credentials, captured cookies/auth/bodies/storage, screenshots/traces/browser profiles/generated artifacts, public targets/admission or sandbox/AppArmor/proxy/cgroup/root weakening. Linux acceptance is independently established below, not inferred from macOS. The initial owned paint update was coalesced into one candidate; the fixture now separates two renders within the unchanged window. The Stage 11 form-value privacy assertion is scoped to forms so numeric metric `value` fields remain legitimate; schema-level form value rejection is retained.
 
 Stage 12 limitations: finite top-document LAB window, controlled fixtures only, no field/RUM interpretation. Unavailable metrics remain null. Browser/cache/CORS privacy rules can expose resource size/timing zeros; these do not mean no expense. Aggregates cover delivered entries only, and zero/missing sizes and truncation are explicit. No iframe aggregation, interaction/INP, performance score, causal script attribution, accessibility, AI or public admission. Same-world Performance API collection is not an anti-tampering guarantee for hostile public pages.
+
+## Stage 12 Linux acceptance and delivery — one run
+
+Implementation commit `258c0c30905ff81a322783b5f7af692b901a3423` was pushed only to `feature/performance-runtime-analysis`. [Run 37230436777](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37230436777), isolation job 111518775157, completed successfully. Exactly one new Linux run was used; Run 2 is not permitted/needed because there was no integration defect. Final documentation uses `[skip ci]`; code remains identical to the accepted run. Main, validation/linux-isolation and the accepted Stage 11 branch remain unchanged; no PR/merge.
+
+| Accepted Linux evidence | Actual result |
+| --- | --- |
+| preparation + exact AppArmor profile | PASS; immutable revision 1243, root:root 0555, artifact SHA256 ded93a9c9a53a1ae040f08124badcca95c938e9d5015ff340c3b5538c41bf39e unchanged |
+| network / filesystem / pids / browser | PASS; existing boundary probes unchanged |
+| collector / Stage 11 schema | PASS; redirect, rendered DOM, console, page error, XHR, denied POST and disposable-marker absence |
+| Stage 12 schema/navigation | PASS; PerformanceNavigationTiming present; request-wait derived from 19.3/102.1 ms timestamps, no wall-clock substitution |
+| FCP / LCP | PASS; FCP 188 ms; LCP candidates 188/372 ms, latest observed candidate only, not finalized |
+| CLS | PASS; observed finite-window session maximum 0.017802242702907988, no recent-input shifts |
+| long task | PASS; one delivered/retained 90 ms task; numeric start/duration only |
+| resource timing | PASS; 10 delivered/retained entries; owned XHR decoded size 130,000 bytes; delivered decoded total 130,203 bytes |
+| retention / privacy | PASS; rich performance 6,119 bytes, combined 13,771 bytes; bounded combined 32,739 bytes with 18 resource timings dropped, 68 console entries and 6 responses dropped. No disposable marker anywhere in CI logs |
+| internal Chromium sandbox | PASS; exact profile attached, completed userns ID maps/setgroups deny, nested PID namespace; renderer Seccomp=2 with 15 filters versus worker/browser 14 |
+| tls / memory / timeout / proxy-down | PASS; expected cgroup oom-kill and RuntimeMaxSec termination, failed outage navigation without DIRECT fallback |
+| cleanup / sentinels | PASS; all nine captured cgroups absent/cleaned=true; zero TCP/UDP hits across seven owned addresses and zero unrelated Unix socket hits |
+| global AppArmor policy | PASS; enabled, userns restriction 1 before/after validation and after temporary profile removal |
+
+Collector worker PID 5427/browser PID 5443 remained non-root UID 999/GID 987 with NoNewPrivs=1 and empty effective/bounding host capabilities. Zygote/renderer maps were UID 999→999 / GID 987→987 (one ID each), setgroups=deny; renderer PID 5495 had nested PID IDs [5495,4,1]. Namespace-local bounding sets are not host capability grants. Cgroup kernel values remain memory.max=1073741824, memory.swap.max=0, pids.max=128 and cpu.max=100000 100000.
+
+Exactly one next task: **Stage 13 Rendered Accessibility Analysis**. Public admission/deployment, AI and field performance collection remain unimplemented; do not begin Stage 13 in this task.
 
 ## Accepted Stage 11 record
 

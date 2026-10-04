@@ -109,7 +109,7 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Add versioned LAB performance composition, pre-navigation buffered observers, explicit raw/derived provenance and unavailable metrics; no inferred scores or fake INP.
 - [x] Bound resources/tasks/candidates/shifts/paint, reuse privacy sanitation, preserve 32 KiB combined ceiling and existing deadline/launch/security architecture.
 - [x] Extend owned fixtures and fixed Linux collector acceptance with navigation/FCP/LCP/CLS/resource/long-task/bounds/privacy checks.
-- [x] Complete focused and one full local validation pass plus privacy/security diff review. Feature-only delivery follows.
-- [ ] Verify one bounded Linux run (second only for a directly evidenced narrow integration defect); record sandbox/proxy/cleanup/zero-sentinel evidence.
-- Stage 12 remains PARTIAL until Linux acceptance; arbitrary public browser scanning stays DISABLED.
+- [x] Complete focused and one full local validation pass plus privacy/security diff review; commit/push only the performance feature branch.
+- [x] Verify bounded Linux run 37230436777 on 258c0c3: both schemas, navigation/FCP/LCP/CLS/resources/long tasks, bounds/privacy, existing sandbox/proxy/resource stages, nine captured-cgroup removals and zero sentinel hits. No second run needed/permitted.
+- Stage 12 is COMPLETE for controlled fixtures; arbitrary public browser scanning stays DISABLED. Final docs use [skip ci] without changing accepted code.
 - Next task only after completion: **Stage 13 Rendered Accessibility Analysis**.
