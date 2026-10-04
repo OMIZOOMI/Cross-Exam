@@ -53,6 +53,8 @@ export const EvidenceSchema = z.object({
       "BROWSER_RENDERED_DOM",
       "BROWSER_PERFORMANCE",
       "BROWSER_RUNTIME_ANALYSIS",
+      "BROWSER_ACCESSIBILITY_OBSERVATION",
+      "BROWSER_ACCESSIBILITY_RULES",
     ])
     .optional(),
   data: z
@@ -301,4 +303,5 @@ export type Page = z.infer<typeof PageSchema>;
 export type Provenance = z.infer<typeof ProvenanceSchema>;
 export type AgentRole = z.infer<typeof AgentRoleSchema>;
 
+export * from "./browser-accessibility";
 export * from "./browser-performance";

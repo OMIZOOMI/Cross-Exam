@@ -22,6 +22,44 @@ export function collectorFixtureResponse(path: string): {
     </script>`;
   } else if (path === "/collector/empty-performance") {
     body = "<!doctype html><title>Empty owned performance fixture</title>";
+  } else if (path === "/collector/accessibility-good") {
+    body = `<!doctype html><html lang="en"><head><title>Accessible owned fixture</title></head><body><main><h1>Owned heading</h1>
+      <img src="/collector/image.svg" alt="Owned image"><button>Owned button</button>
+      <label for="owned-input">Owned label</label><input id="owned-input" value="DISPOSABLE_NOT_A_SECRET">
+      <a href="/collector/next">Owned link</a><p style="color:#000;background:#fff">Passing contrast</p>
+      <div aria-hidden="true" hidden><button></button><img src="/collector/image.svg"></div>
+      <div role="checkbox" aria-checked="false" aria-label="Owned checkbox" tabindex="0"></div>
+      </main></body></html>`;
+  } else if (path === "/collector/accessibility-bad") {
+    body = `<!doctype html><html><head><title>Owned rule fixture</title></head><body><main><h1>Owned heading</h1><h3>Skipped heading</h3>
+      <img src="/collector/image.svg"><img src="/collector/image.svg" alt="Owned image">
+      <button id="DISPOSABLE_NOT_A_SECRET" class="DISPOSABLE_NOT_A_SECRET"></button><button>Owned named button</button>
+      <input value="DISPOSABLE_NOT_A_SECRET"><input type="password" value="DISPOSABLE_NOT_A_SECRET">
+      <label for="owned-labeled">Owned label</label><input id="owned-labeled">
+      <a href="/collector/next"></a><a href="/collector/next">Owned named link</a>
+      <p style="color:#eee;background:#fff">Owned failing contrast</p><p style="color:#000;background:#fff">Owned passing contrast</p>
+      <p style="background-image:linear-gradient(#fff,#000);color:#777">Owned manual contrast review</p>
+      <div role="checkbox" tabindex="0" aria-label="Owned checkbox"></div>
+      <div role="checkbox" tabindex="0" aria-checked="false" aria-label="Owned valid checkbox"></div>
+      <div role="not-a-role"></div><button aria-checked="banana">Owned invalid ARIA</button>
+      <div id="owned-duplicate">Owned duplicate</div><div id="owned-duplicate">Owned duplicate</div><input aria-labelledby="owned-duplicate">
+      <script>const dynamic=document.createElement('button');document.querySelector('main').append(dynamic);</script>
+      </main></body></html>`;
+  } else if (path === "/collector/accessibility-scope") {
+    body = `<!doctype html><html lang="en"><title>Owned scope fixture</title><body><main><h1>Scope</h1>
+      <div id="owned-open"></div><div id="owned-closed"></div><div hidden><button></button></div>
+      <iframe title="Owned excluded frame" src="/collector/accessibility-bad"></iframe>
+      <script>document.getElementById('owned-open').attachShadow({mode:'open'}).innerHTML='<button></button>';
+      document.getElementById('owned-closed').attachShadow({mode:'closed'}).innerHTML='<button></button>';</script>
+      </main></body></html>`;
+  } else if (path === "/collector/accessibility-csp") {
+    headers["content-security-policy"] = "default-src 'self'; script-src 'self'; object-src 'none'";
+    body = `<!doctype html><html lang="en"><title>Owned CSP fixture</title><body><main><h1>CSP</h1>
+      <script>document.body.insertAdjacentHTML('beforeend','<img src="/collector/image.svg">');</script>
+      <script src="/collector/accessibility-csp.js"></script></main></body></html>`;
+  } else if (path === "/collector/accessibility-csp.js") {
+    type = "text/javascript";
+    body = "document.querySelector('main').append(document.createElement('button'));";
   } else if (path === "/collector/rich") {
     headers["x-content-type-options"] = "nosniff";
     headers["referrer-policy"] = "no-referrer";
@@ -35,8 +73,9 @@ export function collectorFixtureResponse(path: string): {
       </head><body><h1>Owned browser fixture</h1><form method="post" action="/collector/action?token=DISPOSABLE_NOT_A_SECRET">
       <input type="text" value="DISPOSABLE_NOT_A_SECRET"><input type="password" value="DISPOSABLE_NOT_A_SECRET">
       <textarea>DISPOSABLE_NOT_A_SECRET</textarea></form><a href="/collector/next?api_key=DISPOSABLE_NOT_A_SECRET">Next</a>
-      <div id="owned-spacer" style="height:0"></div><p id="owned-paint" style="font-size:12px;width:700px">Small initial paint</p><img src="/collector/image.svg" width="32" height="32"><script>
+      <button>Owned labeled button</button><p style="background-image:linear-gradient(#fff,#000);color:#777">Owned manual contrast review</p><div id="owned-spacer" style="height:0"></div><p id="owned-paint" style="font-size:12px;width:700px">Small initial paint</p><img src="/collector/image.svg" width="32" height="32"><script>
         document.title = 'Rendered fixture';
+        document.body.append(document.createElement('button'));
         document.body.insertAdjacentHTML('beforeend', '<h2>Dynamic heading</h2><a href="/collector/dynamic">Dynamic link</a>');
         const image = document.createElement('img'); image.src='/collector/dynamic.svg'; document.body.append(image);
         console.warn('Owned warning token=DISPOSABLE_NOT_A_SECRET'); console.error('Owned console error');

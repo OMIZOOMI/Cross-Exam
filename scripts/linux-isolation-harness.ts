@@ -15,6 +15,7 @@ import {
   startChromiumSandboxObserver,
 } from "../apps/browser-worker/src/linux-sandbox-evidence";
 import {
+  BrowserAccessibilityEvidenceSchema,
   BrowserEvidenceCollectionSchema,
   BrowserPerformanceEvidenceSchema,
 } from "../packages/contracts/src/index";
@@ -361,6 +362,7 @@ async function run() {
         )
           throw new Error("Collector evidence acceptance failed");
         const performance = BrowserPerformanceEvidenceSchema.parse(evidence.performance);
+        const accessibility = BrowserAccessibilityEvidenceSchema.parse(evidence.accessibility);
         console.log(
           JSON.stringify({
             phase: "browser-collector",
@@ -372,6 +374,17 @@ async function run() {
             sensitiveMarkerAbsent: true,
             bytes: Buffer.byteLength(JSON.stringify(evidence)),
             checks: record.checks,
+            accessibility: {
+              schema: accessibility.schemaVersion,
+              engine: accessibility.engine,
+              version: accessibility.engineVersion,
+              status: accessibility.status,
+              violationRules: accessibility.ruleResults?.aggregates.violationRules,
+              incompleteRules: accessibility.ruleResults?.aggregates.incompleteRules,
+              passes: accessibility.ruleResults?.passes.count,
+              truncation: accessibility.truncation,
+              bytes: Buffer.byteLength(JSON.stringify(accessibility)),
+            },
             performance: {
               schema: performance.schemaVersion,
               kind: performance.measurementKind,

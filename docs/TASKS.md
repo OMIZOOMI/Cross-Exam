@@ -113,3 +113,14 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Verify bounded Linux run 37230436777 on 258c0c3: both schemas, navigation/FCP/LCP/CLS/resources/long tasks, bounds/privacy, existing sandbox/proxy/resource stages, nine captured-cgroup removals and zero sentinel hits. No second run needed/permitted.
 - Stage 12 is COMPLETE for controlled fixtures; arbitrary public browser scanning stays DISABLED. Final docs use [skip ci] without changing accepted code.
 - Next task only after completion: **Stage 13 Rendered Accessibility Analysis**.
+
+## Stage 13 — Rendered Accessibility Analysis
+
+- [x] Freeze Stage 12 at `4ebe2d72a87103a6fd37303000adf3b703d71bb2`; create only `feature/rendered-accessibility-analysis`.
+- [x] Pin official axe-core 4.12.1, compose strict accessibility schema v1, separate OBSERVED facts / DERIVED rule results and manual-review outcomes.
+- [x] Project privacy-safe structural node evidence inside the renderer, bounded rules/nodes/tags/counts and 8 KiB accessibility budget within unchanged 32 KiB combined ceiling.
+- [x] Prove owned fail/pass/dynamic/contrast/manual-review/shadow/frame/CSP/bounds fixtures, dependency bundling and Stage 11/12 regressions without isolation changes.
+- [x] Complete one full local validation pass and privacy/security diff review; deliver only the accessibility feature branch.
+- [ ] Establish Stage 13 controlled Linux acceptance with unchanged AppArmor/sandbox/proxy/cgroup/cleanup/sentinel proofs; at most two runs, second only for a precise permitted fixture/serialization defect.
+- Stage 13 remains PARTIAL until Linux acceptance. Public arbitrary browser scanning stays DISABLED.
+- Next task only after completion: **Stage 14 Explorer + Breaker Agent Architecture**.

@@ -12,6 +12,7 @@
   "dependencies": {
     "@crossexam/contracts": "workspace:*",
     "@crossexam/engine": "workspace:*",
-    "@playwright/test": "1.63.0"
+    "@playwright/test": "1.63.0",
+    "axe-core": "4.12.1"
   }
 }

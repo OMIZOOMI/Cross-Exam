@@ -1,5 +1,56 @@
 # Current state
 
+Updated 2026-10-05. Task: **Stage 13 — Rendered Accessibility Analysis**.
+
+**Stage 13 is PARTIAL pending controlled Linux acceptance. Full local validation passed. Public arbitrary browser scanning remains DISABLED.** Task 9a and Stages 11/12 remain accepted; no isolation, browser launch, proxy, AppArmor, cgroup, deadline, public admission or UI policy changes.
+
+## Stage 13 implementation
+
+Started clean on `feature/performance-runtime-analysis` and its remote at exactly `4ebe2d72a87103a6fd37303000adf3b703d71bb2`. Created `feature/rendered-accessibility-analysis` from that SHA. Main/origin/main remain `9bafdb5df0d97668abd66e09fa342610da323ace`. Earlier validated branches remain frozen.
+
+- Official `axe-core` **4.12.1**, exact dependency, MPL-2.0; no wrapper, production dependency tree or CDN. Unmodified engine source is included in the existing esbuild probe bundle and sealed manifest. Its upstream license notice is retained by the bundle. Engine upgrades require explicit contract/version and fixture review.
+- `accessibility-collector.ts` analyzes the same page after the existing 300 ms post-load wait, performance observer drainage and DOM summary. Runtime observations stop before engine work. Default pinned rules run with `noHtml`, `elementRef`, `iframes:false`, `preload:false`, and selector/ancestry/xpath output disabled. Main-world DevTools evaluation of locally bundled source does not disable page CSP; a strict CSP fixture proves inline target scripts still fail. No engine-driven remote preload or second browser.
+- `BrowserAccessibilityEvidenceSchema` v1 composes optional/null accessibility into collection v1. Rendered snapshot facts are OBSERVED; rule results and aggregates are DERIVED. Violations, incomplete/manual-review checks, pass summaries and inapplicable summaries remain distinct. Failed/unsupported/timed-out/cancelled/DOM-limit analysis has null observations/results, never a zero-violation verdict. Navigation failure leaves analysis null.
+- Privacy: raw axe output stays inside Chromium. Only engine-registry rule IDs/tags (tags normalized lowercase), engine impact enums, counts and structural locations leave the renderer. No HTML, check messages/data, failureSummary, axe selectors, IDs/classes/custom-element names, visible text, form values or arbitrary DOM attributes are copied into accessibility output. Previous Stage 11 sanitized document-summary fields remain as previously contracted.
+- Locators use built-in tag names, nth-of-type ancestry, an explicit open-shadow boundary and deterministic document-local index. Up to ten ancestors/256 characters, three representative nodes per rule. Partial/deep/custom-ancestor/unindexed locations are marked; these are approximate snapshot locations, not durable replay selectors. Open shadow roots are tested; closed shadow roots and iframe documents are explicitly excluded. Iframe traffic still follows existing policy.
+- Bounds: 12 violation rules, 8 incomplete rules, 3 nodes/rule, 16 tags/rule (64 characters each), 5 impact buckets and 32 tag aggregate buckets, 128 pass/inapplicable rule IDs each, 10,000 inspected elements. Alphabetical rule and document-index node ordering; complete rule/node totals with explicit dropped counts. Accessibility <=8 KiB, evicted **before IPC** and revalidated afterward. Combined Stage 11/12/13 JSON remains <=32 KiB; no resource limits increased.
+- Engine analysis is capped at 2,500 ms or the smaller remaining operational budget. Timeout closes the existing worker via its idempotent lifecycle; the whole worker/service limits are unchanged. Performance measurements are frozen before analysis, so engine work is outside the LAB observation window.
+- Evidence adapter appends separate OBSERVED `BROWSER_ACCESSIBILITY_OBSERVATION` and DERIVED `BROWSER_ACCESSIBILITY_RULES`. No HTTP evidence replacement, findings, AI, score, remediation or compliance claim.
+- Owned fixtures exercise correct/missing accessible names and labels, document language, headings, landmarks, valid/invalid ARIA, dynamic violation, rendered failing/passing contrast and gradient contrast requiring manual review, hidden content, open/closed shadow roots, excluded iframe, CSP, volume, DOM limit and cancellation. Duplicate IDs are present but no unsupported violation assertion is invented; pinned default engine behavior is the fixture oracle. Local esbuild/CJS execution tests the actual bundled engine/serialized projection.
+
+## Stage 13 validation
+
+Focused accessibility: **34 units + 8 real-browser tests PASS**. Stage 11 regression: **29 units + 8 browser checks PASS**. Stage 12 regression: **18 units + 6 browser checks PASS**. A test-only literal type was corrected before completing the local pass; the bundled MPL notice assertion uses its canonical license URL rather than assuming adjacent text across comment line breaks.
+
+| Command | Result |
+| --- | --- |
+| `pnpm lint` | PASS |
+| `pnpm typecheck` | PASS; root/all workspaces |
+| `pnpm test:security` | PASS; 288 tests / 6 files |
+| `pnpm test:scanner` | PASS; 94 tests / 4 files |
+| `pnpm test` | PASS; 839 tests / 33 files |
+| `pnpm build` | PASS |
+| `pnpm test:browser-security` | PASS; 419 units / 19 files + 47 browser checks |
+| `pnpm test:browser-collector` | PASS; 29 units + 8 browser checks |
+| `pnpm test:performance` | PASS; 18 units + 6 browser checks |
+| `pnpm test:accessibility` | PASS; 34 units + 8 browser checks |
+| `pnpm test:e2e` | PASS; 22 desktop/mobile checks |
+| `pnpm scanner:smoke` | PASS; 1 selected check, 33 intentionally skipped |
+| Exact Linux probe esbuild bundle | PASS; 2.2 MiB, retained MPL notice |
+| `git diff --check` | PASS |
+
+No shell script changed. Local esbuild execution proves the engine and serialized projection operate after bundling. Full diff/privacy review excludes generated outputs, secrets, screenshots, browser state and unrelated UI changes. Existing sandbox/AppArmor/proxy/root/proc/cgroup/public-launcher files are unchanged. E2E regenerates development type references; the installed Next.js declaration generator restores production references without manual editing. The required full build passed; a subsequent optional restoration build encountered a local port-binding permission error, so no further build loop was used. Linux acceptance remains pending; macOS browser checks do not establish Linux confinement.
+
+## Stage 13 limitations
+
+Automated checks cover only part of accessibility; pass/empty retained lists do not establish WCAG conformance or a human verdict. Analysis is a finite rendered snapshot, not eventual DOM stability. The controlled main world is not tamper-resistant against hostile scripts. No iframe/closed-shadow analysis, accessibility tree, raw DOM, image storage, auto-fixes, AI or public admission. Browser evidence is still fixture-only, not deployment-ready.
+
+The next task is **Stage 14 Explorer + Breaker Agent Architecture**, only after Stage 13 Linux acceptance; it is not begun here.
+
+---
+
+## Previous accepted milestone — Stage 12
+
 Updated 2026-10-05. Task: **Stage 12 — Performance + Runtime Analysis**.
 
 **Stage 12 is COMPLETE for owned fixtures inside the verified Linux boundary. Public arbitrary browser scanning remains DISABLED.** Stage 11 and Task 9a remain accepted for controlled fixtures. No UI, public admission, browser launch configuration, AppArmor, proxy or outer isolation policy changed.

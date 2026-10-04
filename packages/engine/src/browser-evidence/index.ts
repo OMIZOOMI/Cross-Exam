@@ -106,5 +106,29 @@ export function browserEvidenceRecords(
         }),
       );
   }
+  if (collection.accessibility) {
+    const { observation, ruleResults, ...identity } = collection.accessibility;
+    for (const [code, provenance, data] of [
+      ["BROWSER_ACCESSIBILITY_OBSERVATION", "OBSERVED", { ...identity, observation }],
+      ["BROWSER_ACCESSIBILITY_RULES", "DERIVED", { ...identity, ruleResults }],
+    ] as const)
+      records.push(
+        EvidenceSchema.parse({
+          id: `${collectionId}-${code}`,
+          scanId,
+          source: "fixture",
+          provenance,
+          kind: "accessibility",
+          code,
+          title: "Controlled rendered accessibility evidence",
+          url: collection.target,
+          capturedAt: collection.accessibility.collectedAt,
+          collector: collection.accessibility.collector,
+          detail:
+            "Pinned automated rule results from a finite rendered snapshot. Incomplete results require manual review; no conformance verdict.",
+          data: { collectionId, observation: JSON.stringify(data) },
+        }),
+      );
+  }
   return records;
 }

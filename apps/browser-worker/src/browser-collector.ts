@@ -12,6 +12,7 @@ import {
   safeText,
 } from "@crossexam/engine/browser-evidence";
 import type { ConsoleMessage, Request, Response } from "@playwright/test";
+import { collectRenderedAccessibility } from "./accessibility-collector";
 import { type FixtureWorker, launchFixtureWorker } from "./fixture-worker";
 import { installPerformanceObservers, readPerformanceObservers } from "./performance-observer";
 
@@ -25,6 +26,10 @@ export const COLLECTOR_FIXTURES = Object.freeze({
   loop: "/collector/loop",
   dom: "/collector/dom-limit",
   empty: "/collector/empty-performance",
+  accessibilityBad: "/collector/accessibility-bad",
+  accessibilityGood: "/collector/accessibility-good",
+  accessibilityScope: "/collector/accessibility-scope",
+  accessibilityCsp: "/collector/accessibility-csp",
 });
 type Collection = BrowserEvidenceCollection;
 type Fixture = keyof typeof COLLECTOR_FIXTURES;
@@ -59,6 +64,7 @@ export function emptyBrowserCollection(fixture: Fixture, startedAt = Date.now())
     responses: [],
     dom: null,
     performance: null,
+    accessibility: null,
     truncation: {
       dropped: Object.fromEntries(BROWSER_TRUNCATION_DIMENSIONS.map((name) => [name, 0])),
       shortenedStrings: 0,
@@ -270,6 +276,14 @@ export async function collectFixtureBrowserEvidence(options: {
       const performance = await readPerformanceObservers(worker.page);
       if (performance) output.performance = finalizePerformance(performance, T);
       output.dom = await collectDom(worker, output);
+      // Freeze runtime/performance observations before analysis work can create engine events.
+      stopped = true;
+      output.accessibility = await collectRenderedAccessibility(
+        worker.page,
+        remaining(),
+        worker.close,
+        options.signal,
+      );
     }
   } catch {
     output.outcome = worker ? "browser-closed" : "launch-failed";

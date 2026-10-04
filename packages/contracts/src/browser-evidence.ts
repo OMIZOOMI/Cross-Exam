@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BrowserAccessibilityEvidenceSchema } from "./browser-accessibility";
 import { BrowserPerformanceEvidenceSchema } from "./browser-performance";
 
 /** Retention bounds, not permission to send traffic. The worker/proxy enforce traffic limits. */
@@ -182,6 +183,7 @@ export const BrowserEvidenceCollectionSchema = z
       .strict()
       .nullable(),
     performance: BrowserPerformanceEvidenceSchema.nullable().optional(),
+    accessibility: BrowserAccessibilityEvidenceSchema.nullable().optional(),
     truncation: z
       .object({
         dropped,

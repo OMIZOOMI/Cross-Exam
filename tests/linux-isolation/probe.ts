@@ -53,7 +53,9 @@ import {
   supplementaryGroupsAreEmptyOrPrimary,
 } from "../../apps/browser-worker/src/proc-status";
 import {
+  ACCESSIBILITY_ENGINE_VERSION,
   BROWSER_EVIDENCE_LIMITS,
+  BrowserAccessibilityEvidenceSchema,
   type BrowserEvidenceCollection,
   BrowserEvidenceCollectionSchema,
   BrowserPerformanceEvidenceSchema,
@@ -845,6 +847,36 @@ async function runCollector(): Promise<{
       ),
       "PERFORMANCE_RESOURCE",
     );
+    const accessibility = BrowserAccessibilityEvidenceSchema.parse(evidence.accessibility);
+    ensure(
+      accessibility.status === "completed" &&
+        accessibility.engineVersion === ACCESSIBILITY_ENGINE_VERSION,
+      "ACCESSIBILITY_ENGINE",
+    );
+    ensure(
+      accessibility.ruleResults?.violations.some((rule) => rule.id === "image-alt"),
+      "ACCESSIBILITY_VIOLATION",
+    );
+    ensure(
+      accessibility.ruleResults?.passes.ruleIds.includes("html-has-lang") &&
+        accessibility.ruleResults.passes.ruleIds.includes("button-name"),
+      "ACCESSIBILITY_PASS",
+    );
+    ensure(
+      accessibility.ruleResults?.violations
+        .find((rule) => rule.id === "button-name")
+        ?.nodes.some((node) => node.path?.endsWith("button:nth-of-type(2)")),
+      "ACCESSIBILITY_DYNAMIC",
+    );
+    ensure(
+      accessibility.ruleResults?.incomplete.some((rule) => rule.id === "color-contrast"),
+      "ACCESSIBILITY_MANUAL_REVIEW",
+    );
+    ensure(
+      !JSON.stringify(accessibility).includes("failureSummary") &&
+        !JSON.stringify(accessibility).includes("<"),
+      "ACCESSIBILITY_NO_SNIPPETS",
+    );
     const bounded = BrowserEvidenceCollectionSchema.parse(
       await collectFixtureBrowserEvidence({
         fixture: "bounds",
@@ -869,6 +901,17 @@ async function runCollector(): Promise<{
       boundedPerformance.truncation.dropped.resources > 0 &&
         boundedPerformance.observed.resources > boundedPerformance.resources.length,
       "PERFORMANCE_RESOURCE_BOUNDS",
+    );
+    const boundedAccessibility = BrowserAccessibilityEvidenceSchema.parse(bounded.accessibility);
+    ensure(
+      boundedAccessibility.status === "completed" &&
+        boundedAccessibility.truncation.violationNodes > 0,
+      "ACCESSIBILITY_BOUNDS",
+    );
+    ensure(
+      (boundedAccessibility.ruleResults?.violations.find((rule) => rule.id === "label")
+        ?.affectedNodes ?? 0) === 60,
+      "ACCESSIBILITY_NODE_TOTAL",
     );
     ensure(
       Buffer.byteLength(JSON.stringify(evidence)) <= 32768 &&
@@ -897,6 +940,16 @@ async function runCollector(): Promise<{
         performanceResources: true,
         performanceBounds: true,
         performanceResourcesDropped: boundedPerformance.truncation.dropped.resources,
+        accessibilitySchemaValid: true,
+        accessibilityEngine: ACCESSIBILITY_ENGINE_VERSION,
+        accessibilityViolation: true,
+        accessibilityPass: true,
+        accessibilityDynamic: true,
+        accessibilityManualReview: true,
+        accessibilityNoSnippets: true,
+        accessibilityBounds: true,
+        accessibilityNodesDropped: boundedAccessibility.truncation.violationNodes,
+        accessibilityBytes: Buffer.byteLength(JSON.stringify(accessibility)),
         combinedCeilingUnchanged: true,
         bytes: Buffer.byteLength(JSON.stringify(evidence)),
         boundedBytes: Buffer.byteLength(JSON.stringify(bounded)),
