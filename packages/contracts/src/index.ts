@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export * from "./browser-evidence";
+
 export const ProvenanceSchema = z.enum(["OBSERVED", "DERIVED", "INFERRED", "SIMULATED"]);
 export const DataSourceSchema = z.enum(["fixture", "live"]);
 export const SeveritySchema = z.enum(["high", "medium", "low", "info"]);
@@ -43,6 +45,12 @@ export const EvidenceSchema = z.object({
       "ROBOTS_TXT",
       "SITEMAP_XML",
       "FETCH_FAILURE",
+      "BROWSER_NAVIGATION",
+      "BROWSER_CONSOLE",
+      "BROWSER_PAGE_ERRORS",
+      "BROWSER_REQUESTS",
+      "BROWSER_RESPONSES",
+      "BROWSER_RENDERED_DOM",
     ])
     .optional(),
   data: z

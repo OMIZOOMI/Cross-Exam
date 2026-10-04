@@ -17,7 +17,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 
 9. [x] Implement the URL/egress safety gate: shared early input policy, conservative IPv4/IPv6 classification, complete A/AAAA validation, literal-address-pinned Node HTTP(S), manual redirect checks, structured denials, request limits, and deterministic/TLS tests. This protects the HTTP primitive; it does not constrain Chromium.
 9a. [x] **COMPLETE for the controlled Linux harness:** Run 37196847138 passed preparation, exact AppArmor allowance/attachment, network/filesystem/PID/browser/TLS/memory/timeout/proxy-down, internal namespace/renderer-seccomp proof, cleanup and zero sentinel hits. All outer controls and global AppArmor restriction remained enabled. Public launch still fails closed with ISOLATION_UNAVAILABLE; production deployment and Stage 11 collector remain separate.
-10. [ ] After task 9a, add a bounded Playwright page collector behind the enforced proxy/network boundary; use controlled local fixtures with an explicit test-only policy. Capture navigation, headers, network/console observations, and cleanup/cancellation.
+10. [ ] **Stage 11 implemented; final acceptance pending:** bounded Playwright page collector behind the existing controlled proxy/Linux boundary. Fixed owned fixtures only; versioned observed navigation/console/errors/network/rendered DOM, privacy/retention and cleanup/cancellation tests. Public admission stays DISABLED.
 11. [x] Persist schema-validated local HTTP reports with IDs, timestamps, compact evidence, redaction, retention, and size bounds. Public storage/access control remains deferred.
 
 ## Day 3 — crawl and measurements
@@ -92,4 +92,12 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Required local checks passed. Run 37196267078 loaded/attached the profile and passed the browser fixture, then stopped on the process-title observer defect.
 - [x] Validate the narrow process-title parsing regression; second run 37196847138 passed. Exactly two Linux runs used; no third run.
 - [x] All required stages, cleanup, zero sentinel hits, unchanged restriction and internal namespace/renderer-seccomp proof passed; mark 9a complete for controlled Linux validation.
-- Next task: **Stage 11 Browser Evidence Collector.** Do not start it here or enable arbitrary public scanning.
+- Historical next task from 10D-C: **Stage 11 Browser Evidence Collector**, now in progress on its separate feature branch. Arbitrary public scanning stays disabled.
+
+## Stage 11 — Real Browser Evidence Collector
+
+- [x] Preserve the exact validated source branch and create `feature/browser-evidence-collector` from 0799927720d3a7fc693335b0238b094b4371cb59.
+- [x] Implement an internal fixed-fixture collector, versioned OBSERVED contracts, bounded/sanitized event and DOM retention, and distinct BROWSER_* Evidence records.
+- [x] Add unit and controlled Chromium coverage plus a fixed Linux collector probe using the accepted proxy/systemd/root/AppArmor/cgroup/sandbox observer.
+- [ ] Complete full local validation, privacy/security diff review, feature-branch delivery and at most two bounded Linux runs.
+- [ ] Record actual Linux schema/sandbox/proxy/cleanup/sentinel acceptance and mark the controlled collector complete. Public admission/deployment remains separate.

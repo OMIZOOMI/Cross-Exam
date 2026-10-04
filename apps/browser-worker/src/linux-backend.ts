@@ -32,6 +32,7 @@ const PROBE_MODES = [
   "memory",
   "timeout",
   "browser",
+  "collector",
   "tls",
   "proxy-down",
 ] as const;

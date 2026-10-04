@@ -6,13 +6,14 @@ import {
   type Page,
   type Request,
 } from "@playwright/test";
+import { WORKER_LIMITS } from "./worker-limits";
 
-const DEFAULT_TIMEOUT_MS = 10_000;
-const MIN_TIMEOUT_MS = 1_000;
-const MAX_TIMEOUT_MS = 30_000;
-const MAX_REQUESTS = 64;
-const MAX_DECISIONS = 96;
-const CLEANUP_RESERVE_MAX_MS = 1_000;
+const DEFAULT_TIMEOUT_MS = WORKER_LIMITS.defaultTimeoutMs;
+const MIN_TIMEOUT_MS = WORKER_LIMITS.minTimeoutMs;
+const MAX_TIMEOUT_MS = WORKER_LIMITS.maxTimeoutMs;
+const MAX_REQUESTS = WORKER_LIMITS.requests;
+const MAX_DECISIONS = WORKER_LIMITS.decisions;
+const CLEANUP_RESERVE_MAX_MS = WORKER_LIMITS.cleanupReserveMaxMs;
 
 const ALLOWED_METHODS = new Set(["GET", "HEAD"]);
 const ALLOWED_RESOURCE_TYPES = new Set([
@@ -75,6 +76,7 @@ export type FixtureWorker = {
   readonly context: BrowserContext;
   readonly page: Page;
   readonly decisions: readonly FixtureDecision[];
+  readonly operationalDeadlineAt: number;
   close(): Promise<void>;
 };
 
@@ -376,6 +378,7 @@ export async function launchFixtureWorker(
       browser,
       context,
       page,
+      operationalDeadlineAt,
       get decisions() {
         return audit.slice();
       },

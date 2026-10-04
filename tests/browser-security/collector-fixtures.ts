@@ -1,0 +1,83 @@
+/** Owned synthetic responses only. No real DNS, public targets, or usable secrets. */
+export function collectorFixtureResponse(path: string): {
+  statusCode: number;
+  headers: Record<string, string>;
+  body: Uint8Array;
+} | null {
+  if (!path.startsWith("/collector/")) return null;
+  let type = "text/html";
+  let statusCode = 200;
+  let body = "";
+  const headers: Record<string, string> = {};
+  if (path === "/collector/redirect") {
+    statusCode = 302;
+    headers.location = "/collector/rich";
+  } else if (path === "/collector/loop") {
+    statusCode = 302;
+    headers.location = "/collector/loop";
+  } else if (path === "/collector/failure") throw new Error("Owned fixture connection failure");
+  else if (path === "/collector/slow") {
+    body = `<!doctype html><title>Slow owned fixture</title><img src="/collector/hold"><script>
+      setTimeout(() => fetch('/collector/late'), 3000);
+    </script>`;
+  } else if (path === "/collector/rich") {
+    headers["x-content-type-options"] = "nosniff";
+    headers["referrer-policy"] = "no-referrer";
+    headers["set-cookie"] = "owned_fixture_cookie=DISPOSABLE_NOT_A_SECRET; Path=/";
+    headers.authorization = "Bearer DISPOSABLE_NOT_A_SECRET";
+    headers["x-api-key"] = "DISPOSABLE_NOT_A_SECRET";
+    body = `<!doctype html><html lang="en"><head><title>Initial fixture</title>
+      <meta name="description" content="Rendered fixture description">
+      <link rel="canonical" href="/collector/rich?token=DISPOSABLE_NOT_A_SECRET">
+      <link rel="stylesheet" href="/collector/style.css"><script src="/collector/script.js"></script>
+      </head><body><h1>Owned browser fixture</h1><form method="post" action="/collector/action?token=DISPOSABLE_NOT_A_SECRET">
+      <input type="text" value="DISPOSABLE_NOT_A_SECRET"><input type="password" value="DISPOSABLE_NOT_A_SECRET">
+      <textarea>DISPOSABLE_NOT_A_SECRET</textarea></form><a href="/collector/next?api_key=DISPOSABLE_NOT_A_SECRET">Next</a>
+      <img src="/collector/image.svg"><script>
+        document.title = 'Rendered fixture';
+        document.body.insertAdjacentHTML('beforeend', '<h2>Dynamic heading</h2><a href="/collector/dynamic">Dynamic link</a>');
+        const image = document.createElement('img'); image.src='/collector/dynamic.svg'; document.body.append(image);
+        console.warn('Owned warning token=DISPOSABLE_NOT_A_SECRET'); console.error('Owned console error');
+        setTimeout(() => { throw new TypeError('Owned runtime error password=DISPOSABLE_NOT_A_SECRET'); }, 0);
+        document.cookie='owned_fixture_cookie=DISPOSABLE_NOT_A_SECRET';
+        fetch('/collector/data?token=DISPOSABLE_NOT_A_SECRET', {headers:{Authorization:'Bearer DISPOSABLE_NOT_A_SECRET','X-API-Key':'DISPOSABLE_NOT_A_SECRET'},credentials:'include'}).catch(() => {});
+        const xhr=new XMLHttpRequest(); xhr.open('GET','/collector/xhr'); xhr.send();
+        fetch('/collector/failure').catch(() => {});
+        fetch('/collector/action', {method:'POST',body:'DISPOSABLE_NOT_A_SECRET'}).catch(() => {});
+        fetch('http://private.crossexam-fixture.com/').catch(() => {});
+        fetch('http://mixed.crossexam-fixture.com/').catch(() => {});
+        const ws = new WebSocket('ws://entry.crossexam-fixture.com/collector/socket'); ws.onerror=()=>{};
+      </script></body></html>`;
+  } else if (path === "/collector/bounds") {
+    body = `<!doctype html><title>Bounds fixture</title><body>
+      ${"<h2>Heading</h2><a href='/collector/link'>Link</a><form><input type='password' value='DISPOSABLE_NOT_A_SECRET'></form>".repeat(60)}
+      <script>
+        for(let i=0;i<100;i++) console.warn('Warning '+i+' '+ 'x'.repeat(5000)+' token=DISPOSABLE_NOT_A_SECRET');
+        for(let i=0;i<30;i++) setTimeout(()=>{throw new Error('Error '+i)},0);
+        for(let i=0;i<34;i++) fetch('/collector/data?i='+i).catch(()=>{});
+        for(let i=0;i<50;i++){ const s=document.createElement('script'); s.textContent=' '; document.body.append(s); }
+        const a=document.createElement('a'); a.href='https://entry.crossexam-fixture.com/'+'z'.repeat(5000); document.body.append(a);
+      </script></body>`;
+  } else if (path === "/collector/dom-limit") {
+    body = `<!doctype html><title>DOM limit fixture</title><body>${"<h2>Owned heading</h2>".repeat(10_010)}</body>`;
+  } else if (path === "/collector/requests") {
+    body = `<!doctype html><title>Requests fixture</title><script>for(let i=0;i<100;i++) fetch('/collector/data?i='+i).catch(()=>{});</script>`;
+  } else if (path.endsWith(".css")) {
+    type = "text/css";
+    body = "body { color: black; }";
+  } else if (path.endsWith(".js")) {
+    type = "text/javascript";
+    body = "window.ownedScriptLoaded=true";
+  } else if (path.endsWith(".svg")) {
+    type = "image/svg+xml";
+    body = '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>';
+  } else {
+    type = "text/plain";
+    body = "owned fixture data";
+  }
+  return {
+    statusCode,
+    headers: { "content-type": type, "access-control-allow-origin": "*", ...headers },
+    body: Buffer.from(body),
+  };
+}

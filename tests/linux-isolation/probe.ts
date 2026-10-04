@@ -32,6 +32,7 @@ import net, { type AddressInfo, type Socket } from "node:net";
 import os from "node:os";
 import { posix as path } from "node:path";
 import tls from "node:tls";
+import { collectFixtureBrowserEvidence } from "../../apps/browser-worker/src/browser-collector";
 import {
   BrowserRuntimeError,
   toBrowserRuntimeError,
@@ -51,6 +52,11 @@ import {
   parseProcStatusIdentity,
   supplementaryGroupsAreEmptyOrPrimary,
 } from "../../apps/browser-worker/src/proc-status";
+import {
+  BROWSER_EVIDENCE_LIMITS,
+  type BrowserEvidenceCollection,
+  BrowserEvidenceCollectionSchema,
+} from "../../packages/contracts/src/index";
 
 const MAX_INPUT_BYTES = 4 * 1024;
 const MAX_RESULT_BYTES = 8 * 1024;
@@ -83,6 +89,7 @@ const MODES = Object.freeze([
   "memory",
   "timeout",
   "browser",
+  "collector",
   "tls",
   "proxy-down",
 ] as const);
@@ -109,6 +116,7 @@ type ProbeRecord =
       mode: Mode;
       status: "passed";
       checks: SafeDetails;
+      browserEvidence?: BrowserEvidenceCollection;
     }>
   | Readonly<{
       version: 1;
@@ -242,7 +250,11 @@ let wroteResult = false;
 async function writeResult(result: ProbeRecord): Promise<void> {
   ensure(!wroteResult, "DUPLICATE_RESULT");
   const serialized = `${JSON.stringify(result)}\n`;
-  ensure(Buffer.byteLength(serialized) <= MAX_RESULT_BYTES, "RESULT_TOO_LARGE");
+  const maximum =
+    result.mode === "collector"
+      ? BROWSER_EVIDENCE_LIMITS.resultBytes + MAX_RESULT_BYTES
+      : MAX_RESULT_BYTES;
+  ensure(Buffer.byteLength(serialized) <= maximum, "RESULT_TOO_LARGE");
   wroteResult = true;
   await new Promise<void>((resolve, reject) => {
     process.stdout.write(serialized, (error) => (error ? reject(error) : resolve()));
@@ -768,6 +780,85 @@ async function runBrowser(input: ProbeInput): Promise<SafeDetails> {
   }
 }
 
+async function runCollector(): Promise<{
+  checks: SafeDetails;
+  browserEvidence: BrowserEvidenceCollection;
+}> {
+  const relay = await startUnixRelay();
+  try {
+    const evidence = BrowserEvidenceCollectionSchema.parse(
+      await collectFixtureBrowserEvidence({
+        fixture: "rich",
+        proxyServer: relay.url,
+        timeoutMs: WORKER_TIMEOUT_MS,
+      }),
+    );
+    ensure(evidence.outcome === "completed", "COLLECTOR_NOT_COMPLETED");
+    ensure(
+      evidence.navigation.status === 200 && evidence.navigation.chain.length === 2,
+      "COLLECTOR_NAVIGATION",
+    );
+    ensure(evidence.dom?.title === "Rendered fixture", "COLLECTOR_RENDERED_DOM");
+    ensure(
+      evidence.console.some((entry) => entry.level === "warning"),
+      "COLLECTOR_CONSOLE",
+    );
+    ensure(
+      evidence.pageErrors.some((entry) => entry.name === "TypeError"),
+      "COLLECTOR_PAGE_ERROR",
+    );
+    ensure(
+      evidence.requests.some((entry) => entry.resourceType === "xhr"),
+      "COLLECTOR_XHR",
+    );
+    ensure(
+      evidence.requests.some((entry) => entry.method === "POST" && entry.outcome === "failed"),
+      "COLLECTOR_POST_POLICY",
+    );
+    ensure(!JSON.stringify(evidence).includes("DISPOSABLE_NOT_A_SECRET"), "COLLECTOR_PRIVACY");
+    const bounded = BrowserEvidenceCollectionSchema.parse(
+      await collectFixtureBrowserEvidence({
+        fixture: "bounds",
+        proxyServer: relay.url,
+        timeoutMs: WORKER_TIMEOUT_MS,
+      }),
+    );
+    ensure(bounded.outcome === "completed", "COLLECTOR_BOUNDS_NOT_COMPLETED");
+    ensure(
+      (bounded.truncation.dropped.console ?? 0) > 0 &&
+        (bounded.truncation.dropped.responses ?? 0) > 0 &&
+        (bounded.truncation.dropped.headings ?? 0) > 0 &&
+        (bounded.truncation.dropped.forms ?? 0) > 0,
+      "COLLECTOR_BOUNDS",
+    );
+    ensure(
+      !JSON.stringify(bounded).includes("DISPOSABLE_NOT_A_SECRET"),
+      "COLLECTOR_BOUNDS_PRIVACY",
+    );
+    return {
+      browserEvidence: evidence,
+      checks: {
+        schemaValid: true,
+        observed: true,
+        navigation: true,
+        renderedDom: true,
+        console: true,
+        pageError: true,
+        xhr: true,
+        postDenied: true,
+        sensitiveMarkerAbsent: true,
+        bounds: true,
+        bytes: Buffer.byteLength(JSON.stringify(evidence)),
+        boundedBytes: Buffer.byteLength(JSON.stringify(bounded)),
+        consoleDropped: bounded.truncation.dropped.console ?? 0,
+        responsesDropped: bounded.truncation.dropped.responses ?? 0,
+      },
+    };
+  } finally {
+    await relay.close();
+  }
+}
+
 async function connectTcp(host: string, port: number): Promise<Socket> {
   return await new Promise<Socket>((resolve, reject) => {
     const socket = net.connect({ host, port });
@@ -987,7 +1078,10 @@ async function armMemoryProbe(): Promise<void> {
   ensure(allocations.length === 0, "MEMORY_LIMIT_NOT_ENFORCED");
 }
 
-async function runNormalMode(mode: Mode, input: ProbeInput): Promise<SafeDetails> {
+async function runNormalMode(
+  mode: Exclude<Mode, "collector">,
+  input: ProbeInput,
+): Promise<SafeDetails> {
   switch (mode) {
     case "network":
       return await runNetwork(input);
@@ -1018,6 +1112,17 @@ async function main(): Promise<void> {
     }
     if (modeArgument === "timeout") {
       await armTimeoutProbe();
+      return;
+    }
+    if (modeArgument === "collector") {
+      const { checks, browserEvidence } = await runCollector();
+      await writeResult({
+        version: 1,
+        mode: "collector",
+        status: "passed",
+        checks,
+        browserEvidence,
+      });
       return;
     }
     const checks = await runNormalMode(modeArgument, input);

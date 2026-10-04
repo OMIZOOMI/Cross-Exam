@@ -1,6 +1,41 @@
 # Current state
 
-Updated 2026-10-04. Task: **10D-C — Exact-executable AppArmor userns enablement**.
+Updated 2026-10-05. Task: **Stage 11 — Real Browser Evidence Collector**.
+
+**Stage 11 is implemented and locally validated for owned fixtures; Linux acceptance is pending. Public arbitrary browser scanning remains DISABLED.** Task 9a remains COMPLETE for the verified controlled boundary. No UI, public admission, proxy policy, AppArmor allowance or outer isolation control has changed.
+
+## Stage 11 implementation
+
+Started clean on `validation/linux-isolation` at `0799927720d3a7fc693335b0238b094b4371cb59`, with main/origin/main at `9bafdb5df0d97668abd66e09fa342610da323ace`. Created `feature/browser-evidence-collector` from exactly that milestone. Only this feature branch may be pushed; no PR or merge.
+
+- Internal `browser-collector.ts` admits only fixed owned fixture identifiers and uses the existing fixture worker, proxy and deadline/cleanup. Package/public launch remains fail-closed with ISOLATION_UNAVAILABLE. No web/scanner admission wiring.
+- `BrowserEvidenceCollectionSchema` v1 captures actual navigation, warn/error console messages, uncaught error name/message, request/response metadata and bounded rendered DOM. OBSERVED provenance with `source: fixture` / `scope: controlled-fixture` distinguishes executed owned fixtures from simulated demo data. Wall-clock durations are collection timings, never performance metrics.
+- Retention caps: requests 64, responses 32, console 32, page errors 16, redirect relationships 5, headings 20, links 40, forms 10, resources 40, input-type buckets 20, DOM elements 10,000, text/header 256 characters, URLs 1,024, nine allowed header names and final JSON 32 KiB. A fixed 300 ms post-load window stays inside the worker operational deadline. Dimension loss counts, string/URL/header omissions, DOM inspection and result-size flags expose incomplete coverage.
+- Engine privacy helpers and a BROWSER_* Evidence adapter preserve browser identity without replacing HTTP evidence or creating findings. No request bodies/headers, auth/cookies, input names/values, storage, stacks, console arguments, screenshots or binary content are retained. Free-text redaction handles recognizable patterns, not arbitrary unlabelled secrets; public privacy/admission review is still required.
+- Owned fixtures cover redirects, JS DOM changes, warnings/errors/exceptions, CSS/script/image/fetch/XHR, failed resources, denied POST/WS/private/mixed DNS attempts, disposable sensitive markers, console/request/response/DOM bounds, redirect loops, timeout/late requests and cancellation/proxy failure. No real public/private destination is contacted.
+- Fixed Linux `collector` mode reuses prepared-root bundling and the existing sandbox observer, cgroup cleanup and sentinel checks. It returns schema-validated rich fixture output and verifies bounded fixture truncation. No new isolation primitive or privileged allowance.
+
+## Stage 11 validation and delivery
+
+`pnpm test:browser-collector` — PASS: 29 focused unit checks and 8 real Chromium checks. Collector/worker/backend focused regression run also passed 72 tests. The single full local validation pass completed successfully:
+
+| Command | Actual result |
+| --- | --- |
+| `pnpm lint` | PASS |
+| `pnpm typecheck` | PASS; root and all workspaces |
+| `pnpm test:security` | PASS; 288 tests / 6 files |
+| `pnpm test:scanner` | PASS; 94 tests / 4 files |
+| `pnpm test` | PASS; 787 tests / 31 files |
+| `pnpm test:browser-security` | PASS; 367 unit/integration tests and 33 browser checks |
+| `pnpm test:e2e` | PASS; 22 desktop/mobile checks |
+| `pnpm build` | PASS; typechecks and production build |
+| `pnpm scanner:smoke` | PASS; 1 selected deterministic collector test |
+| Fixed Linux probe bundle with esbuild | PASS; exact preparation bundling command |
+| `git diff --check` | PASS |
+
+No shell script changed. Reviewed diff contains no UI changes, public browser admission, AppArmor/proxy/cgroup/root/proc weakening, usable credentials, captured cookies/auth, browser profiles, screenshots or generated artifacts. Main and the validated source branch remain unchanged. No Stage 11 Linux CI run has yet been used; Linux acceptance remains pending, not inferred from macOS.
+
+## Previous validated milestone — Task 10D-C
 
 **Task 9a is COMPLETE for the controlled Linux isolation harness. Task 10D-C passed full Linux acceptance. Arbitrary public browser scanning remains disabled.** The deterministic HTTP scanner, live reports, fixture demo and approved UI are unchanged.
 
@@ -78,6 +113,6 @@ Final evidence is recorded in a documentation-only `[skip ci]` commit to preserv
 
 The profile is an exact pathname allowance, not a cryptographic kernel attachment. Immutable prepared-root validation links that pathname to the reviewed artifact under the trusted host provisioning model. Browser compromise gains namespace operations within the existing outer confinement; unprivileged kernel attack surface remains a security consideration. This is not a production deployment audit.
 
-`launchBrowserWorker()` still always throws `ISOLATION_UNAVAILABLE`. Production deployment requires reviewed host provisioning and artifact/profile updates together. CONNECT does not inspect encrypted methods, paths or WSS. Browser collection, scheduling and public admission remain unimplemented.
+`launchBrowserWorker()` still always throws `ISOLATION_UNAVAILABLE`. Production deployment requires reviewed host provisioning and artifact/profile updates together. CONNECT does not inspect encrypted methods, paths or WSS. Stage 11 controlled-fixture collection is described above; production collection, scheduling and public admission remain unimplemented.
 
-**Exactly one recommended next task: Stage 11 Browser Evidence Collector.** Do not begin it in this task. Public scanning remains disabled until separately authorized implementation and validation.
+The historical next task from Task 10D-C was Stage 11 Browser Evidence Collector. The current Stage 11 work must finish Linux acceptance before Stage 12 is recommended. Public scanning remains disabled until separately reviewed admission/deployment work.

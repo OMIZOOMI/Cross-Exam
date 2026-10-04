@@ -32,6 +32,9 @@ importers:
 
   apps/browser-worker:
     dependencies:
+      '@crossexam/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@crossexam/engine':
         specifier: workspace:*
         version: link:../../packages/engine

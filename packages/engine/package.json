@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./browser-egress": "./src/browser-egress/index.ts",
+    "./browser-evidence": "./src/browser-evidence/index.ts",
     "./security": "./src/security/index.ts",
     "./url-policy": "./src/security/url-policy.ts"
   },

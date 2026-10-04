@@ -1,5 +1,13 @@
 # Architecture
 
+## Stage 11 controlled browser evidence boundary
+
+`apps/browser-worker/src/browser-collector.ts` is an internal, direct-file controlled-fixture entry. It accepts a fixed fixture identifier, never a caller-supplied target or launch/network-policy override. It launches the existing fixture worker, subscribes before navigation, observes one page during a fixed 300 ms post-load window, extracts selected bounded DOM fields, and closes the existing context/browser on every exit. Worker enforcement constants now live in `worker-limits.ts` with identical values. The collector uses the worker's existing operational deadline, including its cleanup reserve; there is no second extended deadline.
+
+`packages/contracts/src/browser-evidence.ts` versions and runtime-validates collection identity, OBSERVED provenance, safe metadata and retention bounds. `source: fixture` and `scope: controlled-fixture` identify owned targets even though observations come from actual Chromium execution; these are not SIMULATED demo artifacts or public live reports. `packages/engine/src/browser-evidence` supplies privacy filtering and an append-only adapter to existing Evidence records with distinct BROWSER_* codes and `chromium-runtime-v1`. It does not overwrite HTTP evidence, generate findings or change report/UI admission.
+
+The existing Linux probe has a fixed `collector` mode. It collects rich and bounded owned fixture evidence through the same Unix relay/enforcing proxy, systemd unit, sealed root, exact AppArmor profile and cgroup controls. The host independently validates its output and applies the existing Chromium namespace/renderer-seccomp observer and captured-cgroup/sentinel checks. Local Chromium tests prove collector semantics, not Linux confinement. Public `launchBrowserWorker()` remains fail-closed; reviewed admission and production provisioning remain separate work.
+
 ## Current runtime
 
 ```text

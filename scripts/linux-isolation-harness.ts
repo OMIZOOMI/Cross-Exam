@@ -14,9 +14,11 @@ import {
   ChromiumSandboxEvidenceError,
   startChromiumSandboxObserver,
 } from "../apps/browser-worker/src/linux-sandbox-evidence";
+import { BrowserEvidenceCollectionSchema } from "../packages/contracts/src/index";
 import { startProxy } from "../packages/engine/src/browser-egress/core";
 import type { EgressProxy } from "../packages/engine/src/browser-egress/types";
 import { EgressError } from "../packages/engine/src/security/types";
+import { collectorFixtureResponse } from "../tests/browser-security/collector-fixtures";
 import { startSentinels } from "./linux-sentinels";
 
 const root = "/var/lib/crossexam";
@@ -158,6 +160,8 @@ function fixtureResponse(pathname: string): {
   headers: Record<string, string>;
   body: Uint8Array;
 } {
+  const collector = collectorFixtureResponse(pathname);
+  if (collector) return collector;
   const bodies: Record<string, [string, string]> = {
     "/": ["text/html", "<!doctype html><title>Linux isolation fixture</title><body>fixture</body>"],
     "/script.js": ["text/javascript", "window.scriptLoaded = true"],
@@ -247,7 +251,7 @@ async function run() {
       udpPort: 41232,
       proxyOrigin: origin,
     };
-    const modes = ["network", "filesystem", "pids", "browser", "tls"] as const;
+    const modes = ["network", "filesystem", "pids", "browser", "collector", "tls"] as const;
     const results: Record<string, LinuxIsolationResult> = {};
     for (const mode of modes) {
       currentStage = `probe-${mode}`;
@@ -260,7 +264,7 @@ async function run() {
         result = await backend.run(
           mode,
           input,
-          mode === "browser"
+          mode === "browser" || mode === "collector"
             ? (active) => {
                 observer = startChromiumSandboxObserver(active.controlGroup, active.mainPID);
               }
@@ -336,8 +340,31 @@ async function run() {
         throw new Error(
           `${mode} probe failed or was not cleaned: ${result.stdout} ${result.stderr ?? ""} ${JSON.stringify(result.properties)}`,
         );
-      if (mode === "browser" && (sandboxError || !sandboxEvidence))
+      if ((mode === "browser" || mode === "collector") && (sandboxError || !sandboxEvidence))
         throw sandboxError ?? new Error("Chromium internal sandbox evidence missing");
+      if (mode === "collector") {
+        const record = JSON.parse(result.stdout);
+        const evidence = BrowserEvidenceCollectionSchema.parse(record.browserEvidence);
+        if (
+          evidence.outcome !== "completed" ||
+          evidence.dom?.title !== "Rendered fixture" ||
+          JSON.stringify(evidence).includes("DISPOSABLE_NOT_A_SECRET")
+        )
+          throw new Error("Collector evidence acceptance failed");
+        console.log(
+          JSON.stringify({
+            phase: "browser-collector",
+            schema: 1,
+            provenance: evidence.provenance,
+            source: evidence.source,
+            scope: evidence.scope,
+            valid: true,
+            sensitiveMarkerAbsent: true,
+            bytes: Buffer.byteLength(JSON.stringify(evidence)),
+            checks: record.checks,
+          }),
+        );
+      }
       results[mode] = result;
       if (mode === "network") {
         // Record the exact second-detect reason before the next probe can mask it.
