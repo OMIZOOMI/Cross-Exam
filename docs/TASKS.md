@@ -135,5 +135,6 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Injected unknown-response/failure adapters, one-call role/whole deadlines, cancellation, categorized audit, deduplication and snapshot replay.
 - [x] Focused adversarial/privacy/schema/semantic/lifecycle tests; no model network/SDK, action tools or public browser admission.
 - [x] Complete full local validation and privacy/security diff review; 119 focused tests, 945 final full units, all browser/E2E/build/smoke checks pass. Final audit-only focused/typecheck/unit/build regressions pass.
-- [ ] Commit/push only the feature branch and verify normal Node CI; record exact results before completion.
+- [x] Commit/push only the feature branch: `784d053`; normal Ubuntu Node run **37240933259 PASS**, including 119 focused and 945 full tests. No CI retry/new Linux isolation run; final evidence docs use `[skip ci]`.
+- **Stage 14B COMPLETE for injected fake providers.** No SDK/model network, later role/action execution or public browser admission.
 - Stage 14C: separately reviewed real-provider adapters/configuration/transport with token, privacy, cancellation and admission controls; no browser/public admission implied.

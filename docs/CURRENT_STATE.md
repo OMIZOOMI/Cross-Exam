@@ -2,7 +2,7 @@
 
 Updated 2026-10-05. Task: **Stage 14B — Explorer + Breaker trust boundary**.
 
-**Stage 14B implementation and local validation are complete; normal Node CI is pending.** Task 9a and Stages 11/12/13 remain accepted for owned controlled fixtures. Public arbitrary browser scanning remains DISABLED; no isolation, browser launch, proxy, AppArmor, cgroup, worker deadline, admission or UI policy changes.
+**Stage 14B is COMPLETE for injected deterministic fake providers. Local validation and normal Ubuntu Node CI passed. No real provider invocation or public/browser admission is implemented.** Task 9a and Stages 11/12/13 remain accepted for owned controlled fixtures. Public arbitrary browser scanning remains DISABLED; no isolation, browser launch, proxy, AppArmor, cgroup, worker deadline, admission or UI policy changes.
 
 ## Stage 14B implementation and delivery
 
@@ -36,9 +36,9 @@ Started clean on accepted source `feature/rendered-accessibility-analysis`, loca
 
 Two cached Turbopack build attempts recorded a local EPERM listener error. Local IPv4/IPv6/default/bundled-Node listeners and E2E were independently successful. Preserving the generated Turbopack cache outside the repository and doing a fresh-cache build passed without product/config/security changes. Final host audit review preserves exact oversized proposal counts and marks uncountable rejected counts explicitly; focused tests, root/workspace typecheck, affected full units (945) and production build were rerun afterward. No repeated full browser suite.
 
-Diff review: no credentials/generated artifacts/UI redesign, provider SDK/network/tool integration or raw data export. Browser worker, proxy/SSRF, prepared root, AppArmor, cgroup/timeout/cleanup and public launcher source are unchanged. Feature-only Node workflow checks lint/typecheck/focused/full units; Linux isolation workflow is unchanged. Delivery commit/run will be recorded after push.
+Diff review: no credentials/generated artifacts/UI redesign, provider SDK/network/tool integration or raw data export. Browser worker, proxy/SSRF, prepared root, AppArmor, cgroup/timeout/cleanup and public launcher source are unchanged. Feature-only Node workflow checks lint/typecheck/focused/full units; Linux isolation workflow is unchanged. Implementation commit **784d053f0240b73c6ec2151bd2c0e1b3dd2d69a0** was pushed only to `feature/stage14-explorer-breaker`. [Normal Node CI run 37240933259](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37240933259) passed on that exact SHA: frozen install, lint, root/all workspace typecheck, 119 focused tests and 945 full units / 34 files. One normal run; no CI fix/retry or new Linux-isolation run. Final evidence documentation is a separate `[skip ci]` commit with accepted implementation unchanged. Main and prior source branch refs remain frozen; no PR or merge.
 
- Recommended next task: **Stage 14C — reviewed real-provider adapter boundary**.
+Recommended next task: **Stage 14C — reviewed real-provider adapter boundary**.
 
 ## Accepted prior milestones (historical handoffs)
 
