@@ -2,7 +2,7 @@
 
 Updated 2026-10-05. Task: **Stage 11 — Real Browser Evidence Collector**.
 
-**Stage 11 is implemented and locally validated for owned fixtures; Linux acceptance is pending. Public arbitrary browser scanning remains DISABLED.** Task 9a remains COMPLETE for the verified controlled boundary. No UI, public admission, proxy policy, AppArmor allowance or outer isolation control has changed.
+**Stage 11 is COMPLETE for owned fixtures inside the verified Linux boundary. Public arbitrary browser scanning remains DISABLED.** Task 9a remains COMPLETE for the verified controlled boundary. No UI, public admission, proxy policy, AppArmor allowance or outer isolation control has changed. This is not production/deployment readiness.
 
 ## Stage 11 implementation
 
@@ -33,7 +33,31 @@ Started clean on `validation/linux-isolation` at `0799927720d3a7fc693335b0238b09
 | Fixed Linux probe bundle with esbuild | PASS; exact preparation bundling command |
 | `git diff --check` | PASS |
 
-No shell script changed. Reviewed diff contains no UI changes, public browser admission, AppArmor/proxy/cgroup/root/proc weakening, usable credentials, captured cookies/auth, browser profiles, screenshots or generated artifacts. Main and the validated source branch remain unchanged. No Stage 11 Linux CI run has yet been used; Linux acceptance remains pending, not inferred from macOS.
+No shell script changed. Reviewed diff contains no UI changes, public browser admission, AppArmor/proxy/cgroup/root/proc weakening, usable credentials, captured cookies/auth, browser profiles, screenshots or generated artifacts. Main and the validated source branch remain unchanged. Linux acceptance is independently established below, not inferred from macOS.
+
+### Stage 11 Linux acceptance — one run
+
+Implementation commit `a12e3245f94b651eb23f40ec4468a9ec866574e2` was pushed only to `feature/browser-evidence-collector`. [Run 37227469796](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37227469796), isolation job 111509999899, completed successfully. Exactly one Stage 11 Linux run was used. Run 2 was not permitted/needed because Run 1 revealed no integration defect. Final documentation is delivered with `[skip ci]`; collector/security code remains identical to the accepted run.
+
+| Linux stage/evidence | Verified result |
+| --- | --- |
+| preparation + exact AppArmor provisioning | PASS; sealed root and revision 1243, immutable artifact hash unchanged |
+| network / filesystem / pids | PASS; existing confinement and resource probes unchanged |
+| browser | PASS; original controlled fixture and private/mixed DNS rejection |
+| collector | PASS; rich and bounded fixtures inside the same unit/root/proxy boundary |
+| tls | PASS; end-to-end trusted fixture handshake |
+| memory | PASS; expected cgroup `oom-kill` |
+| timeout | PASS; expected RuntimeMaxSec termination |
+| proxy-down | PASS; navigation failed without DIRECT fallback |
+| cleanup | PASS; all 9 completed captured cgroups absent and cleaned=true |
+| sentinels | PASS; TCP 0, UDP 0 over 7 owned addresses, unrelated Unix socket 0 |
+| AppArmor final + policy removal | PASS; enabled throughout, userns restriction 1 before/after removal |
+
+Rich evidence was 7,635 bytes: navigation 200 with two chain entries, rendered title/description/headings/form/link/resource metadata, 12 observed requests, 9 responses, 8 warnings/errors and one TypeError. The POST request failed with ERR_BLOCKED_BY_CLIENT; private and mixed-answer requests failed. No disposable secret marker appeared in either collection or the complete diagnostic log. The bounded fixture returned 30,685 bytes and explicitly recorded 68 dropped console events and 3 dropped responses; heading/form truncation passed. Both outputs passed the versioned schema and 32 KiB ceiling.
+
+The collector's independently observed worker PID was 5238. Browser/zygote/renderer carried `crossexam-chromium-userns (unconfined)`. Zygote/renderer had completed own-ID maps (UID 999/GID 987, one mapping each), setgroups=deny and user/PID namespaces distinct from the worker. Renderer PID namespace depth was 3, Seccomp mode 2 with 15 filters versus the worker/browser's 14. NoNewPrivileges remained 1; worker/browser effective and bounding capabilities remained zero. This establishes a real Chromium userns/renderer sandbox, not merely successful launch. All active probes retained memory.max=1073741824, memory.swap.max=0, pids.max=128, cpu.max=100000/100000 and verified MainPID membership before release.
+
+Controlled scope limitations remain explicit: cached Playwright headers may omit fields, the 300 ms post-load window does not prove eventual behavior, counts stop after 10,000 DOM elements, free-text privacy filtering is not complete DLP, and crash behavior has focused event/lifecycle regression coverage rather than a newly induced real renderer crash. The outer memory/timeout/crash cleanup primitives remain independently tested. No public admission, persistent storage/deployment, performance analysis, accessibility, AI or screenshots were added.
 
 ## Previous validated milestone — Task 10D-C
 
@@ -115,4 +139,4 @@ The profile is an exact pathname allowance, not a cryptographic kernel attachmen
 
 `launchBrowserWorker()` still always throws `ISOLATION_UNAVAILABLE`. Production deployment requires reviewed host provisioning and artifact/profile updates together. CONNECT does not inspect encrypted methods, paths or WSS. Stage 11 controlled-fixture collection is described above; production collection, scheduling and public admission remain unimplemented.
 
-The historical next task from Task 10D-C was Stage 11 Browser Evidence Collector. The current Stage 11 work must finish Linux acceptance before Stage 12 is recommended. Public scanning remains disabled until separately reviewed admission/deployment work.
+**Exactly one recommended next task: Stage 12 Performance + Runtime Analysis.** Do not begin it in Stage 11. Public scanning remains disabled until separately reviewed admission/deployment work.
