@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { access, chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import https from "node:https";
 import net, { type AddressInfo, type Socket } from "node:net";
@@ -222,6 +222,7 @@ async function run() {
     const results: Record<string, LinuxIsolationResult> = {};
     for (const mode of modes) {
       currentStage = `probe-${mode}`;
+      const diagnosticSince = `@${Math.floor(Date.now() / 1_000)}`;
       const result = await backend.run(mode, input);
       // Emit each completed active snapshot before a later probe can fail the suite.
       console.log(
@@ -235,10 +236,57 @@ async function run() {
           cleaned: result.cleaned,
         }),
       );
+      if (mode === "browser") {
+        console.log(JSON.stringify({ phase: "sandbox-diagnostic", stderr: result.stderr ?? "" }));
+        // Diagnostic-only, bounded kernel audit facts for our executables. No
+        // host-wide log dump, policy changes, or retries of the browser launch.
+        const audit = spawnSync(
+          "/usr/bin/journalctl",
+          [
+            "--dmesg",
+            "--since",
+            diagnosticSince,
+            "--no-pager",
+            "--output=json",
+            "--grep",
+            "apparmor=.*(userns|namespace|capable)",
+            "--lines=30",
+          ],
+          { encoding: "utf8", timeout: 3_000, maxBuffer: 64 * 1024 },
+        );
+        const facts: string[] = [];
+        for (const line of (audit.stdout ?? "").split("\n")) {
+          if (!line.startsWith("{")) continue;
+          try {
+            const message: unknown = JSON.parse(line).MESSAGE;
+            if (
+              typeof message !== "string" ||
+              !/comm="(?:chrome[^" ]*|crossexam-sand[^" ]*)"/.test(message)
+            )
+              continue;
+            const fields = message.match(
+              /\b(?:apparmor|operation|class|info|error|profile|pid|comm|capability|capname|requested_mask|denied_mask)=(?:"[^"\r\n]{0,200}"|[a-zA-Z0-9_-]{1,64})/g,
+            );
+            facts.push((fields ?? []).join(" ").slice(0, 800));
+          } catch {
+            facts.push("unparseable-audit-record");
+          }
+        }
+        console.log(
+          JSON.stringify({
+            phase: "sandbox-policy-audit",
+            status: audit.status,
+            error: audit.error?.message ?? null,
+            facts: facts.slice(0, 12),
+          }),
+        );
+      }
       if (result.exitCode !== 0 || !result.cleaned)
         throw new Error(
           `${mode} probe failed or was not cleaned: ${result.stdout} ${result.stderr ?? ""} ${JSON.stringify(result.properties)}`,
         );
+      if (mode === "browser")
+        throw new Error("Task 10D-B diagnostic-only stop after browser evidence");
       results[mode] = result;
       if (mode === "network") {
         // Record the exact second-detect reason before the next probe can mask it.

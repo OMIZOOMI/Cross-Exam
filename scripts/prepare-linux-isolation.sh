@@ -34,6 +34,26 @@ sudo -n cp -aL "$playwright_dir" "$runtime/node_modules/playwright"
 sudo -n cp -aL "$playwright_core_dir" "$runtime/node_modules/playwright-core"
 phase=browser
 test -d "$HOME/.cache/ms-playwright"
+# Task 10D-B diagnostic-only metadata: fixed browser/helper names, no file content.
+browser_metadata() {
+  local tree="$1" label="$2" executable count=0
+  while IFS= read -r executable; do
+    count=$((count + 1))
+    printf 'sandbox-metadata phase=%s relative=%s ' "$label" "${executable#"$tree"/}"
+    stat --printf='kind=%F uid=%u gid=%g mode=%a size=%s\n' "$executable"
+    readelf -l "$executable" | sed -n '/Requesting program interpreter/p'
+    case "${executable##*/}" in
+      chrome|chrome-headless-shell)
+        if ! test -e "${executable%/*}/chrome-sandbox" && ! test -L "${executable%/*}/chrome-sandbox"; then
+          printf 'sandbox-metadata phase=%s executable=%s sibling-chrome-sandbox=ABSENT\n' "$label" "${executable#"$tree"/}"
+        fi
+        ;;
+    esac
+  done < <(find "$tree" \( -type f -o -type l \) \( -name chrome -o -name chrome-headless-shell -o -name chrome-sandbox -o -name chrome_sandbox \) -print)
+  printf 'sandbox-metadata phase=%s matching-files=%s\n' "$label" "$count"
+}
+browser_metadata "$HOME/.cache/ms-playwright" source-cache
+node -e 'const fs=require("fs"); const p=process.argv[1]; console.log("sandbox-package="+JSON.stringify({playwright:JSON.parse(fs.readFileSync(p+"/package.json")).version,browsers:JSON.parse(fs.readFileSync(p+"/browsers.json")).browsers.filter(b=>b.name.startsWith("chromium"))}));' "$playwright_core_dir"
 for browser_cache in "$HOME"/.cache/ms-playwright/*; do
   test -d "$browser_cache" || continue
   sudo -n cp -aL "$browser_cache" "$browser"/
@@ -55,6 +75,11 @@ sudo -n cp -aL /usr/bin/env /usr/bin/sleep /bin/sh "$prepared_root/usr/bin/"
 sudo -n cp -aL /etc/fonts/. "$prepared_root/etc/fonts/" 2>/dev/null || true
 sudo -n cp -aL /usr/share/fonts/. "$prepared_root/usr/share/fonts/" 2>/dev/null || true
 : | sudo -n tee "$prepared_root/etc/hosts" "$prepared_root/etc/resolv.conf" >/dev/null
+phase=sandbox-diagnostic
+diagnostic_binary=$(mktemp)
+trap 'rm -f "$probe_bundle" "$diagnostic_binary"' EXIT
+cc -std=c11 -Wall -Wextra -Werror -O2 tests/linux-isolation/sandbox-diagnostic.c -o "$diagnostic_binary"
+sudo -n install -m 0555 "$diagnostic_binary" "$prepared_root/usr/bin/crossexam-sandbox-diagnostic"
 copy_deps() {
   local executable="$1"
   local dependency
@@ -72,7 +97,7 @@ copy_deps() {
     sudo -n cp -aL --parents "$dependency" "$prepared_root"
   done <<< "$deps"
 }
-for executable in "$prepared_root/runtime/node" "$prepared_root/usr/bin/env" "$prepared_root/usr/bin/sleep" "$prepared_root/usr/bin/sh"; do
+for executable in "$prepared_root/runtime/node" "$prepared_root/usr/bin/env" "$prepared_root/usr/bin/sleep" "$prepared_root/usr/bin/sh" "$prepared_root/usr/bin/crossexam-sandbox-diagnostic"; do
   test -f "$executable" || continue
   copy_deps "$executable"
 done
@@ -91,6 +116,11 @@ sudo -n find "$prepared_root" -type f -exec chmod a-w {} +
 sudo -n chown -R root:root "$prepared_root"
 sudo -n chmod 0755 "$prepared_root" "$prepared_root/tmp" "$prepared_root/var/tmp"
 sudo -n chmod 0750 "$prepared_root/root"
+browser_metadata "$prepared_root/browser" prepared-root
+# Same unprivileged account outside the service; helper itself sets NNP before
+# trying namespaces. This is a capability observation, never browser execution.
+printf 'sandbox-diagnostic context=host-same-worker-uid\n'
+sudo -n -u crossexam-worker -- "$prepared_root/usr/bin/crossexam-sandbox-diagnostic"
 phase=verify-exec
 for executable in "$prepared_root/usr/bin/env" "$prepared_root/runtime/node"; do
   test -f "$executable" && test -x "$executable" || {

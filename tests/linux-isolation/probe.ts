@@ -16,7 +16,7 @@
  * systemd deadline kill is verified by the host from the service result.
  */
 
-import { type ChildProcess, spawn } from "node:child_process";
+import { type ChildProcess, spawn, spawnSync } from "node:child_process";
 import dgram from "node:dgram";
 import {
   lstat,
@@ -639,6 +639,27 @@ async function startUnixRelay(): Promise<Relay> {
 }
 
 async function runBrowser(input: ProbeInput): Promise<SafeDetails> {
+  // Task 10D-B only. Runs under this exact service before Chromium, changes no
+  // outer controls, and writes bounded diagnostic records to stderr only.
+  const diagnostic = spawnSync("/usr/bin/crossexam-sandbox-diagnostic", [], {
+    encoding: "utf8",
+    timeout: 6_000,
+    maxBuffer: 16 * 1024,
+    env: { LANG: "C" },
+  });
+  process.stderr.write(
+    `sandbox-diagnostic context=worker status=${diagnostic.status} signal=${diagnostic.signal} error=${diagnostic.error?.message ?? "none"}\n${diagnostic.stdout ?? ""}${diagnostic.stderr ?? ""}`,
+  );
+  // Exact pinned headless-shell build; DEBUG output below independently records
+  // Playwright's actual selection. --version does not navigate or start a page.
+  const version = spawnSync(
+    "/browser/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell",
+    ["--version"],
+    { encoding: "utf8", timeout: 2_000, maxBuffer: 4 * 1024, env: { LANG: "C" } },
+  );
+  process.stderr.write(
+    `sandbox-browser-version=${JSON.stringify({ status: version.status, error: version.error?.message ?? null, stdout: version.stdout, stderr: version.stderr })}\n`,
+  );
   const relay = await startUnixRelay();
   let worker: FixtureWorker | undefined;
   let stage = "chromium-launch";

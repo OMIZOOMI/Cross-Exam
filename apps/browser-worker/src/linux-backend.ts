@@ -375,6 +375,8 @@ export class LinuxIsolationBackend {
       "PATH=/runtime:/usr/bin:/bin",
       "PLAYWRIGHT_BROWSERS_PATH=/browser",
       "LANG=C",
+      // Task 10D-B only: retain bounded raw launch logs before Playwright rewrites them.
+      ...(mode === "browser" ? ["DEBUG=pw:browser"] : []),
       "/runtime/node",
       "/app/probe.cjs",
       mode,
