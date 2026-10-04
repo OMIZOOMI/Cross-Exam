@@ -135,6 +135,13 @@ describe("fixture browser worker configuration", () => {
       },
       timeout: 5_000,
     });
+    const launch = mocks.launch.mock.calls[0]?.[0];
+    expect(launch.chromiumSandbox).toBe(true);
+    expect(
+      launch.args.some((arg: string) =>
+        /--(?:no-sandbox|disable-(?:namespace|seccomp-filter|setuid)-sandbox)/.test(arg),
+      ),
+    ).toBe(false);
     expect(harness.browser.newContext).toHaveBeenCalledWith({
       acceptDownloads: false,
       bypassCSP: false,

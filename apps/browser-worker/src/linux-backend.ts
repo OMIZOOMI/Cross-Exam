@@ -206,7 +206,11 @@ export class LinuxIsolationBackend {
     return { available: true, reason: "available" };
   }
 
-  async run(mode: ProbeMode, input: object): Promise<LinuxIsolationResult> {
+  async run(
+    mode: ProbeMode,
+    input: object,
+    observeVerifiedActive?: (active: ActiveCgroup) => void,
+  ): Promise<LinuxIsolationResult> {
     if (!(PROBE_MODES as readonly string[]).includes(mode)) {
       throw new TypeError("Unsupported isolation probe mode.");
     }
@@ -261,6 +265,9 @@ export class LinuxIsolationBackend {
         confirmed.invocationID !== cgroup.invocationID
       )
         throw new Error("Service identity changed before probe release.");
+      // Read-only fixture observer starts only after the full active barrier.
+      // It cannot replace verification or release input before it succeeds.
+      observeVerifiedActive?.(cgroup);
       phase = "probe-completion";
       // The fixed probe reads to stdin EOF. No probe operation can run before this point.
       launcher.release(serializedInput);

@@ -650,6 +650,15 @@ async function runBrowser(input: ProbeInput): Promise<SafeDetails> {
   process.stderr.write(
     `sandbox-diagnostic context=worker status=${diagnostic.status} signal=${diagnostic.signal} error=${diagnostic.error?.message ?? "none"}\n${diagnostic.stdout ?? ""}${diagnostic.stderr ?? ""}`,
   );
+  // The allowance belongs only to Chromium. This unchanged helper must still
+  // encounter Ubuntu's default restriction, demonstrating policy scope.
+  ensure(
+    diagnostic.status === 0 &&
+      /operation=clone-NEWUSER result=0 errno=0/.test(diagnostic.stdout ?? "") &&
+      /value=unprivileged_userns \(enforce\)/.test(diagnostic.stdout ?? "") &&
+      /operation=\/proc\/self\/setgroups result=-1 errno=13/.test(diagnostic.stdout ?? ""),
+    "UNPROFILED_USERNS_POLICY_CHANGED",
+  );
   // Exact pinned headless-shell build; DEBUG output below independently records
   // Playwright's actual selection. --version does not navigate or start a page.
   const version = spawnSync(
@@ -659,6 +668,10 @@ async function runBrowser(input: ProbeInput): Promise<SafeDetails> {
   );
   process.stderr.write(
     `sandbox-browser-version=${JSON.stringify({ status: version.status, error: version.error?.message ?? null, stdout: version.stdout, stderr: version.stderr })}\n`,
+  );
+  ensure(
+    version.status === 0 && version.stdout.includes("153.0.8010.12"),
+    "CHROMIUM_VERSION_MISMATCH",
   );
   const relay = await startUnixRelay();
   let worker: FixtureWorker | undefined;

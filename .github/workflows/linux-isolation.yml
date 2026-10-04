@@ -35,9 +35,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: sudo apt-get update
-      - run: sudo apt-get install --yes systemd dbus-user-session iproute2
+      - run: sudo apt-get install --yes systemd dbus-user-session iproute2 apparmor apparmor-utils
       - run: pnpm lint
       - run: pnpm --filter @crossexam/browser-worker typecheck
       - run: bash scripts/prepare-linux-isolation.sh
+      - name: Provision exact Chromium AppArmor userns policy
+        id: apparmor
+        run: sudo -n "$(command -v node)" node_modules/tsx/dist/cli.mjs scripts/provision-chromium-apparmor.ts install
       - name: Run owned Linux isolation fixtures
         run: sudo -n "$(command -v node)" node_modules/tsx/dist/cli.mjs scripts/linux-isolation-harness.ts
+      - name: Remove temporary Chromium AppArmor policy
+        if: always() && steps.apparmor.outcome == 'success'
+        run: sudo -n "$(command -v node)" node_modules/tsx/dist/cli.mjs scripts/provision-chromium-apparmor.ts cleanup

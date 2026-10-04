@@ -16,7 +16,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 ## Day 2 — safe deterministic collection
 
 9. [x] Implement the URL/egress safety gate: shared early input policy, conservative IPv4/IPv6 classification, complete A/AAAA validation, literal-address-pinned Node HTTP(S), manual redirect checks, structured denials, request limits, and deterministic/TLS tests. This protects the HTTP primitive; it does not constrain Chromium.
-9a. [ ] **PARTIAL:** Fixed systemd/cgroup-v2 harness and controlled probes exist; Task 10A proves active limits before probe release and Task 10B verifies cleanup using the captured cgroup. The filesystem/PID confinement mismatch remains unresolved and its test is not weakened. Public launch still fails closed with ISOLATION_UNAVAILABLE.
+9a. [ ] **PARTIAL:** Active cgroup limits, prepared-root filesystem/process probes and cleanup have Linux evidence. Task 10D-B demonstrated AppArmor blocking Chromium userns setup. Task 10D-C adds one exact immutable executable allowance; full Linux sandbox/browser/TLS/resource/cleanup acceptance is pending. Public launch still fails closed with ISOLATION_UNAVAILABLE.
 10. [ ] After task 9a, add a bounded Playwright page collector behind the enforced proxy/network boundary; use controlled local fixtures with an explicit test-only policy. Capture navigation, headers, network/console observations, and cleanup/cancellation.
 11. [x] Persist schema-validated local HTTP reports with IDs, timestamps, compact evidence, redaction, retention, and size bounds. Public storage/access control remains deferred.
 
@@ -63,15 +63,14 @@ The real HTTP investigation deliberately precedes tasks 9a/10. Browser scanning 
 - [x] Reproduce the post-completion/default-property defect with ordered lifecycle tests before changing the backend.
 - [x] Hold probe input until active identity, direct kernel values, PID membership and identity confirmation pass; preserve all requested security properties.
 - [x] Separate active enforcement evidence from terminal outcome and captured-cgroup cleanup; add malformed/missing value, startup, timeout and real-child barrier regressions.
-- [ ] Single Linux validation run after local checks. The commit's Actions result and final handoff are authoritative; stop on failure without another patch/run.
-- Next task: **Resolve filesystem/PID confinement mismatch.** Do not begin browser collection.
+- [x] Active enforcement verified by run 36863325955 and retained in later runs; cleanup was separately corrected. See CURRENT_STATE for the latest milestone.
 
 ## Task 10B — cleanup verification
 
 - [x] Represent kill/stop/final-state/captured-cgroup/reset-failed evidence separately from the final cleanup boolean.
 - [x] Treat successful transient-unit unload and absent captured cgroup as valid teardown proof; preserve fail-closed behavior for active units, populated descendants, malformed paths, permission/read errors and timeouts.
 - [x] Add focused regression coverage for cleanup semantics and actual captured-cgroup usage.
-- [ ] One authorized Linux validation run after local checks. Stop immediately on failure; do not retry.
+- [x] Successful and failed completed probes retained captured-cgroup cleanup proof in runs 37007052278 and 37194515782; full suite still pending.
 
 ## Task 10C-B — prepared root and proc/filesystem isolation
 
@@ -79,4 +78,17 @@ The real HTTP investigation deliberately precedes tasks 9a/10. Browser scanning 
 - [x] Add systemd 255 `RootDirectory`, `ProtectProc=invisible`, `ProcSubset=pid` (filesystem probe only; `/proc/net` stays readable for the network probe), empty capabilities/ambient/supplementary groups and narrow proxy-socket bind.
 - [x] Replace the invalid PID1-root filesystem assertion with owned sentinel, socket, proc, capability, identity and runtime-layout probes.
 - [x] Add owned host fixture positive controls (sentinels outside PrivateTmp coverage) and structured errno classification.
-- [ ] One authorized Linux validation run. Stop on the first failure; no retry.
+- [x] Prepared-root/network/filesystem/PID checks passed in runs 37007052278 and 37194515782; Chromium failed sandbox initialization.
+
+## Task 10D-B — Chromium sandbox diagnosis
+
+- [x] Preserve diagnostic work, use one bounded Linux run and identify the AppArmor namespace restriction without weakening controls.
+- [x] Verify exact Playwright/Chromium artifact, helper metadata, kernel/sysctls, namespace failure errno and Chromium failure. Run 37194515782 is the evidence record.
+
+## Task 10D-C — exact-executable AppArmor userns enablement
+
+- [x] Render one immutable-artifact attachment with only userns, validate root/manifest/revision/identity, install/load/verify/remove through privileged provisioning, and fail closed on policy errors.
+- [x] Preserve all outer controls and unprofiled negative-control diagnostics; add bounded attached-profile/ID-map/namespace/renderer-seccomp observation and regression tests.
+- [ ] Finish required local checks and one Linux acceptance run; at most one narrowly evidenced integration correction/run is permitted.
+- [ ] Prove all preparation/network/filesystem/PID/browser/TLS/memory/timeout/proxy-down stages, cleanup, zero sentinel hits, unchanged restriction and Chromium internal sandbox before marking 9a complete.
+- Next task: **Complete Task 10D-C Linux acceptance.** Stage 11 Browser Evidence Collector remains blocked until 9a is COMPLETE.

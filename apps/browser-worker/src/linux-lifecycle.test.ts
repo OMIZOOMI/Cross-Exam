@@ -163,6 +163,26 @@ function harness(
   );
   return { backend, events, start, readCgroupFile, inspectControlGroup };
 }
+
+it("starts observation only after verified identity and before input release", async () => {
+  const fixture = harness();
+  await fixture.backend.run("browser", { fixture: true }, (verified) => {
+    expect(verified.controlGroup).toBe(group);
+    expect(verified.mainPID).toBe(4321);
+    expect(fixture.events).toContain("read:cgroup.procs");
+    expect(fixture.events).not.toContain("release");
+    fixture.events.push("observe");
+  });
+  expect(fixture.events.indexOf("observe")).toBeLessThan(fixture.events.indexOf("release"));
+});
+
+it("never starts observation after a failed active barrier", async () => {
+  const fixture = harness({ identityChange: true });
+  const observer = vi.fn();
+  await expect(fixture.backend.run("browser", { fixture: true }, observer)).rejects.toThrow();
+  expect(observer).not.toHaveBeenCalled();
+  expect(fixture.events).toContain("stop");
+});
 it("verifies ACTIVE kernel limits before release/completion, retaining proof when a fast-success unit unloads", async () => {
   const h = harness();
   const result = await h.backend.run("network", { fixture: true });

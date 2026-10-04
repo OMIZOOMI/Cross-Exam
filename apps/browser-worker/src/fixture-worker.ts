@@ -47,6 +47,9 @@ const FIXED_CHROMIUM_ARGS = Object.freeze([
   "--deny-permission-prompts",
   "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
   "--no-first-run",
+  // Bounded Linux sandbox activation diagnostics; no sandbox policy changes.
+  "--enable-logging=stderr",
+  "--vmodule=sandbox_linux=1",
 ]);
 
 export type FixtureDecisionReason =

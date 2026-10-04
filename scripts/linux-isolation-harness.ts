@@ -4,11 +4,13 @@ import https from "node:https";
 import net, { type AddressInfo, type Socket } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertAppArmorEnvironmentAndProfile } from "../apps/browser-worker/src/linux-apparmor";
 import {
   LinuxIsolationBackend,
   type LinuxIsolationResult,
 } from "../apps/browser-worker/src/linux-backend";
 import { diffPreparedRoot } from "../apps/browser-worker/src/linux-root";
+import { startChromiumSandboxObserver } from "../apps/browser-worker/src/linux-sandbox-evidence";
 import { startProxy } from "../packages/engine/src/browser-egress/core";
 import type { EgressProxy } from "../packages/engine/src/browser-egress/types";
 import { EgressError } from "../packages/engine/src/security/types";
@@ -42,6 +44,21 @@ type FilesystemFixtures = {
   socketHits(): number;
 };
 let currentStage = "startup";
+
+function recordCompletedProbe(mode: string, result: LinuxIsolationResult): void {
+  // Preserve proof immediately, even if a later probe or assertion fails.
+  console.log(
+    JSON.stringify({
+      mode,
+      phase: "probe-completed",
+      active: result.active,
+      terminal: result.properties,
+      exitCode: result.exitCode,
+      cleanup: result.cleanup,
+      cleaned: result.cleaned,
+    }),
+  );
+}
 
 async function startFilesystemFixtures(): Promise<FilesystemFixtures> {
   // Deliberately outside the prepared root and outside PrivateTmp coverage,
@@ -166,6 +183,15 @@ async function run() {
   let proxy: EgressProxy | undefined;
   let relay: Relay | undefined;
   try {
+    await assertAppArmorEnvironmentAndProfile();
+    console.log(
+      JSON.stringify({
+        phase: "apparmor-preflight",
+        enabled: true,
+        usernsRestriction: 1,
+        profileLoaded: true,
+      }),
+    );
     currentStage = "start-proxy";
     proxy = await startProxy({
       resolve: async (hostname) => {
@@ -223,19 +249,37 @@ async function run() {
     for (const mode of modes) {
       currentStage = `probe-${mode}`;
       const diagnosticSince = `@${Math.floor(Date.now() / 1_000)}`;
-      const result = await backend.run(mode, input);
-      // Emit each completed active snapshot before a later probe can fail the suite.
-      console.log(
-        JSON.stringify({
+      let observer: ReturnType<typeof startChromiumSandboxObserver> | undefined;
+      let sandboxEvidence: unknown;
+      let sandboxError: unknown;
+      let result: LinuxIsolationResult;
+      try {
+        result = await backend.run(
           mode,
-          phase: "probe-completed",
-          active: result.active,
-          terminal: result.properties,
-          exitCode: result.exitCode,
-          cleanup: result.cleanup,
-          cleaned: result.cleaned,
-        }),
-      );
+          input,
+          mode === "browser"
+            ? (active) => {
+                observer = startChromiumSandboxObserver(active.controlGroup, active.mainPID);
+              }
+            : undefined,
+        );
+      } finally {
+        if (observer) {
+          try {
+            sandboxEvidence = await observer.stop();
+          } catch (error) {
+            sandboxError = error;
+          }
+          console.log(
+            JSON.stringify({
+              phase: "chromium-internal-sandbox",
+              evidence: sandboxEvidence ?? null,
+              error: sandboxError instanceof Error ? sandboxError.message : null,
+            }),
+          );
+        }
+      }
+      recordCompletedProbe(mode, result);
       if (mode === "browser") {
         console.log(JSON.stringify({ phase: "sandbox-diagnostic", stderr: result.stderr ?? "" }));
         // Diagnostic-only, bounded kernel audit facts for our executables. No
@@ -285,8 +329,8 @@ async function run() {
         throw new Error(
           `${mode} probe failed or was not cleaned: ${result.stdout} ${result.stderr ?? ""} ${JSON.stringify(result.properties)}`,
         );
-      if (mode === "browser")
-        throw new Error("Task 10D-B diagnostic-only stop after browser evidence");
+      if (mode === "browser" && (sandboxError || !sandboxEvidence))
+        throw sandboxError ?? new Error("Chromium internal sandbox evidence missing");
       results[mode] = result;
       if (mode === "network") {
         // Record the exact second-detect reason before the next probe can mask it.
@@ -318,11 +362,13 @@ async function run() {
     }
     currentStage = "probe-memory";
     const memory = await backend.run("memory", input);
+    recordCompletedProbe("memory", memory);
     if (!memory.cleaned || memory.properties.Result !== "oom-kill")
       throw new Error("memory probe was not cgroup OOM-killed.");
     results.memory = memory;
     currentStage = "probe-timeout";
     const timeout = await backend.run("timeout", input);
+    recordCompletedProbe("timeout", timeout);
     if (!timeout.cleaned || !timeout.timedOut)
       throw new Error("timeout probe was not killed by RuntimeMaxSec.");
     results.timeout = timeout;
@@ -333,10 +379,20 @@ async function run() {
     await proxy.close();
     proxy = undefined;
     const down = await backend.run("proxy-down", input);
+    recordCompletedProbe("proxy-down", down);
     if (down.exitCode !== 0 || !down.cleaned)
       throw new Error("proxy-down probe failed or was not cleaned.");
     await proxyDownRelay.close();
     results["proxy-down"] = down;
+    await assertAppArmorEnvironmentAndProfile();
+    console.log(
+      JSON.stringify({
+        phase: "apparmor-final",
+        enabled: true,
+        usernsRestriction: 1,
+        profileLoaded: true,
+      }),
+    );
     const sentinelCounts = sentinels.counts();
     if (sentinelCounts.tcpHits || sentinelCounts.udpHits || filesystemFixtures.socketHits())
       throw new Error("Owned sentinel observed network escape");
@@ -345,6 +401,7 @@ async function run() {
         {
           detected,
           sentinelCounts,
+          unrelatedSocketHits: filesystemFixtures.socketHits(),
           modes: Object.fromEntries(
             Object.entries(results).map(([mode, result]) => [
               mode,
