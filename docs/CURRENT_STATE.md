@@ -1,5 +1,44 @@
 # Current state
 
+Updated 2026-10-05. Task: **Stage 12 — Performance + Runtime Analysis**.
+
+**Stage 12 is PARTIAL pending Linux acceptance. Public arbitrary browser scanning remains DISABLED.** Stage 11 and Task 9a remain accepted for controlled fixtures. No UI, public admission, browser launch configuration, AppArmor, proxy or outer isolation policy changed.
+
+## Stage 12 implementation
+
+Started clean on `feature/browser-evidence-collector` and its remote at `666d5d7836ca5a048cab087b6a674374ff0c6c44`. Created `feature/performance-runtime-analysis` from exactly that SHA. Main/origin/main remain `9bafdb5df0d97668abd66e09fa342610da323ace`; validated source branches are preserved.
+
+- `performance-observer.ts` installs buffered top-document observers before fixture scripts, drains pending entries and disconnects at collection. It uses the existing fixture worker and unchanged 300 ms post-load window/whole-job deadlines. No networkidle, tracing, profiling or alternative browser launch.
+- `BrowserPerformanceEvidenceSchema` v1 composes into Stage 11 collection v1 as optional/null `performance`; `collector: chromium-lab-v1`, `measurementKind: LAB`. Navigation, paint/LCP, numeric layout-shift/resource/long-task entries are OBSERVED. Explicit DERIVED sections hold timestamp differences, CLS, delivered/retained summaries and neutral runtime counts. No INFERRED data, field/RUM claims or score.
+- Browser navigation fields include start/fetch, DNS/connection/TLS/request/response phases, DOM/load phases, size fields and redirect count. Derived DNS/connection/TLS/request-wait/download/DOM/load values identify source fields. Missing fields stay null; unfinished/reversed phases are unavailable/invalid, never substituted wall-clock estimates. Proxy-mediated phase timings do not establish target DNS or connection latency.
+- FCP comes from paint entries. LCP is the latest delivered numeric candidate in this finite window, explicitly unfinalized; no element/text/URL attribution. CLS is the maximum session sum with consecutive gaps <1 s and span <5 s, excluding `hadRecentInput`; truncating shifts makes CLS null/insufficient-data. INP is not measured without an interaction protocol.
+- Caps: 16 resource timings, 16 long tasks, 8 LCP candidates (first seven plus latest), 16 shifts, two paints. Performance JSON <=8 KiB and combined Stage 11+12 JSON <=32 KiB, unchanged. Tail eviction/entry loss is counted; latest LCP is preserved. Resource URL sanitation reuses Stage 11; no headers, bodies, storage or arbitrary attribution are read. Summaries distinguish all delivered entries from retained subsets, including zero/missing size counts and native buffer-loss flags.
+- Owned rich/bounds/empty fixtures exercise delayed main response/CSS/script/image, a 130,000-byte XHR body (size only retained), delayed larger paint, layout shift, 90 ms task, failed resources, secrets/redaction and volume limits. Existing lifecycle/security probes remain authoritative. The fixed Linux collector mode checks both schemas and all new measurements; sandbox/proxy/cgroup/sentinel observer paths are reused.
+
+## Stage 12 validation and delivery
+
+Focused checks passed: 18 performance unit tests and six real Chromium performance tests; existing 29 collector units and eight browser checks passed. One full local validation pass succeeded:
+
+| Command | Result |
+| --- | --- |
+| `pnpm lint` | PASS |
+| `pnpm typecheck` | PASS; root/all workspaces |
+| `pnpm test:security` | PASS; 288 / 6 files |
+| `pnpm test:scanner` | PASS; 94 / 4 files |
+| `pnpm test` | PASS; 805 / 32 files |
+| `pnpm test:browser-security` | PASS; 385 units / 18 files plus 39 browser checks |
+| `pnpm test:e2e` | PASS; 22 desktop/mobile checks |
+| `pnpm build` | PASS |
+| `pnpm scanner:smoke` | PASS; one selected check |
+| Exact prepared-root esbuild probe bundle | PASS; 841.5 KiB |
+| `git diff --check` | PASS |
+
+No shell script changed. Linux acceptance is pending; macOS does not establish Linux isolation. The initial owned paint update was coalesced into one candidate; the fixture now separates two renders within the unchanged window. The Stage 11 form-value privacy assertion is scoped to forms so numeric metric `value` fields remain legitimate; schema-level form value rejection is retained.
+
+Stage 12 limitations: finite top-document LAB window, controlled fixtures only, no field/RUM interpretation. Unavailable metrics remain null. Browser/cache/CORS privacy rules can expose resource size/timing zeros; these do not mean no expense. Aggregates cover delivered entries only, and zero/missing sizes and truncation are explicit. No iframe aggregation, interaction/INP, performance score, causal script attribution, accessibility, AI or public admission. Same-world Performance API collection is not an anti-tampering guarantee for hostile public pages.
+
+## Accepted Stage 11 record
+
 Updated 2026-10-05. Task: **Stage 11 — Real Browser Evidence Collector**.
 
 **Stage 11 is COMPLETE for owned fixtures inside the verified Linux boundary. Public arbitrary browser scanning remains DISABLED.** Task 9a remains COMPLETE for the verified controlled boundary. No UI, public admission, proxy policy, AppArmor allowance or outer isolation control has changed. This is not production/deployment readiness.

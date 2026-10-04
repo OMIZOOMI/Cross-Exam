@@ -14,11 +14,17 @@ import {
   ChromiumSandboxEvidenceError,
   startChromiumSandboxObserver,
 } from "../apps/browser-worker/src/linux-sandbox-evidence";
-import { BrowserEvidenceCollectionSchema } from "../packages/contracts/src/index";
+import {
+  BrowserEvidenceCollectionSchema,
+  BrowserPerformanceEvidenceSchema,
+} from "../packages/contracts/src/index";
 import { startProxy } from "../packages/engine/src/browser-egress/core";
 import type { EgressProxy } from "../packages/engine/src/browser-egress/types";
 import { EgressError } from "../packages/engine/src/security/types";
-import { collectorFixtureResponse } from "../tests/browser-security/collector-fixtures";
+import {
+  collectorFixtureDelay,
+  collectorFixtureResponse,
+} from "../tests/browser-security/collector-fixtures";
 import { startSentinels } from "./linux-sentinels";
 
 const root = "/var/lib/crossexam";
@@ -216,7 +222,10 @@ async function run() {
       request: async (target, pin) => {
         if (pin.address !== "93.184.216.34" || target.hostname !== "entry.crossexam-fixture.com")
           throw new EgressError("PEER_MISMATCH", "connection");
-        return fixtureResponse(new URL(target.url).pathname);
+        const pathname = new URL(target.url).pathname;
+        const delay = collectorFixtureDelay(pathname);
+        if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+        return fixtureResponse(pathname);
       },
       connect: async (target) => {
         if (target.hostname !== "example.com")
@@ -351,6 +360,7 @@ async function run() {
           JSON.stringify(evidence).includes("DISPOSABLE_NOT_A_SECRET")
         )
           throw new Error("Collector evidence acceptance failed");
+        const performance = BrowserPerformanceEvidenceSchema.parse(evidence.performance);
         console.log(
           JSON.stringify({
             phase: "browser-collector",
@@ -362,6 +372,21 @@ async function run() {
             sensitiveMarkerAbsent: true,
             bytes: Buffer.byteLength(JSON.stringify(evidence)),
             checks: record.checks,
+            performance: {
+              schema: performance.schemaVersion,
+              kind: performance.measurementKind,
+              window: performance.observationWindow,
+              navigation: performance.navigation !== null,
+              fcp: performance.metrics.fcp,
+              lcp: performance.metrics.lcp,
+              cls: performance.metrics.cls,
+              longTasks: performance.observed.longTasks,
+              maximumLongTask: performance.deliveredTotals.maximumLongTaskDuration,
+              resources: performance.observed.resources,
+              retainedResources: performance.resources.length,
+              truncation: performance.truncation,
+              bytes: Buffer.byteLength(JSON.stringify(performance)),
+            },
           }),
         );
       }

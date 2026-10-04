@@ -51,6 +51,8 @@ export const EvidenceSchema = z.object({
       "BROWSER_REQUESTS",
       "BROWSER_RESPONSES",
       "BROWSER_RENDERED_DOM",
+      "BROWSER_PERFORMANCE",
+      "BROWSER_RUNTIME_ANALYSIS",
     ])
     .optional(),
   data: z
@@ -298,3 +300,5 @@ export type ScanReport = z.infer<typeof ScanReportSchema>;
 export type Page = z.infer<typeof PageSchema>;
 export type Provenance = z.infer<typeof ProvenanceSchema>;
 export type AgentRole = z.infer<typeof AgentRoleSchema>;
+
+export * from "./browser-performance";

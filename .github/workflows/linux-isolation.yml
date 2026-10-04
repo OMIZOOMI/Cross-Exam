@@ -2,7 +2,7 @@ name: Linux browser isolation
 
 on:
   push:
-    branches: [main, "validation/**", "feature/browser-evidence-collector"]
+    branches: [main, "validation/**", "feature/browser-evidence-collector", "feature/performance-runtime-analysis"]
   pull_request:
     paths:
       - "apps/browser-worker/**"

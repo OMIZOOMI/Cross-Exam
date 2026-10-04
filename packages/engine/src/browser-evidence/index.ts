@@ -4,6 +4,15 @@ import {
   EvidenceSchema,
 } from "@crossexam/contracts";
 
+import { browserRuntimeAnalysis } from "./performance";
+
+export {
+  browserRuntimeAnalysis,
+  deriveCLS,
+  deriveNavigation,
+  finalizePerformance,
+} from "./performance";
+
 export { safeFailure, safeHeaders, safeObservedUrl, safeText } from "./safety";
 
 /** Append these observations; never replace HTTP evidence or manufacture findings. */
@@ -21,7 +30,7 @@ export function browserEvidenceRecords(
     ["BROWSER_RESPONSES", "network", "Observed browser responses", collection.responses],
     ["BROWSER_RENDERED_DOM", "metadata", "Rendered browser document", collection.dom],
   ] as const;
-  return observations
+  const records = observations
     .filter((entry) => entry[3] !== null)
     .map(([code, kind, title, data]) =>
       EvidenceSchema.parse({
@@ -36,7 +45,7 @@ export function browserEvidenceRecords(
         capturedAt: collection.collectedAt,
         collector: collection.collector,
         detail:
-          "Direct Chromium observation of an owned fixture; incomplete outside the collection window. No findings or performance measurements.",
+          "Direct Chromium observation of an owned fixture; incomplete outside the collection window. No causal findings.",
         data: {
           schemaVersion: collection.version,
           collectionId,
@@ -47,4 +56,55 @@ export function browserEvidenceRecords(
         },
       }),
     );
+  if (collection.performance) {
+    const { derivedNavigation, aggregates, deliveredTotals, metrics, ...raw } =
+      collection.performance;
+    for (const [code, provenance, observation] of [
+      [
+        "BROWSER_PERFORMANCE",
+        "OBSERVED",
+        {
+          ...raw,
+          metrics: {
+            fcp: metrics.fcp,
+            lcp: metrics.lcp,
+            inp: metrics.inp,
+            finalized: metrics.finalized,
+          },
+        },
+      ],
+      [
+        "BROWSER_RUNTIME_ANALYSIS",
+        "DERIVED",
+        {
+          derivedNavigation,
+          aggregates,
+          deliveredTotals,
+          cls: metrics.cls,
+          runtime: browserRuntimeAnalysis(collection),
+        },
+      ],
+    ] as const)
+      records.push(
+        EvidenceSchema.parse({
+          id: `${collectionId}-${code}`,
+          scanId,
+          source: "fixture",
+          provenance,
+          kind: "performance",
+          code,
+          title:
+            provenance === "OBSERVED"
+              ? "Browser LAB performance entries"
+              : "Derived browser LAB measurements",
+          url: collection.target,
+          capturedAt: collection.collectedAt,
+          collector: "chromium-lab-v1",
+          detail:
+            "Finite top-level document LAB window; controlled fixture only. No field/RUM verdict or performance score.",
+          data: { schemaVersion: 1, collectionId, observation: JSON.stringify(observation) },
+        }),
+      );
+  }
+  return records;
 }

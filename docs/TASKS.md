@@ -101,4 +101,15 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Add unit and controlled Chromium coverage plus a fixed Linux collector probe using the accepted proxy/systemd/root/AppArmor/cgroup/sandbox observer.
 - [x] Complete full local validation, privacy/security diff review and feature-branch delivery. Exactly one bounded Linux run used; no correction or second run needed.
 - [x] Record actual Linux schema/sandbox/proxy/cleanup/sentinel acceptance; run 37227469796 passed all stages, nine captured-cgroup removals and zero sentinel hits. Public admission/deployment remains separate.
-- Exactly one next task: **Stage 12 Performance + Runtime Analysis.** Do not begin it here.
+- Stage 11 next task: **Stage 12 Performance + Runtime Analysis**, tracked below.
+
+## Stage 12 — Performance + Runtime Analysis
+
+- [x] Freeze Stage 11 at 666d5d7836ca5a048cab087b6a674374ff0c6c44 and create only `feature/performance-runtime-analysis`.
+- [x] Add versioned LAB performance composition, pre-navigation buffered observers, explicit raw/derived provenance and unavailable metrics; no inferred scores or fake INP.
+- [x] Bound resources/tasks/candidates/shifts/paint, reuse privacy sanitation, preserve 32 KiB combined ceiling and existing deadline/launch/security architecture.
+- [x] Extend owned fixtures and fixed Linux collector acceptance with navigation/FCP/LCP/CLS/resource/long-task/bounds/privacy checks.
+- [x] Complete focused and one full local validation pass plus privacy/security diff review. Feature-only delivery follows.
+- [ ] Verify one bounded Linux run (second only for a directly evidenced narrow integration defect); record sandbox/proxy/cleanup/zero-sentinel evidence.
+- Stage 12 remains PARTIAL until Linux acceptance; arbitrary public browser scanning stays DISABLED.
+- Next task only after completion: **Stage 13 Rendered Accessibility Analysis**.

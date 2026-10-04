@@ -56,6 +56,7 @@ import {
   BROWSER_EVIDENCE_LIMITS,
   type BrowserEvidenceCollection,
   BrowserEvidenceCollectionSchema,
+  BrowserPerformanceEvidenceSchema,
 } from "../../packages/contracts/src/index";
 
 const MAX_INPUT_BYTES = 4 * 1024;
@@ -816,6 +817,34 @@ async function runCollector(): Promise<{
       "COLLECTOR_POST_POLICY",
     );
     ensure(!JSON.stringify(evidence).includes("DISPOSABLE_NOT_A_SECRET"), "COLLECTOR_PRIVACY");
+    const performance = BrowserPerformanceEvidenceSchema.parse(evidence.performance);
+    ensure(
+      performance.navigation !== null && (performance.navigation.responseStart ?? 0) > 0,
+      "PERFORMANCE_NAVIGATION",
+    );
+    ensure(
+      performance.metrics.fcp.status === "available" && (performance.metrics.fcp.value ?? 0) > 0,
+      "PERFORMANCE_FCP",
+    );
+    ensure(
+      performance.metrics.lcp.status === "available" && performance.lcp.length >= 2,
+      "PERFORMANCE_LCP",
+    );
+    ensure(
+      performance.metrics.cls.status === "available" && (performance.metrics.cls.value ?? 0) > 0,
+      "PERFORMANCE_CLS",
+    );
+    ensure(
+      performance.observed.longTasks > 0 &&
+        (performance.deliveredTotals.maximumLongTaskDuration ?? 0) >= 80,
+      "PERFORMANCE_LONG_TASK",
+    );
+    ensure(
+      performance.resources.some(
+        (entry) => entry.url?.endsWith("/collector/xhr") && (entry.decodedBodySize ?? 0) > 100000,
+      ),
+      "PERFORMANCE_RESOURCE",
+    );
     const bounded = BrowserEvidenceCollectionSchema.parse(
       await collectFixtureBrowserEvidence({
         fixture: "bounds",
@@ -835,6 +864,17 @@ async function runCollector(): Promise<{
       !JSON.stringify(bounded).includes("DISPOSABLE_NOT_A_SECRET"),
       "COLLECTOR_BOUNDS_PRIVACY",
     );
+    const boundedPerformance = BrowserPerformanceEvidenceSchema.parse(bounded.performance);
+    ensure(
+      boundedPerformance.truncation.dropped.resources > 0 &&
+        boundedPerformance.observed.resources > boundedPerformance.resources.length,
+      "PERFORMANCE_RESOURCE_BOUNDS",
+    );
+    ensure(
+      Buffer.byteLength(JSON.stringify(evidence)) <= 32768 &&
+        Buffer.byteLength(JSON.stringify(bounded)) <= 32768,
+      "PERFORMANCE_COMBINED_CEILING",
+    );
     return {
       browserEvidence: evidence,
       checks: {
@@ -848,6 +888,16 @@ async function runCollector(): Promise<{
         postDenied: true,
         sensitiveMarkerAbsent: true,
         bounds: true,
+        performanceSchemaValid: true,
+        labNavigation: true,
+        fcp: true,
+        lcp: true,
+        cls: true,
+        longTask: true,
+        performanceResources: true,
+        performanceBounds: true,
+        performanceResourcesDropped: boundedPerformance.truncation.dropped.resources,
+        combinedCeilingUnchanged: true,
         bytes: Buffer.byteLength(JSON.stringify(evidence)),
         boundedBytes: Buffer.byteLength(JSON.stringify(bounded)),
         consoleDropped: bounded.truncation.dropped.console ?? 0,

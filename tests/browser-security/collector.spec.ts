@@ -4,40 +4,14 @@ import {
   BrowserEvidenceCollectionSchema,
   BROWSER_EVIDENCE_LIMITS as L,
 } from "../../packages/contracts/src/index";
-import { startProxy } from "../../packages/engine/src/browser-egress/core";
 import type { EgressProxy } from "../../packages/engine/src/browser-egress/types";
-import { EgressError } from "../../packages/engine/src/security/types";
-import { collectorFixtureResponse } from "./collector-fixtures";
+import { startOwnedCollectorProxy } from "./collector-proxy";
 
 let proxy: EgressProxy;
 let paths: string[];
 test.beforeEach(async () => {
   paths = [];
-  proxy = await startProxy({
-    resolve: async (host) => {
-      if (host === "private.crossexam-fixture.com") return [{ address: "10.0.0.1", family: 4 }];
-      if (host === "mixed.crossexam-fixture.com")
-        return [
-          { address: "93.184.216.34", family: 4 },
-          { address: "::1", family: 6 },
-        ];
-      if (host === "entry.crossexam-fixture.com") return [{ address: "93.184.216.34", family: 4 }];
-      throw new EgressError("DNS_RESOLUTION_FAILED", "dns");
-    },
-    request: async (target, pin) => {
-      expect(pin.address).toBe("93.184.216.34");
-      expect(target.hostname).toBe("entry.crossexam-fixture.com");
-      const path = new URL(target.url).pathname;
-      paths.push(path);
-      if (path === "/collector/hold") await new Promise((resolve) => setTimeout(resolve, 1500));
-      const response = collectorFixtureResponse(path);
-      if (!response) throw new Error("Unknown fixture");
-      return response;
-    },
-    connect: async () => {
-      throw new EgressError("REQUEST_FAILED", "connection");
-    },
-  });
+  proxy = await startOwnedCollectorProxy(paths);
 });
 test.afterEach(async () => {
   await proxy.close();
@@ -103,11 +77,11 @@ test("observes real navigation, redirect, runtime, dynamic DOM and resource evid
     "set-cookie",
     "localStorage",
     "sessionStorage",
-    '"value":',
     '"body":',
     '"stack":',
   ])
     expect(serialized).not.toContain(key);
+  expect(JSON.stringify(collection.dom?.forms)).not.toContain('"value":');
   expect(paths).not.toContain("/collector/action");
   expect(paths).not.toContain("/collector/socket");
   expect(

@@ -5,6 +5,7 @@ import {
   BROWSER_EVIDENCE_LIMITS as L,
 } from "@crossexam/contracts";
 import {
+  finalizePerformance,
   safeFailure,
   safeHeaders,
   safeObservedUrl,
@@ -12,6 +13,7 @@ import {
 } from "@crossexam/engine/browser-evidence";
 import type { ConsoleMessage, Request, Response } from "@playwright/test";
 import { type FixtureWorker, launchFixtureWorker } from "./fixture-worker";
+import { installPerformanceObservers, readPerformanceObservers } from "./performance-observer";
 
 export const COLLECTOR_FIXTURE_ORIGIN = "http://entry.crossexam-fixture.com";
 export const COLLECTOR_FIXTURES = Object.freeze({
@@ -22,6 +24,7 @@ export const COLLECTOR_FIXTURES = Object.freeze({
   failure: "/collector/failure",
   loop: "/collector/loop",
   dom: "/collector/dom-limit",
+  empty: "/collector/empty-performance",
 });
 type Collection = BrowserEvidenceCollection;
 type Fixture = keyof typeof COLLECTOR_FIXTURES;
@@ -55,6 +58,7 @@ export function emptyBrowserCollection(fixture: Fixture, startedAt = Date.now())
     requests: [],
     responses: [],
     dom: null,
+    performance: null,
     truncation: {
       dropped: Object.fromEntries(BROWSER_TRUNCATION_DIMENSIONS.map((name) => [name, 0])),
       shortenedStrings: 0,
@@ -236,6 +240,7 @@ export async function collectFixtureBrowserEvidence(options: {
     worker.context.on("console", onConsole);
     worker.page.on("pageerror", onError);
     worker.page.on("crash", onCrash);
+    await installPerformanceObservers(worker.page);
     const deadlineAt = worker.operationalDeadlineAt;
     const remaining = () => Math.max(1, deadlineAt - Date.now());
     output.outcome = "navigation-failed";
@@ -262,6 +267,8 @@ export async function collectFixtureBrowserEvidence(options: {
       // Fixed observation window, not networkidle/performance readiness or eventual-page proof.
       // Abort/worker deadline closes the page, ending this wait and any pending evaluation.
       await worker.page.waitForTimeout(Math.min(L.settleMs, remaining()));
+      const performance = await readPerformanceObservers(worker.page);
+      if (performance) output.performance = finalizePerformance(performance, T);
       output.dom = await collectDom(worker, output);
     }
   } catch {

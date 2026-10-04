@@ -20,6 +20,8 @@ export function collectorFixtureResponse(path: string): {
     body = `<!doctype html><title>Slow owned fixture</title><img src="/collector/hold"><script>
       setTimeout(() => fetch('/collector/late'), 3000);
     </script>`;
+  } else if (path === "/collector/empty-performance") {
+    body = "<!doctype html><title>Empty owned performance fixture</title>";
   } else if (path === "/collector/rich") {
     headers["x-content-type-options"] = "nosniff";
     headers["referrer-policy"] = "no-referrer";
@@ -33,7 +35,7 @@ export function collectorFixtureResponse(path: string): {
       </head><body><h1>Owned browser fixture</h1><form method="post" action="/collector/action?token=DISPOSABLE_NOT_A_SECRET">
       <input type="text" value="DISPOSABLE_NOT_A_SECRET"><input type="password" value="DISPOSABLE_NOT_A_SECRET">
       <textarea>DISPOSABLE_NOT_A_SECRET</textarea></form><a href="/collector/next?api_key=DISPOSABLE_NOT_A_SECRET">Next</a>
-      <img src="/collector/image.svg"><script>
+      <div id="owned-spacer" style="height:0"></div><p id="owned-paint" style="font-size:12px;width:700px">Small initial paint</p><img src="/collector/image.svg" width="32" height="32"><script>
         document.title = 'Rendered fixture';
         document.body.insertAdjacentHTML('beforeend', '<h2>Dynamic heading</h2><a href="/collector/dynamic">Dynamic link</a>');
         const image = document.createElement('img'); image.src='/collector/dynamic.svg'; document.body.append(image);
@@ -46,6 +48,14 @@ export function collectorFixtureResponse(path: string): {
         fetch('/collector/action', {method:'POST',body:'DISPOSABLE_NOT_A_SECRET'}).catch(() => {});
         fetch('http://private.crossexam-fixture.com/').catch(() => {});
         fetch('http://mixed.crossexam-fixture.com/').catch(() => {});
+        window.addEventListener('load', () => {
+          requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
+            document.getElementById('owned-spacer').style.height='120px';
+            const paint=document.createElement('p');
+            paint.style.cssText='font-size:48px;width:700px;margin:0'; paint.textContent='Owned large paint candidate with deterministic visible content'; document.getElementById('owned-paint').after(paint);
+            setTimeout(() => { const end=performance.now()+90; while(performance.now()<end) {} }, 30);
+          }, 80)));
+        });
         const ws = new WebSocket('ws://entry.crossexam-fixture.com/collector/socket'); ws.onerror=()=>{};
       </script></body></html>`;
   } else if (path === "/collector/bounds") {
@@ -62,6 +72,9 @@ export function collectorFixtureResponse(path: string): {
     body = `<!doctype html><title>DOM limit fixture</title><body>${"<h2>Owned heading</h2>".repeat(10_010)}</body>`;
   } else if (path === "/collector/requests") {
     body = `<!doctype html><title>Requests fixture</title><script>for(let i=0;i<100;i++) fetch('/collector/data?i='+i).catch(()=>{});</script>`;
+  } else if (path === "/collector/xhr") {
+    type = "text/plain";
+    body = "owned bounded bytes ".repeat(6500);
   } else if (path.endsWith(".css")) {
     type = "text/css";
     body = "body { color: black; }";
@@ -80,4 +93,13 @@ export function collectorFixtureResponse(path: string): {
     headers: { "content-type": type, "access-control-allow-origin": "*", ...headers },
     body: Buffer.from(body),
   };
+}
+
+/** Delays are owned fixture transport behavior, never internet timing or proxy policy. */
+export function collectorFixtureDelay(path: string): number {
+  if (path === "/collector/hold") return 1500;
+  if (path === "/collector/rich") return 80;
+  if (["/collector/style.css", "/collector/script.js", "/collector/image.svg"].includes(path))
+    return 40;
+  return 0;
 }

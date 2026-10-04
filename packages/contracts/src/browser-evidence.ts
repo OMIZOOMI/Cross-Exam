@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BrowserPerformanceEvidenceSchema } from "./browser-performance";
 
 /** Retention bounds, not permission to send traffic. The worker/proxy enforce traffic limits. */
 export const BROWSER_EVIDENCE_LIMITS = Object.freeze({
@@ -180,6 +181,7 @@ export const BrowserEvidenceCollectionSchema = z
       })
       .strict()
       .nullable(),
+    performance: BrowserPerformanceEvidenceSchema.nullable().optional(),
     truncation: z
       .object({
         dropped,

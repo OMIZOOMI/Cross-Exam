@@ -13,6 +13,10 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ launch: vi.fn() }));
+vi.mock("./performance-observer", () => ({
+  installPerformanceObservers: vi.fn(),
+  readPerformanceObservers: vi.fn(async () => null),
+}));
 vi.mock("./fixture-worker", () => ({ launchFixtureWorker: mocks.launch }));
 
 import {
