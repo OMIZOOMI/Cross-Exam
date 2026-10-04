@@ -89,6 +89,7 @@ The real HTTP investigation deliberately precedes tasks 9a/10. Browser scanning 
 
 - [x] Render one immutable-artifact attachment with only userns, validate root/manifest/revision/identity, install/load/verify/remove through privileged provisioning, and fail closed on policy errors.
 - [x] Preserve all outer controls and unprofiled negative-control diagnostics; add bounded attached-profile/ID-map/namespace/renderer-seccomp observation and regression tests.
-- [ ] Finish required local checks and one Linux acceptance run; at most one narrowly evidenced integration correction/run is permitted.
+- [x] Required local checks passed. Run 37196267078 loaded/attached the profile and passed the browser fixture, then stopped on the process-title observer defect.
+- [ ] Validate the narrow process-title parsing regression and use the one permitted second run; no third run.
 - [ ] Prove all preparation/network/filesystem/PID/browser/TLS/memory/timeout/proxy-down stages, cleanup, zero sentinel hits, unchanged restriction and Chromium internal sandbox before marking 9a complete.
 - Next task: **Complete Task 10D-C Linux acceptance.** Stage 11 Browser Evidence Collector remains blocked until 9a is COMPLETE.

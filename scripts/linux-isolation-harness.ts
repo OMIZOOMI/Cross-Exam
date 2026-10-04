@@ -10,7 +10,10 @@ import {
   type LinuxIsolationResult,
 } from "../apps/browser-worker/src/linux-backend";
 import { diffPreparedRoot } from "../apps/browser-worker/src/linux-root";
-import { startChromiumSandboxObserver } from "../apps/browser-worker/src/linux-sandbox-evidence";
+import {
+  ChromiumSandboxEvidenceError,
+  startChromiumSandboxObserver,
+} from "../apps/browser-worker/src/linux-sandbox-evidence";
 import { startProxy } from "../packages/engine/src/browser-egress/core";
 import type { EgressProxy } from "../packages/engine/src/browser-egress/types";
 import { EgressError } from "../packages/engine/src/security/types";
@@ -275,6 +278,10 @@ async function run() {
               phase: "chromium-internal-sandbox",
               evidence: sandboxEvidence ?? null,
               error: sandboxError instanceof Error ? sandboxError.message : null,
+              partialEvidence:
+                sandboxError instanceof ChromiumSandboxEvidenceError
+                  ? sandboxError.partialEvidence
+                  : undefined,
             }),
           );
         }

@@ -54,9 +54,15 @@ export type SandboxEvidence = {
   renderer: SandboxProcessEvidence;
   observations: number;
 };
+export type PartialSandboxEvidence = Partial<Record<Role, SandboxProcessEvidence>> & {
+  observations: number;
+};
 
 export class ChromiumSandboxEvidenceError extends Error {
-  constructor(readonly code: string) {
+  constructor(
+    readonly code: string,
+    readonly partialEvidence?: PartialSandboxEvidence,
+  ) {
     super(`Chromium sandbox evidence failed: ${code}`);
     this.name = "ChromiumSandboxEvidenceError";
   }
@@ -64,6 +70,14 @@ export class ChromiumSandboxEvidenceError extends Error {
 
 function requireEvidence(condition: boolean, code: string): asserts condition {
   if (!condition) throw new ChromiumSandboxEvidenceError(code);
+}
+
+function requireFinalEvidence(
+  condition: boolean,
+  code: string,
+  partialEvidence: PartialSandboxEvidence,
+): asserts condition {
+  if (!condition) throw new ChromiumSandboxEvidenceError(code, partialEvidence);
 }
 
 function field(status: string, name: string): string {
@@ -122,6 +136,23 @@ function mappings(value: string): number[][] {
   });
 }
 
+function chromiumArguments(cmdline: string[]): string[] | undefined {
+  if (cmdline[0] === CHROMIUM_EXECUTABLE) return cmdline;
+  // Chromium 153 SetProcessTitleFromCommandLine replaces argv memory with one
+  // space-joined string. Zygote forks repeat this for their renderer title.
+  // Accept that exact representation only; do not broaden executable matching.
+  const title = cmdline[0];
+  if (cmdline.length !== 1 || !title?.startsWith(`${CHROMIUM_EXECUTABLE} `)) return undefined;
+  requireEvidence(!/[\r\n\t]/u.test(title), "INVALID_CHROMIUM_TITLE");
+  return [
+    CHROMIUM_EXECUTABLE,
+    ...title
+      .slice(CHROMIUM_EXECUTABLE.length + 1)
+      .split(" ")
+      .filter(Boolean),
+  ];
+}
+
 /** Pure parser: only the selected immutable Chromium command is eligible. */
 export function parseSandboxProcessSnapshot(
   snapshot: SandboxProcessSnapshot,
@@ -130,14 +161,15 @@ export function parseSandboxProcessSnapshot(
   let role: Role;
   if (snapshot.pid === mainPID) role = "worker";
   else {
-    if (snapshot.cmdline[0] !== CHROMIUM_EXECUTABLE) return undefined;
+    const arguments_ = chromiumArguments(snapshot.cmdline);
+    if (!arguments_) return undefined;
     requireEvidence(
-      !snapshot.cmdline.some((argument) =>
+      !arguments_.some((argument) =>
         FORBIDDEN_FLAGS.some((flag) => argument === flag || argument.startsWith(`${flag}=`)),
       ),
       "FORBIDDEN_CHROMIUM_FLAG",
     );
-    const types = snapshot.cmdline.filter((argument) => argument.startsWith("--type="));
+    const types = arguments_.filter((argument) => argument.startsWith("--type="));
     requireEvidence(types.length <= 1, "AMBIGUOUS_CHROMIUM_ROLE");
     const type = types[0];
     if (type === undefined) role = "browser";
@@ -216,12 +248,15 @@ export function verifyChromiumSandboxEvidence(
   worker: SandboxProcessEvidence | undefined,
   samples: SandboxProcessEvidence[],
 ): SandboxEvidence {
-  requireEvidence(worker?.role === "worker", "MISSING_WORKER");
-  requireEvidence(
+  const partialEvidence: PartialSandboxEvidence = { worker, observations: samples.length };
+  for (const sample of samples) if (sample.role !== "worker") partialEvidence[sample.role] = sample;
+  requireFinalEvidence(worker?.role === "worker", "MISSING_WORKER", partialEvidence);
+  requireFinalEvidence(
     worker.noNewPrivileges === 1 &&
       BigInt(`0x${worker.capabilityEffective}`) === 0n &&
       BigInt(`0x${worker.capabilityBounding}`) === 0n,
     "INVALID_OUTER_SECURITY_STATE",
+    partialEvidence,
   );
   const browser = samples.find(
     (sample) =>
@@ -233,11 +268,11 @@ export function verifyChromiumSandboxEvidence(
       sample.uid === worker.uid &&
       sample.gid === worker.gid,
   );
-  requireEvidence(browser !== undefined, "MISSING_ATTACHED_BROWSER");
+  requireFinalEvidence(browser !== undefined, "MISSING_ATTACHED_BROWSER", partialEvidence);
   const zygote = samples.find(
     (sample) => sample.role === "zygote" && namespaceSandboxed(sample, worker),
   );
-  requireEvidence(zygote !== undefined, "MISSING_SANDBOXED_ZYGOTE");
+  requireFinalEvidence(zygote !== undefined, "MISSING_SANDBOXED_ZYGOTE", partialEvidence);
   const renderer = samples.find(
     (sample) =>
       sample.role === "renderer" &&
@@ -245,7 +280,7 @@ export function verifyChromiumSandboxEvidence(
       sample.seccomp === 2 &&
       sample.seccompFilters > worker.seccompFilters,
   );
-  requireEvidence(renderer !== undefined, "MISSING_SANDBOXED_RENDERER");
+  requireFinalEvidence(renderer !== undefined, "MISSING_SANDBOXED_RENDERER", partialEvidence);
   return {
     selectedMechanism: "userns",
     profileName: PROFILE_NAME,

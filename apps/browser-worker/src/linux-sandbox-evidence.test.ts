@@ -2,6 +2,7 @@ import { open, readlink } from "node:fs/promises";
 import { afterEach, expect, it, vi } from "vitest";
 import { readCgroupFile } from "./linux-cgroup";
 import {
+  ChromiumSandboxEvidenceError,
   parseSandboxProcessSnapshot,
   type SandboxProcessEvidence,
   type SandboxProcessSnapshot,
@@ -102,6 +103,85 @@ it.each([
   const browser = snapshot("browser");
   browser.cmdline.push(flag);
   expect(() => parseSandboxProcessSnapshot(browser, mainPID)).toThrow("FORBIDDEN_CHROMIUM_FLAG");
+});
+
+it.each(["browser", "zygote", "renderer"] as const)(
+  "recognizes Chromium153's single rewritten %s process title",
+  (role) => {
+    const item = snapshot(role);
+    item.cmdline.push("--disable-background-networking");
+    item.cmdline = [item.cmdline.join(" ")];
+    expect(parseSandboxProcessSnapshot(item, mainPID)?.role).toBe(role);
+  },
+);
+
+it.each([
+  `${executable}-other --type=zygote`,
+  `/tmp${executable} --type=zygote`,
+  `prefix ${executable} --type=zygote`,
+  `${executable}x --type=zygote`,
+])("rejects rewritten title with a wrong executable prefix: %s", (title) => {
+  expect(
+    parseSandboxProcessSnapshot({ ...snapshot("zygote"), cmdline: [title] }, mainPID),
+  ).toBeUndefined();
+});
+
+it.each([
+  "--no-sandbox",
+  "--disable-namespace-sandbox",
+  "--disable-seccomp-filter-sandbox",
+  "--disable-setuid-sandbox",
+  "--no-sandbox=true",
+])("rejects forbidden %s in a rewritten process title", (flag) => {
+  const item = snapshot("renderer");
+  item.cmdline = [`${executable} --type=renderer ${flag}`];
+  expect(() => parseSandboxProcessSnapshot(item, mainPID)).toThrow("FORBIDDEN_CHROMIUM_FLAG");
+});
+
+it("rejects ambiguous role markers in original argv and rewritten titles", () => {
+  for (const cmdline of [
+    [executable, "--type=zygote", "--type=renderer"],
+    [`${executable} --type=zygote --type=renderer`],
+  ]) {
+    expect(() => parseSandboxProcessSnapshot({ ...snapshot("zygote"), cmdline }, mainPID)).toThrow(
+      "AMBIGUOUS_CHROMIUM_ROLE",
+    );
+  }
+});
+
+it("rejects mixed original/title representations and embedded control characters", () => {
+  const item = snapshot("zygote");
+  item.cmdline = [`${executable} --type=zygote`, "--another"];
+  expect(parseSandboxProcessSnapshot(item, mainPID)).toBeUndefined();
+  item.cmdline = [`${executable} --type=zygote\n--hidden`];
+  expect(() => parseSandboxProcessSnapshot(item, mainPID)).toThrow("INVALID_CHROMIUM_TITLE");
+});
+
+it("retains bounded normalized evidence when final sandbox proof is incomplete", () => {
+  const { worker, samples } = valid();
+  const incomplete = { ...evidence("renderer"), seccompFilters: worker.seccompFilters };
+  try {
+    verifyChromiumSandboxEvidence(worker, [
+      ...samples.slice(0, 2),
+      ...Array.from({ length: 50 }, () => incomplete),
+    ]);
+    throw new Error("expected missing renderer proof");
+  } catch (error) {
+    expect(error).toBeInstanceOf(ChromiumSandboxEvidenceError);
+    const failed = error as ChromiumSandboxEvidenceError;
+    expect(failed.code).toBe("MISSING_SANDBOXED_RENDERER");
+    expect(Object.keys(failed.partialEvidence ?? {}).sort()).toEqual([
+      "browser",
+      "observations",
+      "renderer",
+      "worker",
+      "zygote",
+    ]);
+    expect(failed.partialEvidence?.observations).toBe(52);
+    expect(failed.partialEvidence?.renderer?.seccompFilters).toBe(worker.seccompFilters);
+    expect(JSON.stringify(failed.partialEvidence)).not.toContain("cmdline");
+    expect(JSON.stringify(failed.partialEvidence)).not.toContain("/app/probe.mjs");
+  }
 });
 
 it.each(["browser", "zygote", "renderer"] as const)("requires observed %s evidence", (role) => {
