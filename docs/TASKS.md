@@ -23,7 +23,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 ## Day 3 — crawl and measurements
 
 12. [x] Add bounded final-origin HTTP route discovery: eight page attempts, depth two, sequential requests, byte/deadline limits, conservative robots policy and sitemap hints.
-13. [ ] Add browser performance lab measurements and rendered accessibility checks after 9a/10. HTML metadata, declared resource references, and passive response headers are collected now; cookies are not retained.
+13. [x] Add controlled browser LAB measurements and rendered accessibility evidence (Stages 12/13). Public browser admission remains disabled; cookies are not retained.
 14. [x] Generate narrow deterministic HTTP/HTML claims/findings with evidence references, conservative wording, and positive/negative rule tests. No AI execution.
 
 ## Day 4 — connect the product
@@ -121,6 +121,6 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Project privacy-safe structural node evidence inside the renderer, bounded rules/nodes/tags/counts and 8 KiB accessibility budget within unchanged 32 KiB combined ceiling.
 - [x] Prove owned fail/pass/dynamic/contrast/manual-review/shadow/frame/CSP/bounds fixtures, dependency bundling and Stage 11/12 regressions without isolation changes.
 - [x] Complete one full local validation pass and privacy/security diff review; deliver only the accessibility feature branch.
-- [ ] Establish Stage 13 controlled Linux acceptance with unchanged AppArmor/sandbox/proxy/cgroup/cleanup/sentinel proofs; at most two runs, second only for a precise permitted fixture/serialization defect.
-- Stage 13 remains PARTIAL until Linux acceptance. Public arbitrary browser scanning stays DISABLED.
+- [x] Establish controlled Linux acceptance on `13a82b5`: run **37233296257** passed all Stage 11/12/13 checks, pinned engine/rule outcomes, privacy/bounds, unchanged sandbox/proxy/cgroups, nine captured-cgroup removals, enabled AppArmor restriction and zero sentinels. One run; no second needed/permitted.
+- Stage 13 is **COMPLETE for owned controlled fixtures**. Public arbitrary browser scanning stays DISABLED. Final docs use `[skip ci]`; accepted code is unchanged.
 - Next task only after completion: **Stage 14 Explorer + Breaker Agent Architecture**.

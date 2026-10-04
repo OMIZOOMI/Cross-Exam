@@ -2,7 +2,7 @@
 
 Updated 2026-10-05. Task: **Stage 13 — Rendered Accessibility Analysis**.
 
-**Stage 13 is PARTIAL pending controlled Linux acceptance. Full local validation passed. Public arbitrary browser scanning remains DISABLED.** Task 9a and Stages 11/12 remain accepted; no isolation, browser launch, proxy, AppArmor, cgroup, deadline, public admission or UI policy changes.
+**Stage 13 is COMPLETE for owned controlled fixtures inside the accepted Linux boundary. Full local and Linux validation passed. Public arbitrary browser scanning remains DISABLED.** Task 9a and Stages 11/12 remain accepted; no isolation, browser launch, proxy, AppArmor, cgroup, deadline, public admission or UI policy changes.
 
 ## Stage 13 implementation
 
@@ -39,7 +39,28 @@ Focused accessibility: **34 units + 8 real-browser tests PASS**. Stage 11 regres
 | Exact Linux probe esbuild bundle | PASS; 2.2 MiB, retained MPL notice |
 | `git diff --check` | PASS |
 
-No shell script changed. Local esbuild execution proves the engine and serialized projection operate after bundling. Full diff/privacy review excludes generated outputs, secrets, screenshots, browser state and unrelated UI changes. Existing sandbox/AppArmor/proxy/root/proc/cgroup/public-launcher files are unchanged. E2E regenerates development type references; the installed Next.js declaration generator restores production references without manual editing. The required full build passed; a subsequent optional restoration build encountered a local port-binding permission error, so no further build loop was used. Linux acceptance remains pending; macOS browser checks do not establish Linux confinement.
+No shell script changed. Local esbuild execution proves the engine and serialized projection operate after bundling. Full diff/privacy review excludes generated outputs, secrets, screenshots, browser state and unrelated UI changes. Existing sandbox/AppArmor/proxy/root/proc/cgroup/public-launcher files are unchanged. E2E regenerates development type references; the installed Next.js declaration generator restores production references without manual editing. The required full build passed; a subsequent optional restoration build encountered a local port-binding permission error, so no further build loop was used. Linux acceptance is independently recorded below; macOS browser checks alone do not establish Linux confinement.
+
+## Stage 13 Linux acceptance and delivery — one run
+
+Implementation commit `13a82b528d28b204b23c700ca3e069cdf8824281` was pushed only to `feature/rendered-accessibility-analysis`. [Linux run 37233296257](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37233296257), isolation job `111527325289`, completed **successfully**. Exactly one new Linux run; Run 2 is not permitted/needed because no integration defect occurred. Final documentation uses `[skip ci]`, leaving accepted code identical. No PR, merge, source-branch rewrite or main modification.
+
+| Evidence | Verified result |
+| --- | --- |
+| Preparation / sealed root | PASS; bundled pinned engine included in normal manifest closure |
+| Stage 11 schema/runtime | PASS; actual navigation, console/page error, dynamic DOM, XHR and POST denial |
+| Stage 12 schema/measurements | PASS; navigation, FCP 220 ms, finite LCP 336 ms, CLS 0.01877, one 90 ms long task, resource timing/bounds |
+| Stage 13 schema/version | PASS; schema v1, axe-core 4.12.1, completed |
+| Rule classes | PASS; five violation rules, one incomplete/manual-review rule, 17 pass rules; expected image/name violation, language/button pass and JS-inserted button located structurally |
+| Bounds / privacy | PASS; accessibility 6,202 bytes, rich combined 20,064 bytes, bounded combined 32,748 bytes; 234 accessibility nodes omitted with accounting. No snippets/form marker; no disposable marker anywhere in job logs |
+| Exact AppArmor | PASS; loaded and attached to accepted headless executable; enabled/restriction=1 before/after validation; temporary profile unloaded with restriction still 1 |
+| Chromium internal sandbox | PASS; independent userns/UID/GID mapping/setgroups-deny, nested PID/network namespaces, renderer Seccomp=2 and 15 filters versus browser 14; outer effective/bounding capabilities empty |
+| Outer probes | PASS; network, filesystem, pids, browser, collector, tls, memory (expected OOM kill), timeout (expected kill), proxy-down |
+| Active cgroups | PASS; MainPID membership checked before release; memory 1 GiB, swap 0, pids 128, CPU `100000 100000` |
+| Cleanup | PASS; all nine captured cgroups absent, all probes `finalCleaned=true` |
+| Sentinels | PASS; zero TCP/UDP hits across seven owned addresses, zero unrelated Unix socket hits |
+
+Public `launchBrowserWorker()` remains fail-closed with `ISOLATION_UNAVAILABLE`. This acceptance does not establish deployment readiness or arbitrary hostile-page measurement trust. No security control was changed/weakened.
 
 ## Stage 13 limitations
 
