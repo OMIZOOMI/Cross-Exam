@@ -16,7 +16,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 ## Day 2 — safe deterministic collection
 
 9. [x] Implement the URL/egress safety gate: shared early input policy, conservative IPv4/IPv6 classification, complete A/AAAA validation, literal-address-pinned Node HTTP(S), manual redirect checks, structured denials, request limits, and deterministic/TLS tests. This protects the HTTP primitive; it does not constrain Chromium.
-9a. [ ] **PARTIAL:** Active cgroup limits, prepared-root filesystem/process probes and cleanup have Linux evidence. Task 10D-B demonstrated AppArmor blocking Chromium userns setup. Task 10D-C adds one exact immutable executable allowance; full Linux sandbox/browser/TLS/resource/cleanup acceptance is pending. Public launch still fails closed with ISOLATION_UNAVAILABLE.
+9a. [x] **COMPLETE for the controlled Linux harness:** Run 37196847138 passed preparation, exact AppArmor allowance/attachment, network/filesystem/PID/browser/TLS/memory/timeout/proxy-down, internal namespace/renderer-seccomp proof, cleanup and zero sentinel hits. All outer controls and global AppArmor restriction remained enabled. Public launch still fails closed with ISOLATION_UNAVAILABLE; production deployment and Stage 11 collector remain separate.
 10. [ ] After task 9a, add a bounded Playwright page collector behind the enforced proxy/network boundary; use controlled local fixtures with an explicit test-only policy. Capture navigation, headers, network/console observations, and cleanup/cancellation.
 11. [x] Persist schema-validated local HTTP reports with IDs, timestamps, compact evidence, redaction, retention, and size bounds. Public storage/access control remains deferred.
 
@@ -56,7 +56,7 @@ Deferred: WhatIf architecture simulation, distributed jobs, managed database, au
 - [x] Record permanent commit/push workflow in AGENTS.md and AI_WORKFLOW.md.
 - Final commands, manual result, and Git delivery are recorded in CURRENT_STATE.md.
 
-The real HTTP investigation deliberately precedes tasks 9a/10. Browser scanning remains disabled until its separate network isolation boundary is implemented and verified.
+The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Linux isolation boundary is verified; browser scanning remains disabled pending separately authorized collection and deployment work.
 
 ## Task 10A — active systemd/cgroup verification
 
@@ -90,6 +90,6 @@ The real HTTP investigation deliberately precedes tasks 9a/10. Browser scanning 
 - [x] Render one immutable-artifact attachment with only userns, validate root/manifest/revision/identity, install/load/verify/remove through privileged provisioning, and fail closed on policy errors.
 - [x] Preserve all outer controls and unprofiled negative-control diagnostics; add bounded attached-profile/ID-map/namespace/renderer-seccomp observation and regression tests.
 - [x] Required local checks passed. Run 37196267078 loaded/attached the profile and passed the browser fixture, then stopped on the process-title observer defect.
-- [ ] Validate the narrow process-title parsing regression and use the one permitted second run; no third run.
-- [ ] Prove all preparation/network/filesystem/PID/browser/TLS/memory/timeout/proxy-down stages, cleanup, zero sentinel hits, unchanged restriction and Chromium internal sandbox before marking 9a complete.
-- Next task: **Complete Task 10D-C Linux acceptance.** Stage 11 Browser Evidence Collector remains blocked until 9a is COMPLETE.
+- [x] Validate the narrow process-title parsing regression; second run 37196847138 passed. Exactly two Linux runs used; no third run.
+- [x] All required stages, cleanup, zero sentinel hits, unchanged restriction and internal namespace/renderer-seccomp proof passed; mark 9a complete for controlled Linux validation.
+- Next task: **Stage 11 Browser Evidence Collector.** Do not start it here or enable arbitrary public scanning.
