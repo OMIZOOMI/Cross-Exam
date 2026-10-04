@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit && pnpm -r typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:tribunal": "vitest run packages/agents/src packages/contracts/src",
     "test:e2e": "playwright test",
     "scanner:smoke": "pnpm --filter @crossexam/scanner smoke",
     "check": "pnpm lint && pnpm test && pnpm build",

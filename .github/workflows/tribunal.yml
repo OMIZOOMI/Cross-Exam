@@ -1,0 +1,30 @@
+name: Tribunal trust boundary
+
+on:
+  push:
+    branches: ["feature/stage14-explorer-breaker"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tribunal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts-and-host:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:tribunal
+      - run: pnpm test

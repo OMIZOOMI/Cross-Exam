@@ -72,7 +72,7 @@ export async function investigate(input: ScanInput, signal?: AbortSignal): Promi
     notes: [],
   };
   const report: ScanReport = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     summary: {
       id: randomUUID(),
       source: "live",
@@ -93,6 +93,7 @@ export async function investigate(input: ScanInput, signal?: AbortSignal): Promi
     verdicts: [],
     findings: [],
     agentRuns: [],
+    tribunalRuns: [],
     investigation: info,
   };
   const queue: { url: string; depth: number }[] = [];

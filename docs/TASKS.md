@@ -33,7 +33,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 
 ## Day 5 — bounded tribunal
 
-17. [ ] Implement provider adapters and runtime-validated role outputs with missing-key fallback and cost/time limits.
+17. [ ] **PARTIAL:** Stage 14B fake-provider proposal validation, host authority/export boundary and time/token budgets implemented; real adapters/configuration/transport remain Stage 14C.
 18. [ ] Implement bounded challenge/reproduction/judging over structured state with deterministic action authorization.
 
 ## Day 6 — useful conclusions
@@ -124,3 +124,16 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Establish controlled Linux acceptance on `13a82b5`: run **37233296257** passed all Stage 11/12/13 checks, pinned engine/rule outcomes, privacy/bounds, unchanged sandbox/proxy/cgroups, nine captured-cgroup removals, enabled AppArmor restriction and zero sentinels. One run; no second needed/permitted.
 - Stage 13 is **COMPLETE for owned controlled fixtures**. Public arbitrary browser scanning stays DISABLED. Final docs use `[skip ci]`; accepted code is unchanged.
 - Next task only after completion: **Stage 14 Explorer + Breaker Agent Architecture**.
+
+
+## Stage 14B — Explorer + Breaker trust-boundary implementation
+
+- [x] Verify clean accepted source `5e510479ac3f44bcfe173b1d926a8a339f83b799`; create only `feature/stage14-explorer-breaker`, preserve main/prior milestones.
+- [x] Strict proposal v1 schemas with all authority fields rejected, reference semantics/cardinality/text/byte bounds and conditional missing-evidence policy.
+- [x] Report v2 migration across deterministic producer/demo/live fixtures; host-owned required canonical fields and separate TribunalRun/AgentRun audits.
+- [x] Provider-safe numeric/presence projection, immutable role views, no Findings/raw report/website content export or SIMULATED authority.
+- [x] Injected unknown-response/failure adapters, one-call role/whole deadlines, cancellation, categorized audit, deduplication and snapshot replay.
+- [x] Focused adversarial/privacy/schema/semantic/lifecycle tests; no model network/SDK, action tools or public browser admission.
+- [x] Complete full local validation and privacy/security diff review; 119 focused tests, 945 final full units, all browser/E2E/build/smoke checks pass. Final audit-only focused/typecheck/unit/build regressions pass.
+- [ ] Commit/push only the feature branch and verify normal Node CI; record exact results before completion.
+- Stage 14C: separately reviewed real-provider adapters/configuration/transport with token, privacy, cancellation and admission controls; no browser/public admission implied.

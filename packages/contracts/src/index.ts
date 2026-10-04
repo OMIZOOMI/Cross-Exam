@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { CanonicalChallengeSchema, CanonicalClaimSchema, TribunalRunSchema } from "./tribunal";
 
 export * from "./browser-evidence";
+export * from "./tribunal";
 
 export const ProvenanceSchema = z.enum(["OBSERVED", "DERIVED", "INFERRED", "SIMULATED"]);
 export const DataSourceSchema = z.enum(["fixture", "live"]);
@@ -65,23 +67,8 @@ export const EvidenceSchema = z.object({
     .optional(),
 });
 
-export const ClaimSchema = z.object({
-  id: Id,
-  scanId: Id,
-  statement: z.string().min(1),
-  provenance: ProvenanceSchema,
-  evidenceIds: References,
-  proposedBy: z.union([AgentRoleSchema, z.literal("Deterministic rule")]),
-});
-
-export const ChallengeSchema = z.object({
-  id: Id,
-  claimId: Id,
-  raisedBy: z.enum(["Breaker", "Skeptic"]),
-  question: z.string().min(1),
-  evidenceIds: References,
-  status: z.enum(["open", "addressed"]),
-});
+export const ClaimSchema = CanonicalClaimSchema;
+export const ChallengeSchema = CanonicalChallengeSchema;
 
 export const ExperimentSchema = z
   .object({
@@ -175,7 +162,7 @@ export const ScanInputSchema = z.object({
 
 export const ScanReportSchema = z
   .object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     summary: ScanSummarySchema,
     pages: z.array(PageSchema),
     metrics: z.array(MetricSchema),
@@ -186,6 +173,7 @@ export const ScanReportSchema = z
     verdicts: z.array(VerdictSchema),
     findings: z.array(FindingSchema),
     agentRuns: z.array(AgentRunSchema),
+    tribunalRuns: z.array(TribunalRunSchema).max(1),
     investigation: z
       .object({
         mode: z.literal("deterministic-http"),
@@ -214,6 +202,29 @@ export const ScanReportSchema = z
       )
         fail("Deterministic reports require measured evidence and explicit rule attribution.");
     }
+    for (const run of report.tribunalRuns) {
+      if (run.scanId !== report.summary.id) fail("Tribunal belongs to another scan");
+      for (const id of run.authorizedEvidenceIds) {
+        const e = report.evidence.find((item) => item.id === id);
+        if (!e || !["OBSERVED", "DERIVED"].includes(e.provenance))
+          fail("Tribunal evidence authorization mismatch");
+      }
+      const baseIds = new Set(
+        [
+          ...report.pages,
+          ...report.metrics,
+          ...report.evidence,
+          ...report.claims,
+          ...report.challenges,
+          ...report.experiments,
+          ...report.verdicts,
+          ...report.findings,
+          ...report.agentRuns,
+        ].map((item) => item.id),
+      );
+      for (const item of [run, ...run.claims, ...run.challenges, ...run.agentRuns])
+        if (baseIds.has(item.id)) fail("Tribunal ID collides with base state");
+    }
     const collections = [
       report.pages,
       report.metrics,
@@ -239,7 +250,7 @@ export const ScanReportSchema = z
       if (item.source !== report.summary.source || item.scanId !== report.summary.id)
         fail(`Evidence ${item.id} has mixed source or scan identity.`);
     }
-    for (const item of report.claims) {
+    for (const item of [...report.claims, ...report.challenges]) {
       if (item.scanId !== report.summary.id) fail(`Claim ${item.id} belongs to another scan.`);
     }
     for (const item of [

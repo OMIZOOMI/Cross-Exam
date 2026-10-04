@@ -31,6 +31,15 @@ export function addFinding(
     provenance: "DERIVED",
     evidenceIds: input.evidenceIds,
     proposedBy: "Deterministic rule",
+    scope: {
+      observation: "Returned HTTP response and parsed document in this bounded investigation.",
+      conditions: ["The recorded request and response only."],
+      limitations: ["No browser execution.", "No independent reproduction or causal conclusion."],
+    },
+    falsifier:
+      "Repeat the bounded HTTP collection; the recorded rule predicate is no longer present.",
+    createdAt: new Date().toISOString(),
+    status: "proposed",
   });
   report.verdicts.push({
     id: verdictId,

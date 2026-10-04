@@ -44,7 +44,7 @@ export function liveReportFixture(id: string) {
     collector: "controlled-test-fixture",
   }));
   return ScanReportSchema.parse({
-    schemaVersion: 1,
+    schemaVersion: 2,
     summary: {
       id,
       source: "live",
@@ -87,6 +87,7 @@ export function liveReportFixture(id: string) {
     challenges: [],
     experiments: [],
     agentRuns: [],
+    tribunalRuns: [],
     claims: [
       {
         id: "C-001",
@@ -95,6 +96,14 @@ export function liveReportFixture(id: string) {
         provenance: "DERIVED",
         evidenceIds: ["E-002"],
         proposedBy: "Deterministic rule",
+        scope: {
+          observation: "Controlled response.",
+          conditions: [],
+          limitations: ["Synthetic UI test input."],
+        },
+        falsifier: "Repeat collection and observe a different status.",
+        createdAt: date,
+        status: "proposed",
       },
     ],
     verdicts: [

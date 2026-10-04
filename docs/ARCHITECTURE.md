@@ -1,5 +1,11 @@
 # Architecture
 
+## Stage 14B host-owned tribunal boundary
+
+`packages/contracts/src/tribunal.ts` defines strict proposal/digest/view/audit schemas v1. `packages/agents/src/evidence-digest.ts` projects only code-specific numeric/presence facts; provider export never uses generic Evidence.data, website strings or raw report objects. `provider.ts` limits untrusted payload serialization/parsing and defines injected response/failure adapters. `tribunal.ts` owns immutable role views, one-call deadlines, reference authorization, deduplication, canonical IDs/attribution/provenance and replay-safe publication.
+
+ScanReport v2 adds essential claim/challenge fields and a zero-or-one TribunalRun overlay. Deterministic report producers and fixtures explicitly migrate; existing findings/verdicts remain base state. The host validates the complete next snapshot before return; no persistence side effect or public scanner integration. Only fake providers are tested. Real adapters/admission, distributed idempotency and future roles remain deferred. See [agent protocol](AGENT_PROTOCOL.md) for budgets, export omissions, audit semantics and compatibility limits. Browser contracts/security architecture are unchanged.
+
 ## Stage 11 controlled browser evidence boundary
 
 `apps/browser-worker/src/browser-collector.ts` is an internal, direct-file controlled-fixture entry. It accepts a fixed fixture identifier, never a caller-supplied target or launch/network-policy override. It launches the existing fixture worker, subscribes before navigation, observes one page during a fixed 300 ms post-load window, extracts selected bounded DOM fields, and closes the existing context/browser on every exit. Worker enforcement constants now live in `worker-limits.ts` with identical values. The collector uses the worker's existing operational deadline, including its cleanup reserve; there is no second extended deadline.
@@ -19,7 +25,7 @@ Browser → apps/web → local POST /api/scans → DeterministicScanRunner
 Local CLI → apps/scanner → safeRequest → bounded HTTP/HTML investigation
                                 ↓
                    compact evidence + deterministic rules → ScanReport
-packages/agents → contracts (interfaces only; no provider)
+packages/agents → contracts (host tribunal boundary; injected fake providers only)
 ```
 
 This is a pnpm workspace with two product application boundaries and an internal gated browser-worker package, not a deployed microservice fleet. Node.js 24, TypeScript 5.9, Next.js 16, React 19, Tailwind CSS 4, React Flow, Recharts, and Zod. Versions are exact in manifests and locked in `pnpm-lock.yaml`.
@@ -28,7 +34,7 @@ This is a pnpm workspace with two product application boundaries and an internal
 | --- | --- | --- |
 | `contracts` | Runtime schemas, types, explicit data source/provenance, graph-reference checks | Browser, network, framework, provider SDKs |
 | `engine` | ScanRunner/ScanOutcome, report helpers, isolated URL/egress security module | React, model-specific APIs; Node networking imports in browser-safe entry points |
-| `agents` | Typed role outputs, bounded state snapshots, provider-neutral interface | Direct browser/network authority |
+| `agents` | Strict proposals, provider-safe projection, immutable role views, host canonicalization and audit | Direct browser/network/action authority; real SDKs |
 | `scanner` | Bounded HTTP/HTML collector, deterministic rules, CLI and typed runner | Fabricated live reports |
 | `web` | Report display, local scan API and bounded local report storage | Executing scanners in browser/event handlers |
 | `browser-worker` | Fail-closed public launch gate and internal controlled Chromium harness | Public scanning without verified OS/network isolation; product evidence extraction |

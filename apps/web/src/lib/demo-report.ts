@@ -269,7 +269,7 @@ const findings: Finding[] = [
 ];
 
 export const demoReport = ScanReportSchema.parse({
-  schemaVersion: 1,
+  schemaVersion: 2,
   summary: {
     id: scanId,
     source: "fixture",
@@ -302,6 +302,7 @@ export const demoReport = ScanReportSchema.parse({
       evidenceIds: ["E-009"],
     },
   ],
+  tribunalRuns: [],
   claims: findings.map((item) => ({
     id: item.claimId,
     scanId,
@@ -309,11 +310,24 @@ export const demoReport = ScanReportSchema.parse({
     provenance: item.provenance,
     evidenceIds: item.evidenceIds,
     proposedBy: "Explorer",
+    scope: {
+      observation: "Simulated demonstration conditions.",
+      conditions: [],
+      limitations: ["Fixture demonstration only."],
+    },
+    falsifier:
+      "Collect independent evidence under the same conditions that contradicts this example.",
+    createdAt: capturedAt,
+    status: "proposed",
   })),
   challenges: findings.map((item, index) => ({
     id: `CH-00${index + 1}`,
     claimId: item.claimId,
     raisedBy: index % 2 ? "Breaker" : "Skeptic",
+    scanId,
+    createdAt: capturedAt,
+    provenance: "SIMULATED",
+    category: "collection-limitation",
     question: [
       "Does this repeat under the same conditions?",
       "Was the 404 a transient failure?",
