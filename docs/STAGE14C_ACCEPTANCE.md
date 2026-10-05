@@ -64,10 +64,12 @@ CLI `status:completed`/exit 0 means durable local publication, not that both pro
 ## Exact later command (placeholders only; NOT RUN)
 
 ```sh
-CROSSEXAM_OPENAI_API_KEY='<RUNTIME_PROJECT_SCOPED_CREDENTIAL>' pnpm provider:acceptance execute --release-id '<OWNER_APPROVED_SINGLE_USE_RELEASE_ID>'
+pnpm provider:acceptance execute --release-id '<OWNER_APPROVED_SINGLE_USE_RELEASE_ID>'
 ```
 
-This documents the runtime environment interface; the real value must be injected by approved secret bootstrap, not pasted literally into history. A release ID must be 1–64 ASCII letters/digits/underscore/hyphen, starting with a letter/digit; the shown placeholder is not a valid release. CLI accepts no endpoint/model/target/key/file overrides and has no default release ID. The key is not read by preview. The actual execute command has not been run in this task.
+The quotes make the angle brackets literal rather than shell redirection operators. Copying the placeholder unchanged must fail release-ID validation before credential lookup. The owner-approved release procedure supplies the real ID. A release ID must be 1–64 ASCII letters/digits/underscore/hyphen, starting with a letter/digit. CLI accepts no endpoint/model/target/key/file overrides and has no default release ID. The key is not read by preview. The actual execute command has not been run in this task.
+
+The owner-approved secret bootstrap launches the command from the repository root and supplies `CROSSEXAM_OPENAI_API_KEY` through the child environment. Plaintext must stay out of argv, shell history, CrossExam stdin, CrossExam working-tree or temporary files, stdout, stderr, logs and debug output. Plaintext must not be persisted. The secret manager may use its own protected storage or IPC internally; this contract does not prescribe a particular manager. Any temporary retrieval material must be cleaned up under the owner's policy. If the owner cannot verify the launch procedure, paid execution must stop.
 
 ## Current official pricing and illustrative estimate
 
