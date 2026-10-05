@@ -8,7 +8,7 @@ import {
 } from "@crossexam/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { liveReportFixture } from "../../../tests/fixtures/live-report";
-import { boundedJson, type UntrustedProviderResult } from "./provider";
+import { boundedJson, hash, type UntrustedProviderResult } from "./provider";
 import { createSkepticSession, type SkepticFakeConfiguration } from "./skeptic";
 import { createTribunalSession } from "./tribunal";
 
@@ -573,10 +573,45 @@ describe("Skeptic response authorization, privacy and cardinality", () => {
     expect(review.challenges).toHaveLength(6);
     expect(review.audit.acceptedIds).toHaveLength(6);
   });
-  it("returns honest no-valid-output for empty or entirely semantically rejected output", async () => {
+  it("completes a valid empty response with one call, hashes and no accepted/rejected items", async () => {
     const r = await parent();
-    for (const p of [envelope(), envelope(proposal(r, { claimId: "invented" }))])
-      expect((await runPayload(r, p)).audit.status).toBe("no-valid-output");
+    const before = JSON.stringify(r);
+    const payload = envelope();
+    const review = await runPayload(r, payload);
+    expect(review.challenges).toEqual([]);
+    expect(review.audit).toMatchObject({
+      status: "completed",
+      calls: 1,
+      acceptedIds: [],
+      rejectedCount: 0,
+      rejectionCodes: [],
+      rejectedCountKnown: true,
+      responseHash: hash(JSON.stringify(payload)),
+    });
+    expect(review.audit.requestHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(SkepticReviewSchema.safeParse(review).success).toBe(true);
+    expect(JSON.stringify(r)).toBe(before);
+  });
+  it("reports no-valid-output only when every proposed item is semantically rejected", async () => {
+    const r = await parent();
+    const payload = envelope(
+      proposal(r, { claimId: "invented" }),
+      proposal(r, { evidenceIds: ["E-invented"] }),
+      proposal(r, { question: "password=PRIVATE_MARKER" }, 1),
+    );
+    const review = await runPayload(r, payload);
+    expect(review.challenges).toEqual([]);
+    expect(review.audit).toMatchObject({
+      status: "no-valid-output",
+      calls: 1,
+      acceptedIds: [],
+      rejectedCount: 3,
+      rejectionCodes: ["UNAUTHORIZED_CLAIM", "UNAUTHORIZED_EVIDENCE", "TEXT_NOT_ALLOWED"],
+      rejectedCountKnown: true,
+      responseHash: hash(JSON.stringify(payload)),
+    });
+    expect(review.audit.requestHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(SkepticReviewSchema.safeParse(review).success).toBe(true);
   });
   it("handles malformed JSON, schema mismatch and a non-object envelope without raw persistence", async () => {
     const r = await parent();
@@ -782,6 +817,22 @@ describe("one fake call, lifecycle and offline replay", () => {
       reviewedChallengeIds: parentRun(r).challenges.map((c) => c.id),
     });
   });
+  it.each(["completed", "no-valid-output"] as const)(
+    "replays a matching %s review unchanged without another fake call",
+    async (status) => {
+      const r = await parent();
+      const payload =
+        status === "completed" ? envelope() : envelope(proposal(r, { claimId: "invented" }));
+      const original = await runPayload(r, payload);
+      expect(original.audit.status).toBe(status);
+      const run = vi.fn();
+      const reviewed = await createSkepticSession(r, config({ run }), original).run();
+      expect(reviewed).toEqual(original);
+      expect(reviewed.audit.responseHash).toBe(original.audit.responseHash);
+      expect(Object.isFrozen(reviewed.audit)).toBe(true);
+      expect(run).not.toHaveBeenCalled();
+    },
+  );
   it("normalizes key order but detects changes anywhere in the snapshot", async () => {
     const r = await parent();
     const review = await runPayload(r, envelope());
@@ -862,7 +913,7 @@ describe("one fake call, lifecycle and offline replay", () => {
     expect(() =>
       createSkepticSession(r, config(), {
         ...empty,
-        audit: { ...empty.audit, status: "completed" },
+        audit: { ...empty.audit, status: "no-valid-output" },
       }),
     ).toThrow("REPLAY_MISMATCH");
   });

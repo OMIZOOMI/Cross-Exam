@@ -1,6 +1,11 @@
 # Current state
 
-## Stage 15 offline Skeptic — COMPLETE for injected fake providers
+## Stage 15 offline Skeptic — corrected locally; CI pending
+
+**Empty-response correction (2026-10-05):** GPT-6 Astra Max clarified that valid challenges: [] is completed, with one call, request/response hashes and known zero accepted/rejected items. no-valid-output requires one or more proposals all rejected by semantic/reference/privacy checks, a positive known rejection count and at least one code. Neither state establishes agreement, safety, truth or a verdict. Existing parent binding, limits, privacy, cancellation and matching replay are unchanged. This correction starts clean at `a8e381d5cb7b3b2059ae5dbde32d9d8b5179655f` on the existing Stage 15 branch; no new branch, Stage 14C, public/browser/Linux, billing or provider execution change. Stage 15 acceptance is pending corrected offline validation and normal Node CI; Stage 16 must wait. Prior implementation results below are historical pre-correction results.
+
+
+Correction validation: `pnpm test:skeptic` **133 PASS / two files**; `pnpm test:tribunal` **252 PASS / four files**; `pnpm lint` PASS; `pnpm typecheck` PASS (root/all eight workspaces); `pnpm test` **1,245 PASS / 41 files**; `pnpm build` PASS. No local check failed. Added regression tests cover completed empty metadata, positive semantic/reference/privacy rejection counts, invalid completed/no-valid-output audit states and matching immutable replay of both valid states with zero new calls. Diff/privacy review and `git diff --check` passed; only the Skeptic host/contracts, their two test files, agent protocol and this Stage 15 record changed. No new browser/Linux acceptance is needed or run. Corrected implementation commit/push and ordinary offline Node CI are pending; Stage 15 is not yet accepted under the clarified rule.
 
 Started clean from `feature/stage14c-controlled-provider` at exact `e942e8e0faf2d77029edaef3956b8198e2a898db`; created only `feature/stage15-skeptic-offline`. Main remains `9bafdb5df0d97668abd66e09fa342610da323ace`. A separate `SkepticReview` v1 and `createSkepticSession` admit finalized fixture parents, project immutable allowlisted evidence/accepted claim/challenge views, validate one fake response and publish host-owned INFERRED/open challenges beside same-claim Breaker links. Snapshot-bound replay returns original audit/records without another call. No report v2/tribunal v1/two-role audit/canonical Challenge migration, Stage 14C release/operator/provider integration or public route.
 

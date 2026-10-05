@@ -525,11 +525,11 @@ export function createSkepticSession(
                     review.challenges.push({ challenge: canonical, relatedChallengeIds });
                     audit.acceptedIds.push(canonical.id);
                   }
-                  audit.status = review.challenges.length
-                    ? audit.rejectedCount
-                      ? "partial-rejection"
-                      : "completed"
-                    : "no-valid-output";
+                  if (review.challenges.length > 0) {
+                    audit.status = audit.rejectedCount ? "partial-rejection" : "completed";
+                  } else {
+                    audit.status = audit.rejectedCount > 0 ? "no-valid-output" : "completed";
+                  }
                 }
               }
             }

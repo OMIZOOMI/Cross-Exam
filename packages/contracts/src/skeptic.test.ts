@@ -5,6 +5,7 @@ import {
   SkepticChallengeProposalSchema,
   SkepticProposalSchema,
   SkepticRequestSchema,
+  type SkepticReview,
   SkepticReviewSchema,
   skepticSchemas,
 } from "./index";
@@ -134,5 +135,130 @@ describe("Skeptic v1 contracts", () => {
   });
   it("allows an honest empty proposal, without asserting accessibility or truth", () => {
     expect(SkepticProposalSchema.parse(proposal([])).challenges).toEqual([]);
+  });
+});
+
+/** Host-shaped synthetic review; no provider or parent mutation is involved. */
+const emptyReview = (): SkepticReview => {
+  const sha = "a".repeat(64);
+  const time = "2026-10-05T10:00:00.000Z";
+  return {
+    schemaVersion: 1,
+    id: "SR-empty",
+    scanId: "scan-owned",
+    parent: {
+      snapshotHash: sha,
+      tribunalRunId: "TR-parent",
+      authorizedEvidenceIds: ["E-1"],
+      reviewedClaimIds: ["C-parent"],
+      reviewedChallengeIds: [],
+    },
+    upstream: { status: "completed", explorerStatus: "completed", breakerStatus: "completed" },
+    challenges: [],
+    audit: {
+      schemaVersion: 1,
+      id: "SA-empty",
+      scanId: "scan-owned",
+      role: "Skeptic",
+      executionMode: "injected-fake",
+      provider: "fake-provider",
+      model: "fake-model",
+      policy: "skeptic-numeric-audit-v1",
+      policyHash: sha,
+      requestSchemaVersion: 1,
+      responseSchemaVersion: 1,
+      requestSchemaHash: sha,
+      responseSchemaHash: sha,
+      requestHash: sha,
+      responseHash: sha,
+      startedAt: time,
+      finishedAt: time,
+      elapsedMs: 0,
+      status: "completed",
+      usage: null,
+      acceptedIds: [],
+      rejectedCount: 0,
+      rejectedCountKnown: true,
+      rejectionCodes: [],
+      calls: 1,
+      outputTokenLimit: 1024,
+      timeoutMs: 20000,
+      semanticRetries: 0,
+    },
+  };
+};
+describe("Skeptic empty completion and all-rejected audit semantics", () => {
+  it("validates completed empty reviews with exactly one call, hashes and known zero rejections", () => {
+    const r = emptyReview();
+    expect(SkepticReviewSchema.parse(r)).toEqual(r);
+  });
+  it.each([
+    { calls: 0 },
+    { requestHash: null },
+    { responseHash: null },
+    { rejectedCount: 1 },
+    { rejectionCodes: ["DUPLICATE"] },
+    { rejectedCountKnown: false },
+  ])("rejects inconsistent completed empty audit: %j", (patch) => {
+    const r = emptyReview();
+    expect(SkepticReviewSchema.safeParse({ ...r, audit: { ...r.audit, ...patch } }).success).toBe(
+      false,
+    );
+  });
+  it("validates all-rejected output with positive known rejection count and code", () => {
+    const r = emptyReview();
+    r.audit.status = "no-valid-output";
+    r.audit.rejectedCount = 1;
+    r.audit.rejectionCodes = ["UNAUTHORIZED_CLAIM"];
+    expect(SkepticReviewSchema.parse(r)).toEqual(r);
+  });
+  it.each([
+    { calls: 0 },
+    { requestHash: null },
+    { responseHash: null },
+    { rejectedCount: 0 },
+    { rejectionCodes: [] },
+    { rejectedCountKnown: false },
+  ])("rejects inconsistent no-valid-output audit: %j", (patch) => {
+    const r = emptyReview();
+    const audit = {
+      ...r.audit,
+      status: "no-valid-output",
+      rejectedCount: 1,
+      rejectionCodes: ["UNAUTHORIZED_CLAIM"],
+      ...patch,
+    };
+    expect(SkepticReviewSchema.safeParse({ ...r, audit }).success).toBe(false);
+  });
+  it("rejects a zero-rejection no-valid-output review even with a rejection code", () => {
+    const r = emptyReview();
+    r.audit.status = "no-valid-output";
+    r.audit.rejectionCodes = ["UNAUTHORIZED_CLAIM"];
+    expect(SkepticReviewSchema.safeParse(r).success).toBe(false);
+  });
+  it("rejects accepted records in a no-valid-output review", () => {
+    const r = emptyReview();
+    r.challenges = [
+      {
+        challenge: {
+          id: "CH-S-test",
+          scanId: r.scanId,
+          createdAt: r.audit.startedAt,
+          raisedBy: "Skeptic",
+          provenance: "INFERRED",
+          status: "open",
+          claimId: "C-parent",
+          category: "collection-limitation",
+          question: "Is the observation window sufficient?",
+          evidenceIds: ["E-1"],
+        },
+        relatedChallengeIds: [],
+      },
+    ];
+    r.audit.acceptedIds = ["CH-S-test"];
+    r.audit.status = "no-valid-output";
+    r.audit.rejectedCount = 1;
+    r.audit.rejectionCodes = ["UNAUTHORIZED_CLAIM"];
+    expect(SkepticReviewSchema.safeParse(r).success).toBe(false);
   });
 });

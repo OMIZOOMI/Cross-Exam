@@ -255,7 +255,8 @@ export const SkepticReviewSchema = z
       (records.length && (a.calls !== 1 || !a.requestHash || !a.responseHash)) ||
       (a.status === "completed" &&
         (a.calls !== 1 ||
-          !records.length ||
+          !a.requestHash ||
+          !a.responseHash ||
           a.rejectedCount ||
           a.rejectionCodes.length ||
           !a.rejectedCountKnown)) ||
@@ -270,7 +271,12 @@ export const SkepticReviewSchema = z
       (a.calls === 0 &&
         !["configuration-failure", "skipped", "aborted", "timeout"].includes(a.status)) ||
       (a.status === "no-valid-output" &&
-        (a.calls !== 1 || !a.responseHash || !a.rejectedCountKnown))
+        (a.calls !== 1 ||
+          !a.responseHash ||
+          records.length ||
+          !a.rejectedCount ||
+          !a.rejectionCodes.length ||
+          !a.rejectedCountKnown))
     )
       fail();
     if (size(r) > SKEPTIC_LIMITS.reviewBytes)
