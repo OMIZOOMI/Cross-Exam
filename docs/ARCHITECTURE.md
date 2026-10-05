@@ -1,5 +1,11 @@
 # Architecture
 
+## Stage 15 separate offline Skeptic boundary
+
+`packages/contracts/src/skeptic.ts` defines separate strict proposal/view/request/review/audit schemas v1. `packages/agents/src/skeptic.ts` admits only finalized fixture-source Explorer/Breaker snapshots, constructs an immutable numeric/presence view, runs one explicitly injected fake adapter, authorizes parent references and publishes a separate snapshot-bound review. `proposal-safety.ts` extracts the existing text guard and normalized challenge meaning unchanged for shared Explorer/Breaker/Skeptic use. No model can create canonical IDs or alter parent evidence, claims, challenges, experiments, Findings or verdicts.
+
+ScanReport v2, TribunalRun v1 and its two-role audit tuple remain unchanged. Related Breaker links live next to canonical Skeptic Challenges in the separate artifact. Host-generated identity, original parent SHA-256, authorized references, schema/policy hashes and one bounded audit support immutable in-memory replay; there is no storage/admission integration or third role in Stage 14C. Stage 14C fixture/body, release ledger, two-call limit and provider-free recovery remain frozen. The owner deferred paid acceptance: **offline implemented, real-provider acceptance pending**. Browser/Linux/proxy/AppArmor/cgroups/public-launch behavior and UI are unchanged. See [agent protocol](AGENT_PROTOCOL.md) for exact bounds and replay semantics.
+
 ## Stage 14C controlled provider composition
 
 `packages/provider-openai` contains the exact official SDK and fixed Responses wire profile. `packages/controlled-provider` owns explicit fixture admission and private durable single-use dispatch slots/checkpoints/results. `packages/agents` remains provider-neutral: explicit external projection and host-only hooks preserve original proposal/reference/canonical authority. SDK dispatch needs a one-use host authorization after durable reservation. Recovery has no adapter, preserves original records/audits, and never makes provider calls. ScanReport v2 is retained with optional audit extensions; the live-only web store and public launch paths are unchanged. See [Stage 14C details](STAGE14C_PROVIDER.md). This is offline implementation, not paid acceptance or deployment readiness.

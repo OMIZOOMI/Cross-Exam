@@ -2,7 +2,7 @@ name: Tribunal trust boundary
 
 on:
   push:
-    branches: ["feature/stage14-explorer-breaker", "feature/stage14c-controlled-provider"]
+    branches: ["feature/stage14-explorer-breaker", "feature/stage14c-controlled-provider", "feature/stage15-skeptic-offline"]
 
 permissions:
   contents: read
@@ -26,6 +26,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm test:skeptic
       - run: pnpm test:tribunal
       - run: pnpm test:provider
       - run: pnpm test:provider-ledger

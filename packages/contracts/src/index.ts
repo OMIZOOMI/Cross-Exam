@@ -2,6 +2,7 @@ import { z } from "zod";
 import { CanonicalChallengeSchema, CanonicalClaimSchema, TribunalRunSchema } from "./tribunal";
 
 export * from "./browser-evidence";
+export * from "./skeptic";
 export * from "./tribunal";
 
 export const ProvenanceSchema = z.enum(["OBSERVED", "DERIVED", "INFERRED", "SIMULATED"]);

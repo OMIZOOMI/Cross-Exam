@@ -125,7 +125,6 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - Stage 13 is **COMPLETE for owned controlled fixtures**. Public arbitrary browser scanning stays DISABLED. Final docs use `[skip ci]`; accepted code is unchanged.
 - Next task only after completion: **Stage 14 Explorer + Breaker Agent Architecture**.
 
-
 ## Stage 14B — Explorer + Breaker trust-boundary implementation
 
 - [x] Verify clean accepted source `5e510479ac3f44bcfe173b1d926a8a339f83b799`; create only `feature/stage14-explorer-breaker`, preserve main/prior milestones.
@@ -158,3 +157,17 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] One full required local pass and privacy/security diff review: lint/typecheck/build PASS; 119 tribunal, 66 provider, 72 ledger, 29 operator and 1,112 full tests / 39 files PASS. Existing provider/security/public-admission code unchanged.
 - [x] Push only the existing feature branch: operator implementation `b57403546d5cb69395db8836e60cf49843a7ffd9`; normal Ubuntu Node run **37263234119 PASS**, including 29 operator and 1,112 full tests. No CI retry/new Linux run; final receipt docs use `[skip ci]`. Acceptance preparation delivered.
 - [ ] Separately owner-approved paid acceptance remains **NOT AUTHORIZED / NOT RUN**. No credentials, account-setting changes or user billing in preparation.
+
+## Stage 15 — offline Skeptic trust boundary
+
+- [x] Verify clean accepted `feature/stage14c-controlled-provider` source `e942e8e0faf2d77029edaef3956b8198e2a898db`; create only `feature/stage15-skeptic-offline` and preserve main/prior milestones.
+- [x] Separate strict SkepticProposal/SkepticReview/audit v1; unchanged ScanReport v2, TribunalRun v1, two-role tuple and canonical Challenge.
+- [x] Finalized fixture-parent admission, explicit immutable numeric/presence projection, upstream failure visibility, cited-evidence omission rejection and model-text privacy recheck.
+- [x] One bounded injected fake call, host-only reference authorization/canonical authority, same-claim context links, shared deduplication, partial rejection and cancellation/late-response safety.
+- [x] Snapshot-bound schema/semantic replay without another call; immutable original identities/audit, no storage or paid-idempotency claim.
+- [x] Focused hostile output, privacy, limits, lifecycle, parent/replay and unchanged-array coverage; preserve Stage 14B/14C regressions and acceptance packet identity.
+- [x] Complete local validation and privacy/security review: 114 Skeptic, 233 combined tribunal/contracts, 66 provider, 72 ledger, 29 operator and 1,226 full units; lint/typecheck/build/smoke PASS; final E2E 22 PASS. Initial mobile E2E failed once then passed focused/full reruns; exact transient cause unproven, no UI change.
+- [x] Verify unchanged Stage 14C packet/body: 3,540 bytes, SHA-256 `426a10b6b1b54ac683fa8427ba228e8f8ccd444149763d650a0840d4ccf130c4`; prompt's repeated suffix is a typo.
+- [ ] Feature-only commit/push and ordinary offline Node CI; record actual receipt after verification.
+- **Stage 14C remains offline implemented, real-provider acceptance pending. The owner explicitly deferred the paid test.** No credential/release/call, new Linux run, UI/billing/public admission, Reproducer, Judge, experiments or verdict work in Stage 15.
+- Recommended next task after Stage 15 acceptance: **design the offline Reproducer trust boundary**, separately authorized before implementation.
