@@ -2,6 +2,19 @@
 
 Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery promises. Keep each task independently reviewable.
 
+## Stage 16A — offline Reproducer planning/authorization
+
+- [x] Separate strict v1 request/proposal/plan/run/authorization metadata/audits; no report experiment or Tribunal tuple changes.
+- [x] Shared fixture parent + optional matching Skeptic admission; immutable provider-safe view and reference/privacy checks.
+- [x] Exact empty/one/all-rejected semantics; whole two-plan rejection; no partial-rejection in this role.
+- [x] Fixed host operation-ID interface without implementation; synchronous one-use opaque authorization, fake executor and SIMULATED-only result.
+- [x] Cancellation/deadlines/late-result rejection, consumed outcome-unknown and original-object replay; no external/durable recovery claim.
+- [x] Focused/regression/full local validation and diff/privacy review: 123 Reproducer / 133 Skeptic / 1,368 full unit tests, lint/typecheck/build/diff check PASS.
+- [ ] Ordinary offline Node CI acceptance.
+- [ ] Later separately authorized controlled-fixture execution and observed-result acceptance; no real operation in Stage 16A.
+
+Public arbitrary browser scanning stays disabled. No credentials, provider calls, paid releases, Stage 14C execution, Linux redesign or billing/paywalls.
+
 ## Day 1 — foundation
 
 1. [x] Inspect workspace; create isolated `crossexam` directory without changing other projects.

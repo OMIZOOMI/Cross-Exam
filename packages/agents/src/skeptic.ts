@@ -313,6 +313,15 @@ function replay(
   }
 }
 
+/** Internal shared admission for downstream offline roles; performs no adapter call. */
+export function admitOfflineReviewParent(input: unknown, existingReview?: unknown) {
+  const snapshot = parentSnapshot(input);
+  const prepared = prepare(snapshot);
+  const review =
+    existingReview === undefined ? undefined : replay(existingReview, snapshot, prepared);
+  return Object.freeze({ snapshot, prepared, review });
+}
+
 /** A separate offline snapshot review. Never mutates ScanReport or the paid-call ledger. */
 export function createSkepticSession(
   input: unknown,
