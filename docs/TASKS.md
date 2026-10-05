@@ -10,7 +10,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 - [x] Fixed host operation-ID interface without implementation; synchronous one-use opaque authorization, fake executor and SIMULATED-only result.
 - [x] Cancellation/deadlines/late-result rejection, consumed outcome-unknown and original-object replay; no external/durable recovery claim.
 - [x] Focused/regression/full local validation and diff/privacy review: 123 Reproducer / 133 Skeptic / 1,368 full unit tests, lint/typecheck/build/diff check PASS.
-- [ ] Ordinary offline Node CI acceptance.
+- [x] Ordinary offline Node CI acceptance: run 37365200055 attempt 2 PASS on ec737a24ff59ae4199816c93b102fd92f91eb9b8, including build. Attempt 1 never acquired a hosted runner; one infrastructure-only retry, no code/security change.
 - [ ] Later separately authorized controlled-fixture execution and observed-result acceptance; no real operation in Stage 16A.
 
 Public arbitrary browser scanning stays disabled. No credentials, provider calls, paid releases, Stage 14C execution, Linux redesign or billing/paywalls.
