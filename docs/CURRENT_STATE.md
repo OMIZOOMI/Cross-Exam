@@ -2,7 +2,7 @@
 
 Updated 2026-10-05. Current task: **Stage 14C — controlled real-provider implementation**.
 
-**Offline implementation and full local validation passed; normal CI pending. Paid acceptance NOT performed.** Started clean at accepted `576e718bee50f01ddaf91a6b8f793bea69a82f55` (implementation parent `784d053`), created only `feature/stage14c-controlled-provider`. Main/origin/main and accepted source branches remain frozen.
+**Offline implementation, full local validation and normal Ubuntu Node CI passed. Paid acceptance NOT performed; Stage 14C is not fully accepted.** Started clean at accepted `576e718bee50f01ddaf91a6b8f793bea69a82f55` (implementation parent `784d053`), created only `feature/stage14c-controlled-provider`. Main/origin/main and accepted source branches remain frozen.
 
 Official OpenAI SDK 7.28.0 is isolated in `packages/provider-openai`; provider-neutral host hooks/external projection and private `packages/controlled-provider` release ledger preserve Stage 14B authority. Owned numeric fixture only, exact outbound hash/capability, durable single-use slots, canonical checkpoints and provider-free recovery. Report v2 is unchanged; audit extensions are optional. No credentials/real API calls, UI, browser/proxy/isolation/public-admission changes. See [Stage 14C boundary and limitations](STAGE14C_PROVIDER.md).
 
@@ -10,7 +10,9 @@ Full required local validation, one final pass: `pnpm lint` PASS; `pnpm typechec
 
 The 138 new offline tests include exact request/export keys, fixed SDK settings, nullable wire semantics, incomplete/refusal/error/usage handling, streaming byte bounds, timeout/abort/late rejection, single-use dispatch authorization, fixture admission, all role/checkpoint/result interruption stages, corrupt/missing/private artifacts, capacity, concurrency and actual child-process crashes. Recovery preserves original records and never calls transport. Prior 119 tribunal regressions pass. A private same-host local store is not distributed storage or hostile same-user containment; ambiguous/corrupt locks fail closed and may need operator maintenance.
 
-Full diff/privacy review: SDK is isolated, no credential lookup/paid API call, raw provider persistence or generic report/evidence export. No web/scanner/UI, browser-worker, engine/proxy/SSRF, AppArmor/root/cgroup/cleanup or public-launcher files changed; no generated reports/profiles/credentials committed. No new Linux run is required. Normal offline Node workflow covers the new feature branch with no API key or provider call. Feature-only CI evidence will be recorded after push.
+Full diff/privacy review: SDK is isolated, no credential lookup/paid API call, raw provider persistence or generic report/evidence export. No web/scanner/UI, browser-worker, engine/proxy/SSRF, AppArmor/root/cgroup/cleanup or public-launcher files changed; no generated reports/profiles/credentials committed. No new Linux run is required. Normal offline Node workflow covers the new feature branch with no API key or provider call.
+
+Implementation commit **8eecd805f44e0b763b68d72978a3c9ae10e60e00** was pushed only to `feature/stage14c-controlled-provider`. [Normal Ubuntu Node CI run 37261315387](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37261315387) passed on that exact SHA: frozen install, lint, root/all workspace typecheck, 119 tribunal tests, 66 provider tests, 72 ledger tests and 1,083 full tests / 38 files. One normal run; no CI fix/retry, paid API call or new Linux-isolation run. The production build passed locally. Final evidence documentation is a separate `[skip ci]` commit with accepted implementation unchanged. Main and all prior accepted local/remote branch heads remain frozen; no PR, merge or force-push.
 
 Recommended next task: **separately owner-approved controlled paid acceptance**, bound to the exact fixture/release, API project, data policy and spending allowance. Real provider access/behavior/billing remain unverified; Stage 14C is not fully accepted on offline evidence.
 
@@ -58,7 +60,7 @@ Recommended next task: **Stage 14C — reviewed real-provider adapter boundary**
 
 ## Accepted prior milestones (historical handoffs)
 
-The sections below retain earlier milestone evidence and their then-next tasks. The Stage 14B section above is the current state.
+The sections below retain earlier milestone evidence and their then-next tasks. The Stage 14C section above is the current state.
 
 ## Stage 13 implementation
 

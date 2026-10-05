@@ -33,7 +33,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 
 ## Day 5 — bounded tribunal
 
-17. [ ] **PARTIAL:** Stage 14B fake-provider proposal validation, host authority/export boundary and time/token budgets implemented; real adapters/configuration/transport remain Stage 14C.
+17. [ ] **PARTIAL:** Stage 14B trust boundary and Stage 14C controlled adapter/durable dispatch implemented and offline-validated. Real-provider paid acceptance remains separately owner-authorized; normal web routes cannot invoke it.
 18. [ ] Implement bounded challenge/reproduction/judging over structured state with deterministic action authorization.
 
 ## Day 6 — useful conclusions
@@ -146,5 +146,5 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Host-only durable release/role slots, finalized canonical checkpoints, original-ID recovery with zero transport calls and private bounded local storage.
 - [x] Offline adversarial/SDK/fault-injection/multi-process regression coverage; no credential or paid call.
 - [x] Complete one full local validation pass and privacy/security diff review: 119 tribunal, 66 provider, 72 ledger and 1,083 full tests; lint/typecheck/build PASS.
-- [ ] Feature-only push and normal offline CI evidence.
+- [x] Push only `feature/stage14c-controlled-provider`: implementation `8eecd805f44e0b763b68d72978a3c9ae10e60e00`; normal Ubuntu Node run **37261315387 PASS** with 119 tribunal, 66 provider, 72 ledger and 1,083 full tests. No CI retry/new Linux run; final evidence docs use `[skip ci]`.
 - [ ] **Paid acceptance deferred:** separately owner-approved exact fixture/release, API project, export/data policy and spending allowance. Offline success does not fully accept Stage 14C.
