@@ -29,4 +29,5 @@ jobs:
       - run: pnpm test:tribunal
       - run: pnpm test:provider
       - run: pnpm test:provider-ledger
+      - run: pnpm test:provider-operator
       - run: pnpm test

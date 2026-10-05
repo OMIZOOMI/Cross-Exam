@@ -148,3 +148,13 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Complete one full local validation pass and privacy/security diff review: 119 tribunal, 66 provider, 72 ledger and 1,083 full tests; lint/typecheck/build PASS.
 - [x] Push only `feature/stage14c-controlled-provider`: implementation `8eecd805f44e0b763b68d72978a3c9ae10e60e00`; normal Ubuntu Node run **37261315387 PASS** with 119 tribunal, 66 provider, 72 ledger and 1,083 full tests. No CI retry/new Linux run; final evidence docs use `[skip ci]`.
 - [ ] **Paid acceptance deferred:** separately owner-approved exact fixture/release, API project, export/data policy and spending allowance. Offline success does not fully accept Stage 14C.
+
+## Stage 14C — controlled acceptance preparation
+
+- [x] Verify clean exact source `366b425d84c8f605847b3fd2604979d5d2334b1d`; keep main and prior accepted branches unchanged.
+- [x] Operator-only keyless/no-release preview and explicit-release runtime execution wiring; reuse fixed adapter/admission/dispatch/recovery without public routes or broader fixtures.
+- [x] Owner packet with exact 3,540-byte Explorer body and fixture hash, conditional Breaker export, bounded limits, local recovery, later placeholder command and current official pricing estimate.
+- [x] 29 focused offline tests: preview isolation, configuration/argument denial, fixed-profile execution, interrupted/repeated releases, cancellation, privacy and packet identity.
+- [x] One full required local pass and privacy/security diff review: lint/typecheck/build PASS; 119 tribunal, 66 provider, 72 ledger, 29 operator and 1,112 full tests / 39 files PASS. Existing provider/security/public-admission code unchanged.
+- [ ] Feature-only delivery and normal offline CI evidence.
+- [ ] Separately owner-approved paid acceptance remains **NOT AUTHORIZED / NOT RUN**. No credentials, account-setting changes or user billing in preparation.

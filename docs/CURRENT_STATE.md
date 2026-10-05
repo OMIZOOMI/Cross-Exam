@@ -1,6 +1,20 @@
 # Current state
 
-Updated 2026-10-05. Current task: **Stage 14C — controlled real-provider implementation**.
+Updated 2026-10-05. Current task: **Stage 14C — prepare controlled acceptance, no real call**.
+
+Started clean on local/remote `feature/stage14c-controlled-provider` at exactly `366b425d84c8f605847b3fd2604979d5d2334b1d`; prior validated offline implementation `8eecd805f44e0b763b68d72978a3c9ae10e60e00`. Main remains `9bafdb5df0d97668abd66e09fa342610da323ace`. One coding agent, no delegation; only the existing authorized feature branch is modified.
+
+Operator entrypoint: `pnpm provider:acceptance preview` / `execute --release-id <explicit ID>`, in `scripts/provider-acceptance.ts` and its helper. Preview never reads a key, creates a release, calls network or writes the controlled store. It shows the exact immutable fixture/hash and the **3,540-byte Explorer body** below the 16 KiB limit; Breaker shows fixed export fields/limits with no invented claims. Execute is wired to `CROSSEXAM_OPENAI_API_KEY` supplied only by trusted runtime bootstrap, and reuses the unchanged profile/host admission/durable dispatch/recovery API. No report/model/endpoint/key-file override, default release ID or retry. stdout is bounded host receipt metadata, errors are stable codes, SIGINT/SIGTERM uses existing cancellation. No application route imports this entrypoint.
+
+[Owner acceptance packet](STAGE14C_ACCEPTANCE.md): exact fixture snapshot SHA-256 `c418e840c4d0ea98cca6554fe008d41612423202e86e008c43e5088c1ee7c7ad`, complete Explorer body/hash, conditional Breaker policy, deadlines/token caps/two-call maximum, private storage/recovery limitations, project/model/data-policy checks, later placeholder command and current official pricing with an illustrative estimate rather than a cash ceiling. **No actual credential was read, no billed release was created, and no real call was made.** Only keyless preview was run; synthetic execution tests use fake transport in temporary stores. CrossExam remains free for users; no subscriptions, paid tiers, paywalls or user billing.
+
+Focused operator tests: **29 PASS**, including packet/body identity, no preview key/network/release/write, missing/invalid arguments/configuration, fixed-profile one-call-per-role, sanitized failures, cancellation, repeated/interrupted-release recovery and no synthetic key/reasoning persistence. One complete required local validation pass: `pnpm lint` PASS, `pnpm typecheck` PASS (root/all eight workspaces), `pnpm test:tribunal` 119 PASS, `pnpm test:provider` 66 PASS, `pnpm test:provider-ledger` 72 PASS, `pnpm test:provider-operator` 29 PASS, `pnpm test` **1,112 PASS / 39 files**, `pnpm build` PASS. No repeated full suite or build/config workaround. Normal offline CI pending feature push.
+
+Privacy/security diff review passed: changes are limited to the operator script/helper/tests, package test/entry scripts, test inclusion, one keyless workflow step and accurate documentation/packet. Existing provider/controlled-host/contracts/fixtures and all web/scanner/browser/proxy/SSRF/AppArmor/root/cgroup/cleanup/public-launcher source remain unchanged. No secrets, actual credentials, reports, profiles or captured provider data are committed; the intentional packet contains only the non-secret hand-authored fixture projection. No subscriptions/paywalls/user billing and no API/account-setting operation. No new Linux run is required.
+
+Recommended next task: **separately owner-authorized controlled paid acceptance**, after exact packet/release, API project, data policy and spending allowance approval. Preparation does not authorize that step or fully accept Stage 14C; real-provider behavior/access/billing and account policy remain unverified.
+
+## Previously delivered Stage 14C offline implementation
 
 **Offline implementation, full local validation and normal Ubuntu Node CI passed. Paid acceptance NOT performed; Stage 14C is not fully accepted.** Started clean at accepted `576e718bee50f01ddaf91a6b8f793bea69a82f55` (implementation parent `784d053`), created only `feature/stage14c-controlled-provider`. Main/origin/main and accepted source branches remain frozen.
 
@@ -60,7 +74,7 @@ Recommended next task: **Stage 14C — reviewed real-provider adapter boundary**
 
 ## Accepted prior milestones (historical handoffs)
 
-The sections below retain earlier milestone evidence and their then-next tasks. The Stage 14C section above is the current state.
+The sections below retain earlier milestone evidence and their then-next tasks. The controlled acceptance preparation section above is the current state.
 
 ## Stage 13 implementation
 

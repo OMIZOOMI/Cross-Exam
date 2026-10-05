@@ -28,7 +28,9 @@
     "test:performance": "vitest run apps/browser-worker/src/performance.test.ts && playwright test -c browser-security.config.ts performance.spec.ts",
     "test:accessibility": "vitest run apps/browser-worker/src/accessibility.test.ts && playwright test -c browser-security.config.ts accessibility.spec.ts",
     "test:provider": "vitest run packages/provider-openai/src",
-    "test:provider-ledger": "vitest run packages/controlled-provider/src"
+    "test:provider-ledger": "vitest run packages/controlled-provider/src",
+    "test:provider-operator": "vitest run scripts/provider-acceptance/operator.test.ts",
+    "provider:acceptance": "tsx scripts/provider-acceptance.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
