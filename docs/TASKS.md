@@ -156,5 +156,5 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Owner packet with exact 3,540-byte Explorer body and fixture hash, conditional Breaker export, bounded limits, local recovery, later placeholder command and current official pricing estimate.
 - [x] 29 focused offline tests: preview isolation, configuration/argument denial, fixed-profile execution, interrupted/repeated releases, cancellation, privacy and packet identity.
 - [x] One full required local pass and privacy/security diff review: lint/typecheck/build PASS; 119 tribunal, 66 provider, 72 ledger, 29 operator and 1,112 full tests / 39 files PASS. Existing provider/security/public-admission code unchanged.
-- [ ] Feature-only delivery and normal offline CI evidence.
+- [x] Push only the existing feature branch: operator implementation `b57403546d5cb69395db8836e60cf49843a7ffd9`; normal Ubuntu Node run **37263234119 PASS**, including 29 operator and 1,112 full tests. No CI retry/new Linux run; final receipt docs use `[skip ci]`. Acceptance preparation delivered.
 - [ ] Separately owner-approved paid acceptance remains **NOT AUTHORIZED / NOT RUN**. No credentials, account-setting changes or user billing in preparation.

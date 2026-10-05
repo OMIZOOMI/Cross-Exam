@@ -2,6 +2,8 @@
 
 Prepared 2026-10-05 from clean accepted source `366b425d84c8f605847b3fd2604979d5d2334b1d` on `feature/stage14c-controlled-provider`; offline adapter implementation `8eecd805f44e0b763b68d72978a3c9ae10e60e00`.
 
+Operator code revision: **b57403546d5cb69395db8836e60cf49843a7ffd9**. [Offline Ubuntu Node CI run 37263234119](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37263234119) passed on that exact revision: lint, root/workspace typecheck, 119 tribunal / 66 provider / 72 ledger / 29 operator tests and 1,112 full tests. The production build also passed locally. Subsequent delivery documentation changes do not alter the executable, fixture or outbound body.
+
 **PREPARATION ONLY. No real call was made, no actual credential was read, and no billed release was created or consumed. This packet does not authorize execution.** Offline fake-transport test releases are isolated in temporary directories. CrossExam remains free for users; there are no subscriptions, paid tiers, paywalls or user billing. Any later API cost is an owner-approved operator expense.
 
 ## Fixture identity
