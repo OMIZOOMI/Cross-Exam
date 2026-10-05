@@ -6,18 +6,25 @@ import {
   type Claim,
   ExplorerProposalSchema,
   TRIBUNAL_LIMITS as L,
+  ProviderReceiptSchema,
   ProviderRequestSchema,
   type RoleView,
   type ScanReport,
   ScanReportSchema,
   TRIBUNAL_INSTRUCTIONS,
   TribunalIdSchema,
-  type TribunalRun,
   tribunalWireSchemas,
 } from "@crossexam/contracts";
+import {
+  HostPersistenceError,
+  RoleCheckpointSchema,
+  reportFromCheckpoints,
+  type TribunalHostHooks,
+} from "./checkpoint";
 import { evidenceCatalog, roleView } from "./evidence-digest";
 import {
   BoundaryError,
+  type DispatchAuthorization,
   decodePayload,
   hash,
   immutable,
@@ -39,6 +46,13 @@ const failureStatus = {
   "transport-error": "transport-failure",
   timeout: "timeout",
   abort: "aborted",
+  "rate-limit": "rate-limited",
+  quota: "quota-blocked",
+  refusal: "provider-refusal",
+  incomplete: "incomplete-output",
+  limit: "limit-exceeded",
+  "schema-error": "schema-failure",
+  "usage-error": "limit-exceeded",
 } as const;
 const normalize = (value: string) =>
   value.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
@@ -92,10 +106,18 @@ function fields(value: unknown, allowed: string[]): Record<string, unknown> {
 }
 function usage(value: unknown, cap: number): AgentRunAudit["usage"] {
   if (value === undefined) return { inputTokens: null, outputTokens: null };
-  const v = fields(value, ["inputTokens", "outputTokens"]);
+  const v = fields(value, ["inputTokens", "outputTokens", "reasoningTokens"]);
   const valid = (n: unknown, max: number) =>
     n === null || (typeof n === "number" && Number.isSafeInteger(n) && n >= 0 && n <= max);
   if (!valid(v.inputTokens, 32768) || !valid(v.outputTokens, cap)) throw new Error("USAGE_LIMIT");
+  if (
+    v.reasoningTokens !== undefined &&
+    (!valid(v.reasoningTokens, cap) ||
+      (typeof v.reasoningTokens === "number" &&
+        typeof v.outputTokens === "number" &&
+        v.reasoningTokens > v.outputTokens))
+  )
+    throw new Error("USAGE_LIMIT");
   return v as AgentRunAudit["usage"];
 }
 function proposalCount(value: unknown, role: Role) {
@@ -112,6 +134,7 @@ function proposalCount(value: unknown, role: Role) {
 export function createTribunalSession(
   input: unknown,
   providers: Readonly<Record<Role, ProviderConfiguration>>,
+  hooks?: TribunalHostHooks,
 ) {
   const snapshot = immutable(ScanReportSchema.parse(input));
   TribunalIdSchema.parse(snapshot.summary.id);
@@ -155,6 +178,7 @@ export function createTribunalSession(
       }
       throw new Error("Host identity allocation failed");
     };
+    const runId = id("TR");
     const claims: Claim[] = [];
     const challenges: Challenge[] = [];
     const claimKeys = new Set(snapshot.claims.map(claimKey));
@@ -187,6 +211,9 @@ export function createTribunalSession(
         timeoutMs: 20000,
         semanticRetries: 0,
       };
+      if (configuration[role].executionProfile)
+        audit.executionProfile = configuration[role].executionProfile;
+      if (configuration[role].reasoning) audit.reasoning = { ...configuration[role].reasoning };
       const reject = (code: Code, n = 1) => {
         audit.rejectedCount = Math.min(L.responseBytes, audit.rejectedCount + n);
         if (!audit.rejectionCodes.includes(code)) audit.rejectionCodes.push(code);
@@ -231,6 +258,29 @@ export function createTribunalSession(
           reject("PROVIDER_FAILURE", 0);
           return audit;
         }
+        if (configuration[role].executionProfile) audit.requestHash = null;
+        const prepared = adapter.prepare?.(request);
+        if (prepared) {
+          audit.requestHash = prepared.requestHash;
+          audit.requestSchemaHash = prepared.requestSchemaHash;
+          audit.responseSchemaHash = prepared.responseSchemaHash;
+        }
+        let authorization: DispatchAuthorization | undefined;
+        if (hooks) {
+          // Await storage ownership before starting dispatch; never leave a late writer after timeout.
+          try {
+            authorization =
+              (await hooks.beforeDispatch(role, audit.requestHash as string)) || undefined;
+          } catch {
+            throw new HostPersistenceError();
+          }
+          if (
+            signal?.aborted ||
+            performance.now() - roleStart >= L.roleMs ||
+            performance.now() - start >= L.totalMs
+          )
+            throw new HostPersistenceError();
+        }
         const controller = new AbortController();
         let timer: ReturnType<typeof setTimeout> | undefined;
         let aborted: (() => void) | undefined;
@@ -257,16 +307,25 @@ export function createTribunalSession(
             Math.max(0, remaining),
           );
         });
-        audit.calls = 1;
         let untrusted: unknown;
         try {
           untrusted = await Promise.race([
-            Promise.resolve().then(() =>
-              adapter.run(request, Object.freeze({ signal: controller.signal })),
-            ),
+            Promise.resolve().then(async () => {
+              if (controller.signal.aborted || signal?.aborted)
+                return { kind: "failure", category: "abort" };
+              if (
+                performance.now() - roleStart >= L.roleMs ||
+                performance.now() - start >= L.totalMs
+              )
+                return { kind: "failure", category: "timeout" };
+              audit.calls = 1;
+              const options = Object.freeze({ signal: controller.signal, authorization });
+              return prepared ? prepared.dispatch(options) : adapter.run(request, options);
+            }),
             stop,
           ]);
-        } catch {
+        } catch (error) {
+          if (error instanceof HostPersistenceError) throw error;
           untrusted = { kind: "failure", category: "transport-error" };
         } finally {
           clearTimeout(timer);
@@ -283,10 +342,22 @@ export function createTribunalSession(
           reject("DEADLINE", 0);
           return audit;
         }
-        const envelope = fields(untrusted, ["kind", "payload", "usage", "category"]);
+        const envelope = fields(untrusted, ["kind", "payload", "usage", "category", "receipt"]);
+        if (envelope.receipt !== undefined)
+          audit.providerReceipt = ProviderReceiptSchema.parse(envelope.receipt);
+        try {
+          audit.usage = usage(envelope.usage, audit.outputTokenLimit);
+        } catch {
+          audit.status = "limit-exceeded";
+          audit.rejectedCountKnown = false;
+          reject("USAGE_LIMIT", 0);
+          return audit;
+        }
         if (envelope.kind === "failure") {
           if (
-            Object.keys(envelope).length !== 2 ||
+            Object.keys(envelope).some(
+              (k) => !["kind", "category", "receipt", "usage"].includes(k),
+            ) ||
             typeof envelope.category !== "string" ||
             !Object.hasOwn(failureStatus, envelope.category)
           )
@@ -301,14 +372,6 @@ export function createTribunalSession(
           Object.hasOwn(envelope, "category")
         )
           throw new BoundaryError("INVALID_PROVIDER_RESULT");
-        try {
-          audit.usage = usage(envelope.usage, audit.outputTokenLimit);
-        } catch {
-          audit.status = "limit-exceeded";
-          audit.rejectedCountKnown = false;
-          reject("USAGE_LIMIT", 0);
-          return audit;
-        }
         const decoded = decodePayload(envelope.payload);
         audit.responseHash = decoded.responseHash;
         // Structure failures reject the entire response. Semantic failures reject individual proposals.
@@ -402,6 +465,7 @@ export function createTribunalSession(
             : "no-valid-output";
         return audit;
       } catch (error) {
+        if (error instanceof HostPersistenceError) throw error;
         const code: Code = error instanceof BoundaryError ? error.code : "INVALID_PROVIDER_RESULT";
         if (error instanceof BoundaryError && error.responseHash)
           audit.responseHash = error.responseHash;
@@ -419,30 +483,34 @@ export function createTribunalSession(
         audit.elapsedMs = Math.max(0, performance.now() - roleStart);
       }
     }
-    const explorer = await runRole("Explorer");
-    const breaker = await runRole("Breaker");
-    const statuses = [explorer.status, breaker.status];
-    const run: TribunalRun = {
-      schemaVersion: 1,
-      id: id("TR"),
-      scanId,
-      startedAt,
-      finishedAt: new Date().toISOString(),
-      elapsedMs: Math.max(0, performance.now() - start),
-      status: statuses.includes("aborted")
-        ? "aborted"
-        : statuses.every((s) => s === "completed")
-          ? "completed"
-          : claims.length
-            ? "partial"
-            : "failed",
-      authorizedEvidenceIds: [...authorized],
-      claims,
-      challenges,
-      agentRuns: [explorer, breaker],
+    const checkpoint = async (role: Role) => {
+      const audit = await runRole(role);
+      const value = immutable(
+        RoleCheckpointSchema.parse({
+          schemaVersion: 1,
+          runId,
+          scanId,
+          startedAt,
+          finishedAt: new Date().toISOString(),
+          elapsedMs: Math.max(0, performance.now() - start),
+          authorizedEvidenceIds: [...authorized],
+          audit,
+          claims: [...claims],
+          challenges: [...challenges],
+        }),
+      );
+      if (hooks) {
+        try {
+          await hooks.checkpoint(value);
+        } catch {
+          throw new HostPersistenceError();
+        }
+      }
+      return value;
     };
-    // Validate the complete next snapshot before publishing any overlay mutation.
-    return immutable(ScanReportSchema.parse({ ...snapshot, tribunalRuns: [run] }));
+    const explorer = await checkpoint("Explorer");
+    const breaker = await checkpoint("Breaker");
+    return reportFromCheckpoints(snapshot, explorer, breaker);
   };
   return Object.freeze({
     run: (options: { signal?: AbortSignal } = {}) => (once ??= execute(options.signal)),

@@ -1,5 +1,9 @@
 # Architecture
 
+## Stage 14C controlled provider composition
+
+`packages/provider-openai` contains the exact official SDK and fixed Responses wire profile. `packages/controlled-provider` owns explicit fixture admission and private durable single-use dispatch slots/checkpoints/results. `packages/agents` remains provider-neutral: explicit external projection and host-only hooks preserve original proposal/reference/canonical authority. SDK dispatch needs a one-use host authorization after durable reservation. Recovery has no adapter, preserves original records/audits, and never makes provider calls. ScanReport v2 is retained with optional audit extensions; the live-only web store and public launch paths are unchanged. See [Stage 14C details](STAGE14C_PROVIDER.md). This is offline implementation, not paid acceptance or deployment readiness.
+
 ## Stage 14B host-owned tribunal boundary
 
 `packages/contracts/src/tribunal.ts` defines strict proposal/digest/view/audit schemas v1. `packages/agents/src/evidence-digest.ts` projects only code-specific numeric/presence facts; provider export never uses generic Evidence.data, website strings or raw report objects. `provider.ts` limits untrusted payload serialization/parsing and defines injected response/failure adapters. `tribunal.ts` owns immutable role views, one-call deadlines, reference authorization, deduplication, canonical IDs/attribution/provenance and replay-safe publication.

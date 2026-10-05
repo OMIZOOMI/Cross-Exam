@@ -1,5 +1,21 @@
 # Current state
 
+Updated 2026-10-05. Current task: **Stage 14C — controlled real-provider implementation**.
+
+**Offline implementation and full local validation passed; normal CI pending. Paid acceptance NOT performed.** Started clean at accepted `576e718bee50f01ddaf91a6b8f793bea69a82f55` (implementation parent `784d053`), created only `feature/stage14c-controlled-provider`. Main/origin/main and accepted source branches remain frozen.
+
+Official OpenAI SDK 7.28.0 is isolated in `packages/provider-openai`; provider-neutral host hooks/external projection and private `packages/controlled-provider` release ledger preserve Stage 14B authority. Owned numeric fixture only, exact outbound hash/capability, durable single-use slots, canonical checkpoints and provider-free recovery. Report v2 is unchanged; audit extensions are optional. No credentials/real API calls, UI, browser/proxy/isolation/public-admission changes. See [Stage 14C boundary and limitations](STAGE14C_PROVIDER.md).
+
+Full required local validation, one final pass: `pnpm lint` PASS; `pnpm typecheck` PASS (root/all eight workspaces); `pnpm test:tribunal` **119 PASS**; `pnpm test:provider` **66 PASS**; `pnpm test:provider-ledger` **72 PASS**; `pnpm test` **1,083 PASS / 38 files**; `pnpm build` PASS. The generated Turbopack cache was preserved outside the repository before this one fresh-cache build, following the previously verified local cache issue; no product/build configuration changed. Focused implementation checks preceded this complete pass.
+
+The 138 new offline tests include exact request/export keys, fixed SDK settings, nullable wire semantics, incomplete/refusal/error/usage handling, streaming byte bounds, timeout/abort/late rejection, single-use dispatch authorization, fixture admission, all role/checkpoint/result interruption stages, corrupt/missing/private artifacts, capacity, concurrency and actual child-process crashes. Recovery preserves original records and never calls transport. Prior 119 tribunal regressions pass. A private same-host local store is not distributed storage or hostile same-user containment; ambiguous/corrupt locks fail closed and may need operator maintenance.
+
+Full diff/privacy review: SDK is isolated, no credential lookup/paid API call, raw provider persistence or generic report/evidence export. No web/scanner/UI, browser-worker, engine/proxy/SSRF, AppArmor/root/cgroup/cleanup or public-launcher files changed; no generated reports/profiles/credentials committed. No new Linux run is required. Normal offline Node workflow covers the new feature branch with no API key or provider call. Feature-only CI evidence will be recorded after push.
+
+Recommended next task: **separately owner-approved controlled paid acceptance**, bound to the exact fixture/release, API project, data policy and spending allowance. Real provider access/behavior/billing remain unverified; Stage 14C is not fully accepted on offline evidence.
+
+## Previously accepted Stage 14B
+
 Updated 2026-10-05. Task: **Stage 14B — Explorer + Breaker trust boundary**.
 
 **Stage 14B is COMPLETE for injected deterministic fake providers. Local validation and normal Ubuntu Node CI passed. No real provider invocation or public/browser admission is implemented.** Task 9a and Stages 11/12/13 remain accepted for owned controlled fixtures. Public arbitrary browser scanning remains DISABLED; no isolation, browser launch, proxy, AppArmor, cgroup, worker deadline, admission or UI policy changes.

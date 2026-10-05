@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { RoleView } from "@crossexam/contracts";
+import type { AgentRunAudit, RoleView } from "@crossexam/contracts";
 import { TRIBUNAL_LIMITS } from "@crossexam/contracts";
 
 export type ProviderFailure =
@@ -7,10 +7,27 @@ export type ProviderFailure =
   | "unavailable"
   | "transport-error"
   | "timeout"
-  | "abort";
+  | "abort"
+  | "rate-limit"
+  | "quota"
+  | "refusal"
+  | "incomplete"
+  | "limit"
+  | "schema-error"
+  | "usage-error";
 export type UntrustedProviderResult =
-  | { kind: "response"; payload: unknown; usage?: unknown }
-  | { kind: "failure"; category: ProviderFailure };
+  | {
+      kind: "response";
+      payload: unknown;
+      usage?: unknown;
+      receipt?: AgentRunAudit["providerReceipt"];
+    }
+  | {
+      kind: "failure";
+      category: ProviderFailure;
+      receipt?: AgentRunAudit["providerReceipt"];
+      usage?: unknown;
+    };
 export interface ProviderRequest {
   readonly schemaVersion: 1;
   readonly role: "Explorer" | "Breaker";
@@ -20,10 +37,41 @@ export interface ProviderRequest {
   readonly timeoutMs: 20000;
   readonly semanticRetries: 0;
 }
+/** In-memory capability issued only by trusted durable-admission host code. */
+export interface DispatchAuthorization {
+  readonly kind: "durable-host-dispatch-v1";
+}
+const grants = new WeakMap<DispatchAuthorization, { hash: string; consumed: boolean }>();
+export function authorizeDispatch(requestHash: string): DispatchAuthorization {
+  const authorization = Object.freeze({ kind: "durable-host-dispatch-v1" as const });
+  grants.set(authorization, { hash: requestHash, consumed: false });
+  return authorization;
+}
+export function consumeDispatch(
+  authorization: DispatchAuthorization | undefined,
+  requestHash: string,
+): boolean {
+  const grant = authorization && grants.get(authorization);
+  if (!grant || grant.consumed || grant.hash !== requestHash) return false;
+  grant.consumed = true;
+  return true;
+}
+/** Trusted adapter prepares exact non-secret wire identity without dispatching. */
+export interface PreparedProviderCall {
+  readonly requestHash: string;
+  readonly requestBytes: number;
+  readonly requestSchemaHash: string;
+  readonly responseSchemaHash: string;
+  dispatch(options: {
+    readonly signal: AbortSignal;
+    readonly authorization?: DispatchAuthorization;
+  }): Promise<UntrustedProviderResult>;
+}
 export interface AgentProvider {
+  prepare?(request: ProviderRequest): PreparedProviderCall;
   run(
     request: ProviderRequest,
-    options: { readonly signal: AbortSignal },
+    options: { readonly signal: AbortSignal; readonly authorization?: DispatchAuthorization },
   ): Promise<UntrustedProviderResult>;
 }
 /** Adapter identity comes from trusted host configuration, never from a response. */
@@ -31,6 +79,8 @@ export interface ProviderConfiguration {
   readonly provider: string;
   readonly model: string;
   readonly adapter?: AgentProvider;
+  readonly executionProfile?: AgentRunAudit["executionProfile"];
+  readonly reasoning?: AgentRunAudit["reasoning"];
 }
 export class BoundaryError extends Error {
   constructor(

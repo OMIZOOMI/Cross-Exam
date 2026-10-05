@@ -138,3 +138,13 @@ The real HTTP investigation deliberately precedes tasks 9a/10. The controlled Li
 - [x] Commit/push only the feature branch: `784d053`; normal Ubuntu Node run **37240933259 PASS**, including 119 focused and 945 full tests. No CI retry/new Linux isolation run; final evidence docs use `[skip ci]`.
 - **Stage 14B COMPLETE for injected fake providers.** No SDK/model network, later role/action execution or public browser admission.
 - Stage 14C: separately reviewed real-provider adapters/configuration/transport with token, privacy, cancellation and admission controls; no browser/public admission implied.
+
+## Stage 14C — controlled real-provider implementation
+
+- [x] Verify accepted source/ancestry/clean tree and preserve main/prior branches; create only `feature/stage14c-controlled-provider`.
+- [x] Exact official SDK/profile, separate strict provider-wire schemas, explicit numeric/presence external projection and bounded transport/error mapping.
+- [x] Host-only durable release/role slots, finalized canonical checkpoints, original-ID recovery with zero transport calls and private bounded local storage.
+- [x] Offline adversarial/SDK/fault-injection/multi-process regression coverage; no credential or paid call.
+- [x] Complete one full local validation pass and privacy/security diff review: 119 tribunal, 66 provider, 72 ledger and 1,083 full tests; lint/typecheck/build PASS.
+- [ ] Feature-only push and normal offline CI evidence.
+- [ ] **Paid acceptance deferred:** separately owner-approved exact fixture/release, API project, export/data policy and spending allowance. Offline success does not fully accept Stage 14C.

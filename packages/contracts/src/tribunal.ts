@@ -167,6 +167,11 @@ export const AgentRunStatusSchema = z.enum([
   "configuration-failure",
   "provider-unavailable",
   "transport-failure",
+  "rate-limited",
+  "quota-blocked",
+  "provider-refusal",
+  "incomplete-output",
+  "unknown-dispatch",
   "timeout",
   "aborted",
   "malformed-output",
@@ -193,6 +198,47 @@ export const RejectionCodeSchema = z.enum([
 ]);
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const count = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
+/** Host enums only; never provider messages or arbitrary error codes. */
+export const ProviderReceiptSchema = z
+  .object({
+    code: z
+      .enum([
+        "PROJECT_SPEND_LIMIT",
+        "ORGANIZATION_SPEND_LIMIT",
+        "ORGANIZATION_USAGE_LIMIT",
+        "CREDIT_BALANCE_EXHAUSTED",
+        "QUOTA_UNSPECIFIED",
+        "RATE_INCREASE_TOO_FAST",
+        "RATE_LIMIT_REACHED",
+        "RATE_LIMIT_UNSPECIFIED",
+        "HTTP_429_UNCLASSIFIED",
+        "HTTP_CONFIGURATION",
+        "HTTP_TIMEOUT",
+        "HTTP_UNAVAILABLE",
+        "CONNECTION_FAILURE",
+        "TRANSPORT_TIMEOUT",
+        "CANCELLED",
+        "REFUSAL",
+        "CONTENT_FILTER",
+        "INCOMPLETE",
+        "EMPTY_OUTPUT",
+        "MALFORMED_RESPONSE",
+        "WIRE_SCHEMA_INVALID",
+        "BODY_LIMIT",
+        "OUTPUT_LIMIT",
+        "USAGE_INVALID",
+        "NO_CONFIGURATION",
+      ])
+      .nullable(),
+    httpStatus: z.number().int().min(100).max(599).nullable(),
+    requestId: z
+      .string()
+      .max(128)
+      .regex(/^req_[A-Za-z0-9_-]+$/)
+      .nullable(),
+    retryAfterSeconds: z.number().int().min(0).max(3600).nullable(),
+  })
+  .strict();
 export const AgentRunAuditSchema = z
   .object({
     id: TribunalIdSchema,
@@ -214,6 +260,7 @@ export const AgentRunAuditSchema = z
       .object({
         inputTokens: count.max(32768).nullable(),
         outputTokens: count.max(1024).nullable(),
+        reasoningTokens: count.max(1024).nullable().optional(),
       })
       .strict(),
     acceptedIds: z.array(TribunalIdSchema).max(8),
@@ -224,8 +271,80 @@ export const AgentRunAuditSchema = z
     outputTokenLimit: z.union([z.literal(768), z.literal(1024)]),
     timeoutMs: z.literal(20000),
     semanticRetries: z.literal(0),
+    executionProfile: z.literal("openai-responses-luna-none-v1").optional(),
+    reasoning: z
+      .object({ effort: z.literal("none"), mode: z.literal("standard") })
+      .strict()
+      .optional(),
+    providerReceipt: ProviderReceiptSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((a, ctx) => {
+    if (
+      a.usage.reasoningTokens != null &&
+      a.usage.outputTokens != null &&
+      a.usage.reasoningTokens > a.usage.outputTokens
+    )
+      ctx.addIssue({ code: "custom", message: "Inconsistent reasoning usage" });
+  });
+export const RoleCheckpointSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    runId: TribunalIdSchema,
+    scanId: TribunalIdSchema,
+    startedAt: z.string().datetime(),
+    finishedAt: z.string().datetime(),
+    elapsedMs: z.number().finite().nonnegative(),
+    authorizedEvidenceIds: z.array(TribunalIdSchema).max(96),
+    audit: AgentRunAuditSchema,
+    claims: z.array(CanonicalClaimSchema).max(5),
+    challenges: z.array(CanonicalChallengeSchema).max(8),
+  })
+  .strict()
+  .superRefine((cp, ctx) => {
+    const fail = () => ctx.addIssue({ code: "custom", message: "Invalid canonical checkpoint" });
+    const a = cp.audit;
+    const refs = new Set(cp.authorizedEvidenceIds);
+    const claimIds = new Set(cp.claims.map((c) => c.id));
+    const records = a.role === "Explorer" ? cp.claims : cp.challenges;
+    const ids = [cp.runId, a.id, ...cp.claims.map((c) => c.id), ...cp.challenges.map((c) => c.id)];
+    if (
+      refs.size !== cp.authorizedEvidenceIds.length ||
+      new Set(ids).size !== ids.length ||
+      a.scanId !== cp.scanId ||
+      a.acceptedIds.length !== records.length ||
+      new Set(a.acceptedIds).size !== a.acceptedIds.length ||
+      a.acceptedIds.some((id) => !records.some((r) => r.id === id)) ||
+      (a.role === "Explorer" && cp.challenges.length) ||
+      (a.role === "Explorer" ? 768 : 1024) !== a.outputTokenLimit ||
+      (a.usage.outputTokens !== null && a.usage.outputTokens > a.outputTokenLimit) ||
+      (!["completed", "partial-rejection"].includes(a.status) && records.length) ||
+      (records.length && a.calls !== 1) ||
+      (a.status === "completed" &&
+        (a.calls !== 1 || a.rejectedCount || (a.role === "Explorer" && !records.length))) ||
+      (a.status === "partial-rejection" && (!records.length || !a.rejectedCount)) ||
+      cp.claims.some(
+        (c) =>
+          c.proposedBy !== "Explorer" ||
+          c.provenance !== "INFERRED" ||
+          c.scanId !== cp.scanId ||
+          c.evidenceIds.some((id) => !refs.has(id)),
+      ) ||
+      cp.challenges.some(
+        (c) =>
+          c.raisedBy !== "Breaker" ||
+          c.provenance !== "INFERRED" ||
+          c.status !== "open" ||
+          c.scanId !== cp.scanId ||
+          !claimIds.has(c.claimId) ||
+          c.evidenceIds.some((id) => !refs.has(id)),
+      ) ||
+      cp.claims.some((c) => cp.challenges.filter((ch) => ch.claimId === c.id).length > 3)
+    )
+      fail();
+  });
+export type RoleCheckpoint = z.infer<typeof RoleCheckpointSchema>;
+
 export const TribunalRunSchema = z
   .object({
     schemaVersion: z.literal(1),

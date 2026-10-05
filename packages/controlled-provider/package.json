@@ -1,0 +1,17 @@
+{
+  "name": "@crossexam/controlled-provider",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@crossexam/agents": "workspace:*",
+    "@crossexam/contracts": "workspace:*",
+    "zod": "4.6.5"
+  }
+}

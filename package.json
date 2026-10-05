@@ -26,7 +26,9 @@
     "test:browser-security": "vitest run packages/engine/src/browser-egress apps/browser-worker/src && playwright test -c browser-security.config.ts",
     "test:linux-isolation": "test \"$(uname -s)\" = Linux && bash scripts/prepare-linux-isolation.sh && sudo -n \"$(command -v node)\" node_modules/tsx/dist/cli.mjs scripts/linux-isolation-harness.ts",
     "test:performance": "vitest run apps/browser-worker/src/performance.test.ts && playwright test -c browser-security.config.ts performance.spec.ts",
-    "test:accessibility": "vitest run apps/browser-worker/src/accessibility.test.ts && playwright test -c browser-security.config.ts accessibility.spec.ts"
+    "test:accessibility": "vitest run apps/browser-worker/src/accessibility.test.ts && playwright test -c browser-security.config.ts accessibility.spec.ts",
+    "test:provider": "vitest run packages/provider-openai/src",
+    "test:provider-ledger": "vitest run packages/controlled-provider/src"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

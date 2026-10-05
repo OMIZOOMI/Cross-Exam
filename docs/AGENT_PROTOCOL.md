@@ -1,5 +1,11 @@
 # Agent protocol
 
+## Stage 14C controlled adapter extension
+
+The Stage 14B semantics below remain authoritative. Stage 14C adds one isolated official Responses adapter and an explicit external export narrower than the internal role view: scan/source/time fields are removed, fixed labels/limitations and code-specific numeric/presence facts only. Breaker receives just accepted claim proposal content plus host ID/INFERRED attribution. Separate strict wire schemas normalize only `missingEvidence:null` to absence; original host validation follows.
+
+A trusted host pre-dispatch hook durably consumes one release/role slot and issues a one-use exact-body authorization. A finalized-role checkpoint hook persists actual canonical records/audit before the next role. Neither hook is passed to a provider/model. Optional profile/reasoning/receipt/reasoning-token audit fields preserve old fake reports. Provider failures additionally distinguish quota/rate/refusal/incomplete/limit; raw errors and reasoning remain excluded. Recovery reconstructs only from actual finalized checkpoints, never fabricating an absent role audit or making a provider call. See [Stage 14C record](STAGE14C_PROVIDER.md). Public/live admission and paid acceptance remain disabled/unverified.
+
 ## Stage 14B: proposals cross a host trust boundary
 
 ```text

@@ -2,7 +2,7 @@ name: Tribunal trust boundary
 
 on:
   push:
-    branches: ["feature/stage14-explorer-breaker"]
+    branches: ["feature/stage14-explorer-breaker", "feature/stage14c-controlled-provider"]
 
 permissions:
   contents: read
@@ -27,4 +27,6 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test:tribunal
+      - run: pnpm test:provider
+      - run: pnpm test:provider-ledger
       - run: pnpm test

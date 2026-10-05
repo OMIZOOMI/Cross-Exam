@@ -10,7 +10,7 @@ import {
 } from "@crossexam/contracts";
 import { immutable } from "./provider";
 
-const labels: Record<NonNullable<Evidence["code"]>, string> = {
+export const labels: Record<NonNullable<Evidence["code"]>, string> = {
   HTTP_STATUS: "HTTP response measurements",
   DOCUMENT_METADATA: "Document metadata presence",
   DOCUMENT_STRUCTURE: "Returned document structure counts",

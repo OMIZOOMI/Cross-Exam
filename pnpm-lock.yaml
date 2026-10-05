@@ -116,6 +116,18 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
 
+  packages/controlled-provider:
+    dependencies:
+      '@crossexam/agents':
+        specifier: workspace:*
+        version: link:../agents
+      '@crossexam/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+
   packages/engine:
     dependencies:
       '@crossexam/contracts':
@@ -124,6 +136,21 @@ importers:
       ipaddr.js:
         specifier: 2.2.0
         version: 2.2.0
+
+  packages/provider-openai:
+    dependencies:
+      '@crossexam/agents':
+        specifier: workspace:*
+        version: link:../agents
+      '@crossexam/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      openai:
+        specifier: 7.28.0
+        version: 7.28.0(undici@7.30.0)(zod@4.6.5)
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
 
 packages:
 
@@ -1302,6 +1329,30 @@ packages:
     resolution: {integrity: sha512-XrsrhT5sybtKI6wakr2SPOlGZWWYbUXZ7a0jT8/QOeAPau+1X/bSegNe5YR75oJmEZQbKningirmGOEJCIk61Q==}
     engines: {node: '>=12.20.0'}
 
+  openai@7.28.0:
+    resolution: {integrity: sha512-HSY4fFLflQGYe2kvO0atm6/GzhD61gpyiOZZUvO4nptMUhuB1to2K3wwFpFqc5gfEK0SxyIIFiu1yE2MtygWcA==}
+    engines: {node: '>=22.0.0'}
+    peerDependencies:
+      '@aws-sdk/credential-provider-node': '>=3.972.0 <4'
+      '@smithy/hash-node': '>=4.3.0 <5'
+      '@smithy/signature-v4': '>=5.4.0 <6'
+      undici: '>=5 <9'
+      ws: ^8.21.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-node':
+        optional: true
+      '@smithy/hash-node':
+        optional: true
+      '@smithy/signature-v4':
+        optional: true
+      undici:
+        optional: true
+      ws:
+        optional: true
+      zod:
+        optional: true
+
   parse5-htmlparser2-tree-adapter@7.1.0:
     resolution: {integrity: sha512-ruw5xyKs6lrpo9x9rCZqZZnIUntICjQAd0Wsmp396Ul9lN/h+ifgVV1x1gZHi8euej6wTfpqX8j+BFQxF0NS/g==}
 
@@ -2473,6 +2524,11 @@ snapshots:
       boolbase: 1.0.0
 
   obug@2.2.1: {}
+
+  openai@7.28.0(undici@7.30.0)(zod@4.6.5):
+    optionalDependencies:
+      undici: 7.30.0
+      zod: 4.6.5
 
   parse5-htmlparser2-tree-adapter@7.1.0:
     dependencies:
