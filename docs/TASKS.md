@@ -13,7 +13,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 - [x] Ordinary offline Node CI acceptance: run 37365200055 attempt 2 PASS on ec737a24ff59ae4199816c93b102fd92f91eb9b8, including build. Attempt 1 never acquired a hosted runner; one infrastructure-only retry, no code/security change.
 - [x] Correct the initial composite snapshot identity: report-only `parent.snapshotHash`, separate optional review hash and required nullable authorization `parentSkepticReviewHash`; bind both hashes in the one-use grant and cross-field validation, update policy identity and replay regressions.
 - [x] Binding-correction focused/full offline validation and privacy diff review: 136 Reproducer / 133 Skeptic / 388 combined / 1,381 full units (43 files), lint/typecheck/build/diff check PASS. Restricted socket/IPC failures resolved by rerunning unchanged code with local permission; earlier counts above describe the historical initial implementation.
-- [ ] Accept the binding correction after ordinary offline Node CI on its implementation commit.
+- [x] Binding correction accepted for injected fakes: ordinary offline Node run **37393286885**, **attempt 1 PASS** on **c041a3247ac4913cbcf102037f64d647d235f7c6**, including every test step and build; no retry, real execution or browser/Linux run. Final evidence receipt is a separate documentation-only `[skip ci]` commit.
 - [ ] Later separately authorized controlled-fixture execution and observed-result acceptance; no real operation in Stage 16A.
 
 Public arbitrary browser scanning stays disabled. No credentials, provider calls, paid releases, Stage 14C execution, Linux redesign or billing/paywalls.
