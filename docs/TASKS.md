@@ -12,7 +12,8 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 - [x] Use one deterministic injected-fake provider call only: 20-second role/25-second whole bounds, 1,536 output tokens, 24 KiB response, 64 KiB review, five verdicts, zero retries; distinguish valid empty completion from all-proposals-rejected no-valid-output.
 - [x] Add adversarial Judge contract/host coverage for authority/reference/semantic/reproduction/replay/failure/privacy/prompt-injection boundaries; no real provider, browser, fixture, public route or UI integration.
 - [x] Complete the required local validation/privacy review: 40 Judge, 133 Skeptic, 136 Reproducer, 321 controlled Reproducer, 164 fixture-preflight, 139 Linux-preflight, 561 Tribunal/contracts, 66 provider, 72 ledger, 29 operator and 1,843 full unit tests; lint/typecheck/build/diff check PASS. No execution or provider call.
-- [ ] **One next task:** verify the ordinary offline Node CI receipt for `feature/stage17-judge-offline`, then record the exact implementation/documentation handoff. Real provider acceptance, observed Stage 16B reproduction, public scanning and visualization remain separate tasks.
+- [x] Push implementation **11a3f850a534be9f587fa61914524fdec50895ec** only to `feature/stage17-judge-offline`; [ordinary offline Node CI 37489088586](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37489088586), attempt 1, passed on that exact SHA with every step successful. No Linux/browser job, provider call, fixture execution or public target.
+- [ ] **One next task:** Stage 18 — Tribunal Visualization + UI Redesign Planning using the owner's visual references. Keep presentation work separate from real provider/browser/public execution.
 
 ## Stage 16B.2 — Linux identity/manual-authority, no execution
 
