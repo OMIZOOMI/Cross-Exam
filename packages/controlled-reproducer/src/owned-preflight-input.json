@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 2,
+  "summary": {
+    "id": "scan-owned-numeric-tribunal-v1",
+    "source": "fixture",
+    "targetUrl": "https://controlled.fixture.test/",
+    "status": "completed",
+    "startedAt": "2026-10-05T00:00:00.000Z",
+    "durationMs": 100,
+    "pageCount": 1,
+    "evidenceCount": 2,
+    "findingCount": 0
+  },
+  "pages": [
+    {
+      "id": "P-owned",
+      "path": "/",
+      "title": "Owned numeric fixture",
+      "statusCode": 200,
+      "durationMs": 100,
+      "linksTo": []
+    }
+  ],
+  "metrics": [],
+  "evidence": [
+    {
+      "id": "E-owned-status",
+      "scanId": "scan-owned-numeric-tribunal-v1",
+      "source": "fixture",
+      "provenance": "OBSERVED",
+      "kind": "network",
+      "url": "https://controlled.fixture.test/",
+      "capturedAt": "2026-10-05T00:00:00.000Z",
+      "title": "Owned response fixture",
+      "detail": "Fixed numeric test input; no target contacted.",
+      "collector": "http-document-v1",
+      "code": "HTTP_STATUS",
+      "data": {
+        "statusCode": 200,
+        "responseBytes": 400,
+        "durationMs": 100,
+        "redirectCount": 0
+      }
+    },
+    {
+      "id": "E-owned-structure",
+      "scanId": "scan-owned-numeric-tribunal-v1",
+      "source": "fixture",
+      "provenance": "OBSERVED",
+      "kind": "metadata",
+      "url": "https://controlled.fixture.test/",
+      "capturedAt": "2026-10-05T00:00:00.000Z",
+      "title": "Owned structure fixture",
+      "detail": "Fixed presence/count test input; no target contacted.",
+      "collector": "http-document-v1",
+      "code": "DOCUMENT_STRUCTURE",
+      "data": {
+        "images": 2,
+        "imagesWithoutAlt": 1,
+        "scripts": 1,
+        "stylesheets": 1,
+        "forms": 0,
+        "internalLinkCount": 2,
+        "externalLinkCount": 0
+      }
+    }
+  ],
+  "claims": [],
+  "challenges": [],
+  "experiments": [],
+  "verdicts": [],
+  "findings": [],
+  "agentRuns": [],
+  "tribunalRuns": []
+}

@@ -2,6 +2,18 @@
 
 Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery promises. Keep each task independently reviewable.
 
+## Stage 16B.1 — real-path preflight/staging, no execution
+
+- [x] Separate real-path identities and future host-proof policy; accepted fake v1 contracts/ledger remain unchanged, with no conversions.
+- [x] Fixed disabled private runner/configuration, independent exact manifest/body, pinned numeric parent input, fixed same-process fake planning and original-object promotion; no caller target/configuration overrides.
+- [x] Durable pending approval survives restart/age; deterministic read-only receipt reconstruction, no serialized promotion, explicit terminal cancel/expiry/denial only.
+- [x] Independent staging ledger and opaque synthetic-only fake approval seam: fsynced approval/marker/ledger before one fake attempt, no retry, fail-closed recovery/reconciliation/privacy.
+- [x] New focused contract/staging coverage: 164 PASS; real runner/observation publisher/public admission remain disabled.
+- [x] Required local validation/privacy review: 164 focused, 212 controlled, 491 combined agent-contract, 167 provider/ledger/operator regressions, 1,664 full units; lint/typecheck/build/diff check PASS.
+- [ ] Implementation commit and ordinary offline Node CI on its exact SHA.
+- [ ] Generate the concrete unapproved pending intent/packet on the implementation commit; record exact hashes, identities and local storage with pre-approval blockers.
+- [ ] **One next task:** resolve exact intended Linux artifact/storage identities and reviewed owner-authority provisioning offline, then restage an approval-ready packet. Do not request approval while required values are missing; no real run before later owner approval.
+
 ## Stage 16B — controlled Reproducer offline boundary
 
 - [x] Separate strict v1 controlled intent/plan/release/dispatch/ledger/run contracts; no Stage 16A/report/Tribunal/Skeptic polymorphism or mutation.
