@@ -2,6 +2,17 @@
 
 Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery promises. Keep each task independently reviewable.
 
+## Stage 16B.2 — Linux identity/manual-authority, no execution
+
+- [x] Separate strict static Linux packet/policy; exact commit/fixed wrapper/prepared-root/binary/bundle/version/worker/storage/host identities and unchanged security configuration, no execution proof.
+- [x] Read-only production verifier, explicit persistent Ubuntu 24.04 selection, no defaults/GitHub-hosted operational path, no launch or provisioning. Synthetic facades cannot supply production packet authority.
+- [x] Separate Linux staging namespace and original-object promotion; required artifact hashes, exact parent/policy/storage/authorization, deterministic read-only preview and persistent pending-approval.
+- [x] Canonical domain-separated signed decision v2, protected-key interfaces, bounded validation/opaque grant; real key loader and dispatch remain fail-closed, no sign/approve/execute CLI.
+- [x] Synthetic-only signature, inode/hash, identity, promotion, durability/fault/replay/terminalization tests; no fake-to-OBSERVED path.
+- [x] Required local validation/privacy review: 139 new focused, 321 controlled, 164 Stage 16B.1, 521 combined agent-contract, 167 provider/ledger/operator; 1,803 full units; lint/typecheck/build PASS. Existing macOS candidate bytes/mtimes/ownership/inventory unchanged; no real operation or approval.
+- [ ] Implementation commit/push on new branch and ordinary offline Node CI on exact SHA.
+- [ ] **One next task:** owner chooses persistent Linux host, verified artifacts/private storage and protected-key custody, then reviewed adapter/exact Linux staging packet. No placeholder approval or real run.
+
 ## Stage 16B.1 — real-path preflight/staging, no execution
 
 - [x] Separate real-path identities and future host-proof policy; accepted fake v1 contracts/ledger remain unchanged, with no conversions.

@@ -21,6 +21,8 @@
     "test:controlled-reproducer": "vitest run packages/controlled-reproducer/src packages/contracts/src/controlled-reproducer.test.ts",
     "test:fixture-preflight": "vitest run packages/controlled-reproducer/src/fixture*.test.ts packages/contracts/src/controlled-fixture-reproducer.test.ts",
     "reproducer:preflight": "tsx scripts/reproducer-preflight.ts",
+    "test:linux-preflight": "vitest run packages/controlled-reproducer/src/linux*.test.ts packages/contracts/src/linux-fixture-preflight.test.ts",
+    "reproducer:linux-preflight": "tsx scripts/reproducer-linux-preflight.ts",
     "test:tribunal": "vitest run packages/agents/src packages/contracts/src",
     "test:e2e": "playwright test",
     "scanner:smoke": "pnpm --filter @crossexam/scanner smoke",
