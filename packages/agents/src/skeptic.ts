@@ -69,7 +69,7 @@ const failures = {
   abort: "aborted",
 } as const;
 /** Stable key order after schema normalization; arrays retain their observation order. */
-function normalizedJson(value: unknown): string {
+export function normalizedJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(normalizedJson).join(",")}]`;
   if (value && typeof value === "object")
     return `{${Object.entries(value)
@@ -78,6 +78,7 @@ function normalizedJson(value: unknown): string {
       .join(",")}}`;
   return JSON.stringify(value);
 }
+export const reportSnapshotHash = (report: ScanReport) => hash(normalizedJson(report));
 function configure(input: SkepticFakeConfiguration): SkepticFakeConfiguration {
   const fail = () => {
     throw new SkepticAdmissionError("INVALID_CONFIGURATION");
@@ -181,7 +182,7 @@ function prepare(snapshot: ScanReport) {
     breakerStatus: parent.agentRuns[1].status,
   };
   const binding: SkepticReview["parent"] = {
-    snapshotHash: hash(normalizedJson(snapshot)),
+    snapshotHash: reportSnapshotHash(snapshot),
     tribunalRunId: parent.id,
     authorizedEvidenceIds: [...parent.authorizedEvidenceIds],
     reviewedClaimIds: parent.claims.map((c) => c.id),

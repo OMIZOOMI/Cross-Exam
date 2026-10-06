@@ -2,6 +2,18 @@
 
 Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery promises. Keep each task independently reviewable.
 
+## Stage 17 — offline Judge trust boundary
+
+- [x] Choose a separate `JudgeReview`/`JudgeVerdict` artifact because existing deterministic `Verdict` cannot represent empty support, challenge/reproduction links or exact parent binding without changing its meaning; keep ScanReport v2 unchanged.
+- [x] Implement strict Judge view/request/proposal/review/audit contracts with host-owned IDs, attribution, timestamps, reference authorization and bounded rationale/limitations; no confidence or model-agreement fields.
+- [x] Reuse the Stage 14B provider-safe EvidenceDigest projection only; include accepted Explorer claims, Breaker/Skeptic challenge linkage, collection limitations and bounded Stage 16A/16B fake reproduction lineage without raw payloads or Findings.
+- [x] Enforce confirmed/contested/insufficient/rejected semantics: direct support for confirmation, support plus unresolved challenge for contestation, explicit missing/incomplete/reproduction basis for insufficiency, and observed/derived contradiction for rejection. Missing evidence and an INFERRED challenge alone never reject.
+- [x] Bind report, TribunalRun, optional Skeptic and optional Reproducer identities separately, compose a distinct binding hash, validate an artifact hash, and replay exact reviews with zero provider calls while rejecting mutated/cross-scan parents.
+- [x] Use one deterministic injected-fake provider call only: 20-second role/25-second whole bounds, 1,536 output tokens, 24 KiB response, 64 KiB review, five verdicts, zero retries; distinguish valid empty completion from all-proposals-rejected no-valid-output.
+- [x] Add adversarial Judge contract/host coverage for authority/reference/semantic/reproduction/replay/failure/privacy/prompt-injection boundaries; no real provider, browser, fixture, public route or UI integration.
+- [x] Complete the required local validation/privacy review: 40 Judge, 133 Skeptic, 136 Reproducer, 321 controlled Reproducer, 164 fixture-preflight, 139 Linux-preflight, 561 Tribunal/contracts, 66 provider, 72 ledger, 29 operator and 1,843 full unit tests; lint/typecheck/build/diff check PASS. No execution or provider call.
+- [ ] **One next task:** verify the ordinary offline Node CI receipt for `feature/stage17-judge-offline`, then record the exact implementation/documentation handoff. Real provider acceptance, observed Stage 16B reproduction, public scanning and visualization remain separate tasks.
+
 ## Stage 16B.2 — Linux identity/manual-authority, no execution
 
 - [x] Separate strict static Linux packet/policy; exact commit/fixed wrapper/prepared-root/binary/bundle/version/worker/storage/host identities and unchanged security configuration, no execution proof.

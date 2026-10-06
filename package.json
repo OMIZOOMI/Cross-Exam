@@ -24,6 +24,7 @@
     "test:linux-preflight": "vitest run packages/controlled-reproducer/src/linux*.test.ts packages/contracts/src/linux-fixture-preflight.test.ts",
     "reproducer:linux-preflight": "tsx scripts/reproducer-linux-preflight.ts",
     "test:tribunal": "vitest run packages/agents/src packages/contracts/src",
+    "test:judge": "vitest run packages/agents/src/judge.test.ts packages/contracts/src/judge.test.ts",
     "test:e2e": "playwright test",
     "scanner:smoke": "pnpm --filter @crossexam/scanner smoke",
     "check": "pnpm lint && pnpm test && pnpm build",

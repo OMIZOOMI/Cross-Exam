@@ -1,5 +1,13 @@
 # Current state
 
+## Stage 17 — offline Judge trust boundary
+
+Started on exact accepted Stage 16B.2 source **37455074f8b1699e80eac7eda4fddc5e5afefdf0** in the feature-only branch `feature/stage17-judge-offline`; main and prior milestone branches remain unchanged. The existing deterministic `Verdict` contract is intentionally not reused. Separate JudgeReview/JudgeVerdict v1 contracts and a provider-neutral injected-fake host boundary now implement strict parent/report/Skeptic/Reproducer binding, a bounded provider-safe view, host canonicalization and no ScanReport/Findings mutation. Stage 16A Reproducer objects require original-object admission; Stage 16B injected-fake lineage receipts are accepted only as hash-checked SIMULATED/test-only status. Future real observed fixture artifacts are not admitted.
+
+Local validation completed on the final implementation before commit: Judge-focused `pnpm test:judge` **40 PASS / two files**; Skeptic **133**, Reproducer **136**, controlled Reproducer **321**, fixture preflight **164**, Linux preflight **139**, combined Tribunal/contracts **561**, provider **66**, provider-ledger **72**, provider-operator **29**, and full `pnpm test` **1,843 PASS / 51 files**. `pnpm lint` PASS (202 files), `pnpm typecheck` PASS (root plus all nine workspace projects), `pnpm build` PASS, and `git diff --check` PASS. The first build invocation exceeded the tool's 120-second host timeout during the recursive typecheck without a product failure; the unchanged command was rerun with a 300-second timeout and completed the production Next build. No code workaround or dependency change was used.
+
+No real provider, API key, paid call, browser, fixture, Linux execution, observed reproduction, public admission, Findings, UI, billing or Stage 16B authority activation occurred. The provider boundary is one fake call with zero retries; valid empty output is completed, while all semantic proposal rejections are no-valid-output. Existing evidence provenance and prior report/tribunal contracts remain unchanged. Ordinary offline Node CI is the remaining delivery receipt before this section is finalized.
+
 ## Stage 16B.2 — offline Linux identity/manual-authority plumbing
 
 Started clean on exact local/remote Stage 16B.1 **fa3442072d75490a09acc86336a900b9526164e1**; created only `feature/stage16b2-linux-preflight`. Main stays **9bafdb5df0d97668abd66e09fa342610da323ace**; accepted source/fake artifacts/ledgers and the existing macOS candidate are preserved. No Linux host or OS/TPM key custodian has been selected; no key/provider is provisioned and no operational Linux packet/intent has been staged.

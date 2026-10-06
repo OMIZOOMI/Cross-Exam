@@ -2,7 +2,7 @@ name: Tribunal trust boundary
 
 on:
   push:
-    branches: ["feature/stage14-explorer-breaker", "feature/stage14c-controlled-provider", "feature/stage15-skeptic-offline", "feature/stage16-reproducer-offline", "feature/stage16b-controlled-reproducer-offline", "feature/stage16b1-fixture-preflight", "feature/stage16b2-linux-preflight"]
+    branches: ["feature/stage14-explorer-breaker", "feature/stage14c-controlled-provider", "feature/stage15-skeptic-offline", "feature/stage16-reproducer-offline", "feature/stage16b-controlled-reproducer-offline", "feature/stage16b1-fixture-preflight", "feature/stage16b2-linux-preflight", "feature/stage17-judge-offline"]
 
 permissions:
   contents: read
@@ -32,6 +32,7 @@ jobs:
       - run: pnpm test:fixture-preflight
       - run: pnpm test:linux-preflight
       - run: pnpm test:tribunal
+      - run: pnpm test:judge
       - run: pnpm test:provider
       - run: pnpm test:provider-ledger
       - run: pnpm test:provider-operator

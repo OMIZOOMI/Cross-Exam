@@ -4,6 +4,7 @@ import { CanonicalChallengeSchema, CanonicalClaimSchema, TribunalRunSchema } fro
 export * from "./browser-evidence";
 export * from "./controlled-fixture-reproducer";
 export * from "./controlled-reproducer";
+export * from "./judge";
 export * from "./linux-fixture-preflight";
 export * from "./reproducer";
 export * from "./skeptic";
