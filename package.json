@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "test:skeptic": "vitest run packages/agents/src/skeptic.test.ts packages/contracts/src/skeptic.test.ts",
     "test:reproducer": "vitest run packages/agents/src/reproducer.test.ts packages/contracts/src/reproducer.test.ts",
+    "test:controlled-reproducer": "vitest run packages/controlled-reproducer/src packages/contracts/src/controlled-reproducer.test.ts",
     "test:tribunal": "vitest run packages/agents/src packages/contracts/src",
     "test:e2e": "playwright test",
     "scanner:smoke": "pnpm --filter @crossexam/scanner smoke",

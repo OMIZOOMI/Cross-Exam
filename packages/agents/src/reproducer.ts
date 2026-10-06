@@ -588,3 +588,44 @@ export function createReproducerSession(
     },
   });
 }
+
+/** Internal host handoff. Serialized artifacts never establish promotion authority. */
+export function attestControlledReproducerParent(
+  input: unknown,
+  original: unknown,
+  identity: { provider: string; model: string },
+  skepticReview?: unknown,
+) {
+  // Reuse the private original-object registry and exact current replay identity; no run/call.
+  createReproducerSession(
+    input,
+    { executionMode: "injected-fake", provider: identity.provider, model: identity.model },
+    { existingRun: original, skepticReview },
+  );
+  const source = ReproducerRunSchema.parse(original);
+  const prepared = prepare(input, skepticReview);
+  const plan = source.plans[0];
+  const challenge = prepared.request?.view.challenges.find((c) => c.id === plan?.challengeId);
+  if (
+    source.audit.status !== "completed" ||
+    source.plans.length !== 1 ||
+    !plan ||
+    challenge?.category !== "reproduction-gap"
+  )
+    throw new ReproducerAdmissionError("INVALID_PARENT");
+  return immutable({
+    scanId: source.scanId,
+    sourceRunId: source.id,
+    sourceRunHash: hash(JSON.stringify(source)),
+    sourcePlanId: plan.id,
+    sourcePlanHash: hash(JSON.stringify(plan)),
+    sourcePolicyHash: source.audit.policyHash,
+    sourceRequestHash: source.audit.requestHash as string,
+    provider: source.audit.provider,
+    model: source.audit.model,
+    parent: source.parent,
+    claimId: plan.claimId,
+    challengeId: plan.challengeId,
+    evidenceIds: plan.evidenceIds,
+  });
+}

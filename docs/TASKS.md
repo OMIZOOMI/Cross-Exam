@@ -2,6 +2,21 @@
 
 Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery promises. Keep each task independently reviewable.
 
+## Stage 16B — controlled Reproducer offline boundary
+
+- [x] Separate strict v1 controlled intent/plan/release/dispatch/ledger/run contracts; no Stage 16A/report/Tribunal/Skeptic polymorphism or mutation.
+- [x] Original frozen current-process Stage 16A promotion with exact report/review/request/policy/provider/model/plan/ref checks; reproduction-gap only, new controlled plan/authorization, no authority from fake source results.
+- [x] Fixed private `browser-empty-navigation-v1` descriptor and manifest; only `controlled-fixture-empty-navigation-v1`, lineage-only, claimTested/challengeResolved false, no browser wrapper or fixture selector.
+- [x] Independent private same-host ledger: durable reservation/marker-before-fake-dispatch, one attempt/no retry, bounded receipts, fail-closed corruption and call-free recovery/replay.
+- [x] Focused fault/concurrency/tamper/cancellation/timeout/privacy tests, including clone rejection and no fake-to-OBSERVED path; future projection is shape-only and every offline receipt has observation null.
+- [x] [Owner review packet](STAGE16B_REVIEW.md): exact candidate manifest/hash, parent requirements, safe fields, recovery limits, unresolved release values and proposed later gated Linux proof.
+- [x] Final local validation: 119 controlled / 420 combined agent-contract / 167 provider regression / 1,500 full units; lint/typecheck/build/diff check PASS. Local IPC permission and pnpm preflight limitations are recorded in CURRENT_STATE.
+- [x] Final privacy/security diff review: no secrets/raw retention, real-operation path, admission change, prior browser/security/Stage 14C change or generated artifacts.
+- [ ] Ordinary offline Node CI on the implementation SHA; record acceptance in CURRENT_STATE.
+- [ ] **One next task after offline delivery:** owner approves the exact manifest/release, parent context, retained fields and one-attempt policy before the first separately implemented gated Linux fixture run. Review that run before accepting observed behavior.
+
+No real fixture/browser/provider, credential access, paid/controlled real release or Linux workflow invocation. Public scanning remains DISABLED; prior accepted branches, Stage 14C and free-for-all product policy are unchanged.
+
 ## Stage 16A — offline Reproducer planning/authorization
 
 - [x] Separate strict v1 request/proposal/plan/run/authorization metadata/audits; no report experiment or Tribunal tuple changes.

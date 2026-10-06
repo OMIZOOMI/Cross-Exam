@@ -128,6 +128,18 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
 
+  packages/controlled-reproducer:
+    dependencies:
+      '@crossexam/agents':
+        specifier: workspace:*
+        version: link:../agents
+      '@crossexam/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+
   packages/engine:
     dependencies:
       '@crossexam/contracts':

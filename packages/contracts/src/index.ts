@@ -2,6 +2,7 @@ import { z } from "zod";
 import { CanonicalChallengeSchema, CanonicalClaimSchema, TribunalRunSchema } from "./tribunal";
 
 export * from "./browser-evidence";
+export * from "./controlled-reproducer";
 export * from "./reproducer";
 export * from "./skeptic";
 export * from "./tribunal";
