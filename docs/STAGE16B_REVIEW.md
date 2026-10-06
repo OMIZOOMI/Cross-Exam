@@ -4,17 +4,75 @@
 
 This section supersedes the old candidate-only preparation state below, without changing the accepted fake ledger. The real-path release/run/observation have separate artifact identities and schema/policy hashes. Operator stage and read-only preview exist; no approve/execute command, owner authority, browser invocation or observation publisher is enabled. A bare approved boolean or parsed approval file is not authority. The private real wrapper always fails closed; synthetic approvals and fake terminal receipts belong only to offline tests.
 
-The concrete pending receipt will be generated after the implementation is committed and the repository is clean. It fixes the implementation SHA, schemas/proof-policy/real-policy/configuration hashes, report/review/source-run/source-plan/controlled-plan/intent/release/authorization identities and hashes, exact manifest/body hashes, and storage path/owner/retention. Receipt reconstruction after restart or interrupted receipt publication is deterministic and read-only. No raw report or provider output is persisted. The input is the exact accepted **hand-authored** owned numeric parent snapshot `c418e840c4d0ea98cca6554fe008d41612423202e86e008c43e5088c1ee7c7ad`; it is not a measurement of the empty browser page. Fixed Explorer/Breaker/Skeptic/Reproducer fakes create lineage context; the controlled operation does not test or resolve that claim/challenge.
+One concrete **unapproved local pending intent** was staged exactly once from the clean implementation commit below. A fresh-process read-only preview returned byte-for-byte identical packet text and identical receipt/hash; release/ledger/receipt contents, filenames, modes and modification times were unchanged. Raw receipt and release hashes were independently verified. The private namespace contains only release.json, ledger.json and receipt.json: no approval, dispatch marker or result. The ledger is nonterminal **pending-approval**, all approval/dispatch/result hashes are null, and approvalReady is false.
+
+The canonical receipt is **3,662 bytes** (16 KiB cap); full canonical packet **7,263 bytes** (24 KiB cap), pretty operator output **8,640 bytes**. The generated packet and ledger stay outside Git at `/Users/Om/Om Projects/.crossexam-stage16b1-ad7fc46/pending-review-packet.json` and `/Users/Om/Om Projects/.crossexam-stage16b1-ad7fc46/controlled-fixture-v1/stage16b1-local-ad7fc46-001/`. Directories are 0700; files 0600; owner UID 503. Retention is owner-explicit-removal-no-auto-delete-v1; no cleanup, cancellation or expiry transition was performed. This local macOS record is not portable Linux authority. No actual owner approval was created or requested.
+
+| Pre-approval identity/value | Exact local candidate |
+| --- | --- |
+| Implementation commit | `ad7fc46fb391f41dc86a7fbf6b16f397b8bb33e9` |
+| Intent ID | `stage16b1-local-ad7fc46-001` |
+| Intent hash | `ee3c04950571a1d37c06d37bef3772730a0253d5758d6eb23061a0df0dfbf0e8` |
+| Release ID | `FL-c1d3c429-9e05-4c30-a2d9-2cb3c8b6b1b8` |
+| Release hash | `0a5452e1caff6a9d9ea82983182045f45879f18c5b560a39acf7ea22e4c14284` |
+| Review receipt hash | `d7bcf2e8a27006cdfc18752d0d08cd54f20752981044e277d34438c6bdadecff` |
+| Controlled run ID | `FR-ed85d2ae-51ec-4582-92b1-8cf368b1da37` |
+| Controlled plan ID | `FP-45e8c48e-c226-4515-8c18-eb49fc6c433a` |
+| Controlled plan hash | `222b541e5b5d15fe24e561dac8add71e693329e7b5234dafd42c23f2f81715f0` |
+| Authorization ID (metadata only) | `FA-53a2d87e-17bb-40b1-9e35-9a5df6ca6e1c` |
+| Authorization binding hash (not approval) | `e21191be5c1c01e0813dd078e7bde7e498a4e9fbcd5d59db3b6c015aa6fe7245` |
+| Scan ID | `scan-owned-numeric-tribunal-v1` |
+| Base owned input snapshot hash | `c418e840c4d0ea98cca6554fe008d41612423202e86e008c43e5088c1ee7c7ad` |
+| Exact normalized parent report hash | `e62dde399074d86751b91fe31d3ff1ed64897a1b69d89eba0f3ae9df782ecd5c` |
+| Parent Tribunal run ID | `TR-3cbfdd5f-7bba-4974-a6e7-ee88b1cd337e` |
+| Matching Skeptic review ID | `SR-45c68526-9069-48ae-8853-389632639376` |
+| Matching Skeptic review hash | `75bf8a130b7f290457e767fd0c89a5d2649896140d0c49bdf838f11fc1470cd1` |
+| Source Stage 16A run ID | `RR-5798b496-bb7f-4660-bcc1-0969dd38b062` |
+| Source run hash | `2d2b3ebfe08252f10afb2bd1a7b13e6696a0398c235045331f1a9ff4733ba007` |
+| Source plan ID | `RP-3d936742-c9c3-43ad-9b55-f9838b609fc6` |
+| Source plan hash | `7c721d5b492c36d2a69504376a35d20d6b66f420d91c9b86246f03cfd1628950` |
+| Source request hash | `f09732b4fa7cc5b49e0f03faed284779506dcba38141ac297965042ae87b01eb` |
+| Source operation policy hash | `23774967fad01807922d311c99674946802d4e5078a8214c18a90ed4894602f9` |
+| Fake source provider / model | `owned-fixture-preflight-fake / deterministic-v1` |
+| Linked claim ID | `C-faae39c3-5af1-4915-9ec7-4fe1aeed6991` |
+| Linked reproduction-gap challenge ID | `CH-3c79df64-56da-416c-9500-f04da50cde63` |
+| Parent authorized evidence IDs | `E-owned-status, E-owned-structure` |
+| Selected lineage evidence IDs | `E-owned-status` |
+| Fixture manifest hash | `f7cf62e2d5414c0a341e35f5da1cbe572821988cd67fc061d2e21fc733fd638f` |
+| Fixture body SHA-256 / bytes | `5c6172ecdaf0408ad301e116bc5003d6ecbb84f44b93576a5a28d29e99841a3b / 61` |
+| Real-path schemas hash | `116fc0cd11c8b56533df4616ba60808045aae232ebce673f9e2b4a6d3fa52ef9` |
+| Real-path policy hash | `70de49638dc942a634a54301c46a55fc29fcbd4886e1da311f4e097501bea74a` |
+| Required future proof-policy hash | `c90549ab0110add7cd32126abb98519fbc20a7e496541aa0d8f687b209dd846f` |
+| Fixed runner/configuration hash | `6fcd049acde0a3e6ea668130d07b585d5fd0941f800d699f9ae428bd0feb786d` |
+| Local storage directory hash | `d20ebb6a56ea150882e533523fd089a55d01223b6daaca9bdd3271a6c5497575` |
+| Local hostname consistency hash | `483a8737b5859b390188095346628c872bbb0a256e4314ca611e89810fb5b3e2` |
+| Local owner UID | `503` |
+| Prepared Linux root manifest hash | `null — NOT VERIFIED` |
+| Actual Linux Chromium binary hash | `null — NOT VERIFIED` |
+| Intent createdAt | `2026-10-06T05:53:21.926Z` |
+| Intent expiresAt | `2026-10-07T05:53:21.926Z` |
+
+The fixed input is a pinned **hand-authored** owned numeric snapshot, not a measurement of the empty browser page. Fixed injected Explorer/Breaker/Skeptic/Reproducer fakes generate lineage context in the same process. The normalized parent report hash above includes those newly generated canonical claims/challenges; it is separate from the unchanged base-input hash. Source fake authorization/SIMULATED results are ignored. Controlled authorization ID/hash are binding metadata, not an owner decision or executable capability. No raw report, Stage 16A artifact or provider output is persisted. The operation remains lineage-only, claimTested=false and challengeResolved=false; it does not test or resolve the linked claim/challenge.
+
+Future review of this exact existing candidate is read-only and requires the repository root:
+
+```sh
+pnpm reproducer:preflight preview --intent-id 'stage16b1-local-ad7fc46-001' --directory '/Users/Om/Om Projects/.crossexam-stage16b1-ad7fc46'
+```
+
+Do not repeat stage for this ID. Preview never approves, dispatches, terminalizes or rewrites it. There is no approve/execute CLI command. The manual real-dispatch boundary always throws REAL_RUNNER_DISABLED; a trusted owner-authority loader is not provisioned. Only opaque, differently identified synthetic approvals inside fake tests exercise the durable approval → marker → ledger dispatchHash → fake attempt order. No automatic push/CI/restart path invokes it.
 
 Future retained fields are only schema/artifact identity, fixed fixture key, fixture/OBSERVED provenance, completed navigation outcome, status code, title presence, zero redirects, bounded duration/time and explicit complete/nontruncated metadata. A final real run requires matching private trusted-host execution attestation; shape validation is insufficient. No paths/URLs/HTML/headers/text/forms/selectors/screenshots/secrets/raw collection enter observations. Cancel/expiry/denial and offline fake outcomes are distinct terminal staging receipts with observation null, never real-path runs.
 
 No-marker state remains pending-approval across restart and age. Expiry is 24 hours and terminalizes only on an explicit validated expiry action. No automatic deletion; retention is owner-explicit-removal-no-auto-delete-v1. Under a future verified manual authority, approval must be durable before the one-attempt marker, then matching ledger dispatchHash must be durable before any worker call. Offline tests exercise that order with synthetic opaque authority and fake execution only. Marker/no result becomes unknown, result-before-final-ledger reconciles exactly, terminal replay never redispatches. Same-host trusted-storage host dispatch at most once is the limit; there is no distributed/external at-most-once or physical power-loss claim.
 
-Fixed configuration is reviewable: owned entry origin and empty path, GET document, 61-byte body/hash below, 10-second worker/45-second outer deadline, 1-second cleanup reserve, 64 requests/96 decisions, non-root crossexam-worker, sealed `/var/lib/crossexam/root`, Playwright 1.63.0/Chromium 153.0.8010.12/revision 1243, exact existing AppArmor attachment/profile with restriction 1, Chromium sandbox, renderer seccomp proof, private network/enforcing proxy socket, NoNewPrivileges/empty host capabilities, 1 GiB memory/no swap, 128 PIDs/100% CPU and existing cleanup/sentinels. Source hashes pin the existing collector/worker/backend/root/AppArmor/sandbox/proxy/pinned-transport/preparation/dependency files. No browser or proxy code has changed.
+Fixed configuration is reviewable: owned `http://entry.crossexam-fixture.com` origin and `/collector/empty-performance` path, GET document, 61-byte body/hash below, 10-second worker/45-second outer deadline, 1-second cleanup reserve, 64 requests/96 decisions, non-root user/group crossexam-worker, sealed `/var/lib/crossexam/root`, Playwright 1.63.0/Chromium 153.0.8010.12/revision 1243. The exact executable and AppArmor attachment are `/browser/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell`; profile `crossexam-chromium-userns`, userns restriction 1. Required future proofs include Chromium sandbox/renderer seccomp, private network, enforcing `/run/crossexam/proxy.sock` with pinned DNS/no DIRECT, NoNewPrivileges/empty host capabilities, 1 GiB memory/no swap, 128 PIDs/100% CPU and existing cleanup/zero-sentinel receipts. Browser methods remain GET/HEAD; no WebSocket/QUIC/service-worker/download allowance. Source hashes in the private packet pin the existing collector/worker/backend/root/AppArmor/sandbox/proxy/pinned-transport/preparation/dependency files. These are required configuration/proof policy, not newly measured runtime facts. No browser or proxy code has changed.
 
 **Not approval-ready:** prepared Linux root-manifest and actual Chromium binary hashes are unknown here. The disabled runner and unprovisioned trusted owner-authority loader are additional blockers. No actual execution attestation is invented in a pending release. Local pending storage is bound to its absolute namespace/path, UID and hostname hash; copying it to a different Linux host/UID cannot supply authority. The hostname hash is only a consistency check, not cryptographic machine attestation; host/OS-account storage integrity is trusted. The intended trusted Linux host must have exact verified artifact/storage identities and a coherent reviewed policy/authority mechanism before a new exact pending intent can be presented for approval. Do not ask the owner to approve this blocked packet.
 
 Post-execution-only values are dispatch/start/finish/capture timestamps, measured duration/status/title presence, complete observation hash, sandbox/proxy/cgroup/cleanup/sentinel security receipts and actual execution attestation. No such value exists now. One next task is offline resolution of the pre-approval Linux artifact/storage and owner-authority blockers; then restage/review the exact packet before any owner approval, first gated Linux fixture run and full acceptance review.
+
+Delivery verification: the implementation SHA in the table was pushed only to `feature/stage16b1-fixture-preflight`. [Ordinary offline Node run 37420818616](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37420818616) **attempt 1 PASS** on that exact SHA; every job step including frozen install, focused/regression/full units and build passed. No retry, fixture/browser/Linux/provider execution or owner approval. Local results: 164 focused, 212 controlled, 491 combined agent-contract, 167 provider/ledger/operator and 1,664 full units; lint/typecheck/build/diff check PASS. Counts are the recorded local results; CI step conclusions and implementation SHA were independently checked. The resumed delivery reused prior validation without repeating the full suite or staging. GitHub's branch inventory showed only the Tribunal/Node workflow; prior local/remote milestones remain unchanged. Final documentation receipt is `[skip ci]`, with executable code and this local candidate's bindings unchanged.
 
 ## Historical Stage 16B offline candidate packet
 
