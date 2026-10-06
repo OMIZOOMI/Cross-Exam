@@ -66,6 +66,7 @@ const identity = Object.freeze({
       limits: L,
       operationPolicyHash: OPERATION_POLICY_HASH,
       parent: "offline-skeptic-admission-v1",
+      authorizationBinding: "report-snapshot-and-separate-skeptic-review-v1",
       projection: "numeric-presence-only-v1",
       execution: "injected-fake-only; object-identity-replay",
     }),
@@ -172,9 +173,7 @@ function prepare(input: unknown, skepticReview?: unknown) {
   ];
   const skepticHash = review ? hash(JSON.stringify(review)) : null;
   const binding: ReproducerRun["parent"] = {
-    snapshotHash: hash(
-      JSON.stringify({ reportHash: prepared.binding.snapshotHash, skepticReviewHash: skepticHash }),
-    ),
+    snapshotHash: prepared.binding.snapshotHash,
     tribunalRunId: parent.id,
     skepticReviewId: review?.id ?? null,
     skepticReviewHash: skepticHash,
@@ -530,6 +529,7 @@ export function createReproducerSession(
               runId: run.id,
               sessionId: run.sessionId,
               parentSnapshotHash: prepared.binding.snapshotHash,
+              parentSkepticReviewHash: prepared.binding.skepticReviewHash,
               plan,
             });
             const consumed = grant.consume(grant.bindingHash);

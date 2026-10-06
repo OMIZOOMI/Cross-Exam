@@ -111,7 +111,7 @@ const fakePlanner = (payload: unknown) => ({
   run: vi.fn(async (_r: ReproducerRequest, _o: { signal: AbortSignal }) => payload),
 });
 const fakeExecutor = () => ({ execute: vi.fn(async () => simulated()) });
-async function review(r: ScanReport) {
+async function review(r: ScanReport, question = "Would a repeat extend the collection window?") {
   return createSkepticSession(r, {
     executionMode: "injected-fake",
     provider: "fake-skeptic",
@@ -124,7 +124,7 @@ async function review(r: ScanReport) {
             {
               claimId: r.tribunalRuns[0]?.claims[0]?.id,
               category: "collection-limitation",
-              question: "Would a repeat extend the collection window?",
+              question,
               evidenceIds: ["E-001"],
               relatedChallengeIds: r.tribunalRuns[0]?.challenges.slice(0, 1).map((c) => c.id),
             },
@@ -191,6 +191,7 @@ describe("Reproducer offline host boundary", () => {
       operationPolicyHash: OPERATION_POLICY_HASH,
       planHash: hash(JSON.stringify(result.plans[0])),
       parentSnapshotHash: result.parent.snapshotHash,
+      parentSkepticReviewHash: null,
       runId: result.id,
       sessionId: result.sessionId,
     });
@@ -221,6 +222,11 @@ describe("Reproducer offline host boundary", () => {
     expect(result.plans).toHaveLength(1);
     expect(result.parent.skepticReviewId).toBe(s.id);
     expect(result.parent.skepticReviewHash).toBe(hash(JSON.stringify(s)));
+    expect(result.parent.snapshotHash).toBe(s.parent.snapshotHash);
+    expect(result.authorization).toMatchObject({
+      parentSnapshotHash: s.parent.snapshotHash,
+      parentSkepticReviewHash: result.parent.skepticReviewHash,
+    });
     const view = planner.run.mock.calls[0]?.[0] as unknown as ReproducerRequest;
     expect(
       view.view.challenges.find((c) => c.id === s.challenges[0]?.challenge.id)?.relatedChallengeIds,
@@ -236,6 +242,32 @@ describe("Reproducer offline host boundary", () => {
     ).run();
     expect(denied.audit.rejectionCodes).toEqual(["UNAUTHORIZED_EVIDENCE"]);
     expect(denied.authorization).toBeNull();
+  });
+  it("keeps exact normalized report identity independent of optional review identity", async () => {
+    const r = await parent();
+    const s = await review(r);
+    const changedReview = await review(r, "Does a different repeat extend the observation window?");
+    const run = (skepticReview?: typeof s) =>
+      createReproducerSession(r, config(fakePlanner(proposal([plan(r)])), fakeExecutor()), {
+        skepticReview,
+      }).run();
+    const without = await run();
+    const withReview = await run(s);
+    const withChangedReview = await run(changedReview);
+    for (const result of [without, withReview, withChangedReview]) {
+      expect(result.parent.snapshotHash).toBe(s.parent.snapshotHash);
+      expect(result.authorization).toMatchObject({
+        parentSnapshotHash: s.parent.snapshotHash,
+        parentSkepticReviewHash: result.parent.skepticReviewHash,
+      });
+    }
+    expect(without.parent.skepticReviewId).toBeNull();
+    expect(without.parent.skepticReviewHash).toBeNull();
+    expect(withReview.parent.skepticReviewHash).toBe(hash(JSON.stringify(s)));
+    expect(withChangedReview.parent.skepticReviewHash).toBe(hash(JSON.stringify(changedReview)));
+    expect(withChangedReview.parent.skepticReviewHash).not.toBe(
+      withReview.parent.skepticReviewHash,
+    );
   });
   it.each([
     [{ claimId: "C-001" }, "UNAUTHORIZED_CLAIM"],
@@ -580,6 +612,7 @@ describe("Reproducer offline host boundary", () => {
       runId: result.id,
       sessionId: result.sessionId,
       parentSnapshotHash: result.parent.snapshotHash,
+      parentSkepticReviewHash: result.parent.skepticReviewHash,
       plan: p,
     });
     expect(() => grant.consume("different-binding")).toThrow("AUTHORIZATION_NOT_AVAILABLE");
@@ -591,6 +624,38 @@ describe("Reproducer offline host boundary", () => {
       "INVALID_OPERATION_CAPABILITY",
     );
   });
+  it.each(["report change", "review change", "review added", "review removed"])(
+    "invalidates authorization for %s with all other bound identities held fixed",
+    async (change) => {
+      const r = await parent();
+      const result = await createReproducerSession(
+        r,
+        config(fakePlanner(proposal([plan(r)]))),
+      ).run();
+      const binding = {
+        runId: result.id,
+        sessionId: result.sessionId,
+        parentSnapshotHash: result.parent.snapshotHash,
+        parentSkepticReviewHash: change === "review added" ? null : "a".repeat(64),
+        plan: required(result.plans[0]),
+      };
+      const changed = {
+        ...binding,
+        ...(change === "report change"
+          ? { parentSnapshotHash: "b".repeat(64) }
+          : { parentSkepticReviewHash: change === "review removed" ? null : "b".repeat(64) }),
+      };
+      const originalGrant = issueReproducerAuthorization(binding);
+      const changedGrant = issueReproducerAuthorization(changed);
+      expect(changedGrant.bindingHash).not.toBe(originalGrant.bindingHash);
+      expect(() => changedGrant.consume(originalGrant.bindingHash)).toThrow(
+        "AUTHORIZATION_NOT_AVAILABLE",
+      );
+      const { metadata } = changedGrant.consume(changedGrant.bindingHash);
+      expect(metadata.parentSnapshotHash).toBe(changed.parentSnapshotHash);
+      expect(metadata.parentSkepticReviewHash).toBe(changed.parentSkepticReviewHash);
+    },
+  );
   it("repeated/concurrent session calls and matching in-process replay never redispatch", async () => {
     const r = await parent();
     const planner = fakePlanner(proposal([plan(r)]));
@@ -614,6 +679,11 @@ describe("Reproducer offline host boundary", () => {
     expect(() =>
       createReproducerSession(changed, config(planner, executor), { existingRun: result }),
     ).toThrow("REPLAY_MISMATCH");
+    const changedResult = await createReproducerSession(
+      changed,
+      config(fakePlanner(proposal()), fakeExecutor()),
+    ).run();
+    expect(changedResult.parent.snapshotHash).not.toBe(result.parent.snapshotHash);
     expect(() =>
       createReproducerSession(
         r,
@@ -621,6 +691,30 @@ describe("Reproducer offline host boundary", () => {
         { existingRun: result },
       ),
     ).toThrow("REPLAY_MISMATCH");
+  });
+  it("rejects replay after review addition, removal or review-only change without redispatch", async () => {
+    const r = await parent();
+    const s = await review(r);
+    const changedReview = await review(r, "Would another repeat extend the observation window?");
+    const planner = fakePlanner(proposal([plan(r)]));
+    const executor = fakeExecutor();
+    const fake = config(planner, executor);
+    const without = await createReproducerSession(r, fake).run();
+    const withReview = await createReproducerSession(r, fake, { skepticReview: s }).run();
+    expect(
+      await createReproducerSession(r, fake, {
+        skepticReview: s,
+        existingRun: withReview,
+      }).run(),
+    ).toBe(withReview);
+    for (const options of [
+      { skepticReview: s, existingRun: without },
+      { existingRun: withReview },
+      { skepticReview: changedReview, existingRun: withReview },
+    ])
+      expect(() => createReproducerSession(r, fake, options)).toThrow("REPLAY_MISMATCH");
+    expect(planner.run).toHaveBeenCalledTimes(2);
+    expect(executor.execute).toHaveBeenCalledTimes(2);
   });
   it("replays valid empty and all-rejected results with original status, hashes and zero extra calls", async () => {
     const r = await parent();

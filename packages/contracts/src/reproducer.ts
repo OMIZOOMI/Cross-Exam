@@ -158,6 +158,7 @@ export const ReproducerFakeExecutorResultSchema = z.discriminatedUnion("kind", [
 ]);
 export const ReproducerParentSchema = z
   .object({
+    // Exact normalized report identity, never a composite with the optional review.
     snapshotHash: sha256,
     tribunalRunId: TribunalIdSchema,
     skepticReviewId: TribunalIdSchema.nullable(),
@@ -184,6 +185,7 @@ export const ReproducerAuthorizationMetadataSchema = z
     sessionId: TribunalIdSchema,
     planId: TribunalIdSchema,
     parentSnapshotHash: sha256,
+    parentSkepticReviewHash: sha256.nullable(),
     planHash: sha256,
     operationPolicyHash: sha256,
     bindingHash: sha256,
@@ -384,6 +386,7 @@ export const ReproducerRunSchema = z
           auth.sessionId !== r.sessionId ||
           auth.planId !== p.id ||
           auth.parentSnapshotHash !== r.parent.snapshotHash ||
+          auth.parentSkepticReviewHash !== r.parent.skepticReviewHash ||
           Date.parse(auth.issuedAt) < Date.parse(a.finishedAt) ||
           Date.parse(auth.consumedAt) > Date.parse(r.finishedAt))) ||
       (e.startedAt !== null &&

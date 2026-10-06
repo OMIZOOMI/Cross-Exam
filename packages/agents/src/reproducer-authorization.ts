@@ -50,6 +50,7 @@ export function issueReproducerAuthorization(binding: {
   runId: string;
   sessionId: string;
   parentSnapshotHash: string;
+  parentSkepticReviewHash: string | null;
   plan: ReproducerPlan;
 }) {
   const operation = REPRODUCER_OPERATIONS.find((o) => o.id === binding.plan.operationId);
@@ -60,6 +61,7 @@ export function issueReproducerAuthorization(binding: {
     sessionId: binding.sessionId,
     planId: binding.plan.id,
     parentSnapshotHash: binding.parentSnapshotHash,
+    parentSkepticReviewHash: binding.parentSkepticReviewHash,
     planHash: hash(JSON.stringify(binding.plan)),
     operationPolicyHash: OPERATION_POLICY_HASH,
   });

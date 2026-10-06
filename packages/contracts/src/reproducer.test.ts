@@ -114,6 +114,7 @@ function one() {
     sessionId: r.sessionId,
     planId: "RP-1",
     parentSnapshotHash: digest,
+    parentSkepticReviewHash: null,
     planHash: digest,
     operationPolicyHash: digest,
     bindingHash: digest,
@@ -195,6 +196,44 @@ describe("Reproducer v1 contracts", () => {
     expect(ReproducerRunSchema.safeParse(empty()).success).toBe(true);
     expect(ReproducerRunSchema.safeParse(one()).success).toBe(true);
   });
+  it("accepts authorization matching both the report and optional review hashes", () => {
+    const r = one();
+    expect(required(r.authorization).parentSkepticReviewHash).toBeNull();
+    expect(ReproducerRunSchema.safeParse(r).success).toBe(true);
+    r.parent.skepticReviewId = "SR-1";
+    r.parent.skepticReviewHash = "b".repeat(64);
+    required(r.authorization).parentSkepticReviewHash = r.parent.skepticReviewHash;
+    expect(ReproducerRunSchema.safeParse(r).success).toBe(true);
+  });
+  it("requires the nullable authorization review hash, rejecting legacy metadata", () => {
+    const auth = required(one().authorization);
+    const legacy = { ...auth };
+    Reflect.deleteProperty(legacy, "parentSkepticReviewHash");
+    expect(ReproducerAuthorizationMetadataSchema.safeParse(legacy).success).toBe(false);
+    for (const value of [undefined, "invalid-hash"])
+      expect(
+        ReproducerAuthorizationMetadataSchema.safeParse({
+          ...auth,
+          parentSkepticReviewHash: value,
+        }).success,
+      ).toBe(false);
+  });
+  it.each([
+    ["SR-1", digest, null],
+    ["SR-1", digest, "b".repeat(64)],
+    [null, null, digest],
+    ["SR-1", null, null],
+    [null, digest, digest],
+  ])(
+    "rejects mismatched review ID/hash/authorization bindings %s / %s / %s",
+    (reviewId, reviewHash, authorizationHash) => {
+      const r = one();
+      r.parent.skepticReviewId = reviewId;
+      r.parent.skepticReviewHash = reviewHash;
+      required(r.authorization).parentSkepticReviewHash = authorizationHash;
+      expect(ReproducerRunSchema.safeParse(r).success).toBe(false);
+    },
+  );
   it.each([
     { calls: 0 },
     { requestHash: null },
