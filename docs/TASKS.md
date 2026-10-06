@@ -12,7 +12,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 - [x] [Owner review packet](STAGE16B_REVIEW.md): exact candidate manifest/hash, parent requirements, safe fields, recovery limits, unresolved release values and proposed later gated Linux proof.
 - [x] Final local validation: 119 controlled / 420 combined agent-contract / 167 provider regression / 1,500 full units; lint/typecheck/build/diff check PASS. Local IPC permission and pnpm preflight limitations are recorded in CURRENT_STATE.
 - [x] Final privacy/security diff review: no secrets/raw retention, real-operation path, admission change, prior browser/security/Stage 14C change or generated artifacts.
-- [ ] Ordinary offline Node CI on the implementation SHA; record acceptance in CURRENT_STATE.
+- [x] Offline boundary acceptance: ordinary Node [run 37409928780](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37409928780), attempt 1 PASS on **d1a41a71f21863298a1dd3c52be5329171e760c7**, all steps including frozen install/full tests/build. No retry or browser/Linux run. Final receipt is documentation-only `[skip ci]`; validated code is unchanged.
 - [ ] **One next task after offline delivery:** owner approves the exact manifest/release, parent context, retained fields and one-attempt policy before the first separately implemented gated Linux fixture run. Review that run before accepting observed behavior.
 
 No real fixture/browser/provider, credential access, paid/controlled real release or Linux workflow invocation. Public scanning remains DISABLED; prior accepted branches, Stage 14C and free-for-all product policy are unchanged.
