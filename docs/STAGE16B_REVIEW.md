@@ -23,6 +23,19 @@ No runnable owner-approved command or fabricated Linux values are provided here.
 
 The existing macOS candidate below remains unchanged: it was not copied, restaged, approved, cancelled, expired or dispatched. Its receipt hash stays d7bcf2e8a27006cdfc18752d0d08cd54f20752981044e277d34438c6bdadecff. Its old implementation/configuration bindings belong to the frozen Stage 16B.1 code and provide no Linux authority. No generated operational packet, ledger, key or report is committed. CrossExam remains free for all users; Stage 14C paid acceptance remains owner-deferred and public browser scanning DISABLED.
 
+Delivery: implementation **066ef69d8ab81bbecb4fac9e690a7d2b67901696**, source **fa3442072d75490a09acc86336a900b9526164e1**, new branch `feature/stage16b2-linux-preflight`. [Offline Node CI 37442005422](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37442005422) attempt 1 PASS on the exact implementation SHA, all steps successful. Local checks: 139 new focused, 321 controlled, 164 previous preflight, 521 combined agent-contract, 167 provider/ledger/operator and 1,803 full units; lint/typecheck/build/diff check PASS. No Linux/browser job or selected-host verification ran. Read-only preservation checks confirmed all four old macOS candidate hashes/mtimes/UID/modes and its pending namespace unchanged. Main and prior accepted remote heads are unchanged.
+
+Pure code identities recomputed from that clean implementation (not a selected-host packet or owner decision):
+
+| Fixed code identity | SHA-256 |
+| --- | --- |
+| Disabled fixed-wrapper source artifact | `9e60bde2b22c64742b3d6d5d7ad7e176bbd176a14d8032ccae2bf9bf2c05389a` |
+| Linux source closure | `c9134efbffe95409256395a1b4fb5c09c30813d4e2b7180dd3da29e221fe41d2` |
+| Linux schema set | `09c3ec0d07374e3d8229647cd4b5f664f0609ab5c713a2f1efd15a06092c6626` |
+| Distinct Linux policy | `b2d7ef188aa6c7ad04bca40e1e6b00971a62dcd33ab4530c3250576db228b281` |
+
+Host-specific prepared-root manifest/binary/worker-bundle hashes, hostname/machine-id, worker/operator UID/GID, private storage and protected-key identity remain **UNKNOWN / NOT SELECTED**. They were not filled with synthetic test values. Future selection must name its exact clean checkout SHA, including any later reviewed loader changes; the documentation-only delivery receipt changes no code hash. No operational Linux packet is ready for approval.
+
 ## Stage 16B.1 concrete pre-dispatch staging
 
 This section supersedes the old candidate-only preparation state below, without changing the accepted fake ledger. The real-path release/run/observation have separate artifact identities and schema/policy hashes. Operator stage and read-only preview exist; no approve/execute command, owner authority, browser invocation or observation publisher is enabled. A bare approved boolean or parsed approval file is not authority. The private real wrapper always fails closed; synthetic approvals and fake terminal receipts belong only to offline tests.
