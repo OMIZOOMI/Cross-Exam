@@ -56,7 +56,7 @@ const demoProjection = createDemoProjection();
 
 export default function HomePage() {
   return (
-    <div className="stage18-landing">
+    <div className="stage18-landing stage181-landing">
       <header className="stage18-header">
         <Brand />
         <nav className="stage18-nav" aria-label="Main navigation">
@@ -71,22 +71,23 @@ export default function HomePage() {
       </header>
 
       <main id="main">
-        <section className="stage18-hero" id="how-it-works" aria-labelledby="hero-title">
-          <div className="stage18-hero-copy">
+        <section
+          className="stage18-hero stage181-hero"
+          id="how-it-works"
+          aria-labelledby="hero-title"
+        >
+          <div className="stage18-hero-copy stage181-hero-copy">
             <p className="stage18-eyebrow">
               <span className="stage18-eyebrow-dot" aria-hidden="true" />
               Evidence-backed website investigations.
             </p>
             <h1 id="hero-title">
-              Your website says it works.
-              <br />
-              <em>Prove it.</em>
+              <span>Your website</span> <span>says it works.</span> <em>Prove it.</em>
             </h1>
-            <p className="stage18-hero-deck">
-              See what your website serves. Follow the evidence, challenge the conclusion, and
-              understand what remains uncertain. Every verdict has a scope.
+            <p className="stage18-hero-deck stage181-hero-deck">
+              Map the surface. Keep the evidence. Let every verdict carry its limit.
             </p>
-            <div className="stage18-hero-actions">
+            <div className="stage18-hero-actions stage181-hero-actions">
               <div className="stage18-primary-cta">
                 <span className="stage18-cta-label">Run a local investigation</span>
                 <ScanForm />
@@ -95,9 +96,9 @@ export default function HomePage() {
                 See the demo case <ArrowUpRight size={16} aria-hidden="true" />
               </Link>
             </div>
-            <p className="stage18-hero-caption">
-              Runs on your local Node server, not a public scanning service. The demo is synthetic;
-              browser execution, real providers, and observed reproduction are unavailable here.
+            <p className="stage18-hero-caption stage181-hero-caption">
+              Local HTTP collection now. The visual record is synthetic; browser execution, real
+              providers, and observed reproduction are unavailable here.
             </p>
           </div>
           <CaseSequence projection={demoProjection} />

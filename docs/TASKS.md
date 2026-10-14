@@ -2,6 +2,17 @@
 
 Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery promises. Keep each task independently reviewable.
 
+## Stage 18.1 — cinematic landing only
+
+- [x] Preserve exact Stage 18 source `caecbe04010a37d4db27cd25105793b968268e34` and resume only `feature/stage18-1-cinematic-landing`; preserve private untracked attachments.
+- [x] Finish the existing full-width campaign hero, semantic CSS/SVG depth scene, 12-second one-shot story, skip control, static reduced-motion state and vertical mobile sequence.
+- [x] Keep the C-005 synthetic claim contested; no fabricated live activity, green confirmation, or backend/provider authority.
+- [x] Complete lint, root/workspace typecheck and production build, 9 fixture-source units and 14 landing-only Playwright checks on development and production.
+- [x] Review production screenshots at 1440/1280/768/390, staged animation, keyboard, navigation and reduced motion; no page overflow or card overlap at those sizes.
+- [x] Review the scoped diff/privacy; exclude attachments, screenshots, logs and generated files. Preserve reports, contracts and all security/execution boundaries.
+- [ ] Commit/push only the cinematic feature branch and verify its landing-only CI receipt.
+- **One next task after delivery:** owner visual review; stop before any further implementation or execution milestone.
+
 ## Stage 18 — Veyra product redesign and Tribunal visualization
 
 - [x] Preserve CrossExam internals and present the public surface as Veyra — Evidence-backed website investigations.

@@ -1,5 +1,63 @@
 # Current state
 
+## Stage 18.1 — cinematic Veyra landing
+
+Resumed the existing `feature/stage18-1-cinematic-landing` worktree at source
+**caecbe04010a37d4db27cd25105793b968268e34**. Initial branch creation had verified that exact
+Stage 18 source with a clean tracked tree; the resume preserved its uncommitted landing work and
+untouched private attachments. No reset, branch recreation, report redesign, dependency change,
+or execution-boundary change.
+
+The existing scene now fits the desktop campaign composition: large serif headline, local CTA,
+layered website/page/evidence/claim/challenge/verdict objects, a perspective grid, and SVG record
+connections. All content comes from the existing synthetic C-005 fixture projection. The verdict
+stays **contested**, in amber with a question mark, not a green confirmation. The existing tabbed
+record remains inspectable in a disclosure rather than forcing an oversized initial hero.
+
+The one-shot illustration is 12 seconds: website at 0.18s, pages at 1.8s, observations/evidence at
+3.4s, claim at 5s, challenge at 6.5s, evidence reconnect at 8.2s, verdict at 9.6s, Veyra signature at
+11.2–12s. “Skip intro,” record selection, or reduced-motion preference settles it immediately.
+All animations stop after settling; no loop or automatic replay on selection/resizing. Reduced
+motion renders the final static composition without waiting for delays. Tablet removes the tilt;
+mobile uses a legible vertical sequence, not a miniaturised graph. No WebGL, canvas, Three.js,
+video, textures, remote fonts, animation library, or new dependency was added.
+
+### Validation and visual receipt
+
+| Check | Actual result |
+| --- | --- |
+| `corepack pnpm lint` | PASS; 212 files |
+| `corepack pnpm exec vitest run apps/web/src/lib/demo-report.test.ts` | PASS; 9 synthetic-source integrity tests |
+| `corepack pnpm build` with the existing external pnpm shim on PATH | PASS; root `tsc`, all nine workspace typechecks, Next production compilation/static generation |
+| `corepack pnpm exec playwright test tests/e2e/product.spec.ts --grep 'Veyra.*landing\|URL form validates\|unsafe URL feedback'` | PASS; 14 focused desktop/mobile checks on the development server |
+| Same focused command with `E2E_PRODUCTION=1` | PASS; 14 checks on the freshly built production server, zero retries |
+| `git diff --check` | PASS |
+
+Production viewport/full-page images were reviewed at 1440×1000, 1280×800, 768×1024 and 390×844,
+plus website/pages, challenge, verdict, settled, reduced-motion and keyboard-focus captures.
+Temporary images/scripts/logs are outside Git. The final production checks found no horizontal
+page overflow, card intersections, or page errors at these sizes. Desktop hero plus header ends
+at y=1000 (1440) and y=801 (1280, one-pixel border rounding); hero widths are 1382 and 1229px.
+Headlines are 95/84px respectively. Both CTAs are initially visible at all four sizes. Tablet and
+mobile deliberately flow vertically beyond one viewport. Skip-link focus, arrow/End-key record
+selection, Product/How-it-works anchors, local URL validation and demo navigation were verified.
+
+One bounded local headless Chromium frame sample during the production intro recorded 743 frame
+intervals, median/p95 16.7ms, maximum 16.8ms, zero intervals above 32ms, and zero active animations
+after settling. This is a local sample, not a real-device or cross-browser 60fps guarantee. CI and
+visual acceptance target Chromium; Safari/Firefox and physical mobile devices were not tested.
+
+Scope/privacy review: only landing markup/style/component, landing assertions, a feature-only
+landing CI workflow, and milestone documentation changed. Shared layout adds only the scoped
+stylesheet import. Existing report/Tribunal source, ScanReport v2, scanner, storage, `safeRequest`,
+providers, Judge, Reproducer, browser worker, Linux isolation and public admission are unchanged.
+No credential, provider call, target scan, observed reproduction, paid operation, deployment,
+Stage 16B authority, `.opencode/`, screenshot, log or generated build output is delivered.
+
+Local validation is complete; feature commit/push and exact CI receipt are pending below.
+**One next task:** owner review of the delivered landing; no additional implementation or execution
+milestone is authorised by Stage 18.1.
+
 ## Stage 18 — Veyra product redesign and Tribunal visualization
 
 Stage 18 is complete in the working tree on `feature/stage18-veyra-product-redesign`, starting from

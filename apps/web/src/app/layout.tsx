@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import "./editorial.css";
 import "./landing-stage18.css";
+import "./landing-stage181.css";
 import "./report-stage18.css";
 
 export const metadata: Metadata = {

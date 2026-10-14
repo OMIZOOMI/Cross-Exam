@@ -2,6 +2,22 @@
 
 Accepted 2026-10-01. The visual identity is an investigative research report with the precision of developer analytics. The content determines the composition.
 
+## Stage 18.1 landing-only motion exception
+
+The campaign landing uses `landing-stage181.css` over the existing landing system. At desktop,
+header plus hero occupy approximately one viewport with about 96% available width, a large serif
+headline, and a layered CSS-perspective/SVG investigation scene. The existing detailed fixture
+record is disclosed on demand. This is not a report or Tribunal redesign.
+
+One 12-second synthetic illustration introduces website → page records → observations/evidence →
+claim → challenge → evidence reconnection → contested verdict → Veyra signature. The exact C-005
+fixture remains contested, amber and explicitly unproven. Depth represents records, not authority.
+Small radial lighting fields are static; entrance motion uses translation/opacity and bounded SVG
+strokes, without video, WebGL, remote assets or new dependencies. “Skip intro” and record selection
+settle the scene; it does not loop. Reduced motion shows the final composition immediately and a
+preference change never restarts it. Tablet removes tilt, while mobile reads vertically rather than
+shrinking the desktop scene. The report's existing motion/semantic rules below remain unchanged.
+
 ## Stage 18 public presentation — Veyra
 
 The public web identity is **Veyra — Evidence-backed website investigations.** Veyra is a

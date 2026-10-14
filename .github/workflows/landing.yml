@@ -1,0 +1,35 @@
+name: Veyra cinematic landing
+
+on:
+  push:
+    branches: ["feature/stage18-1-cinematic-landing"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: landing-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  landing:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - name: Validate the synthetic landing source
+        run: pnpm exec vitest run apps/web/src/lib/demo-report.test.ts
+      - name: Root and workspace typecheck, then production build
+        run: pnpm build
+      - name: Install UI test browser only
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Landing-only desktop and mobile checks
+        run: E2E_PRODUCTION=1 pnpm exec playwright test tests/e2e/product.spec.ts --grep 'Veyra.*landing|URL form validates|unsafe URL feedback'
