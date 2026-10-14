@@ -10,7 +10,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 - [x] Deliver an independent 35-second 1920×1080 H.264 MP4 and compressed WebP poster; no audio/copyrighted music or remote media.
 - [x] Prominent dark campaign landing, full-width video, unchanged local/demo CTAs, intentional mobile poster, explicit muted inline playback, static reduced-motion fallback and complete text equivalent.
 - [x] Final focused validation: 14 units; lint/root and isolated tool typecheck/build PASS; 18 production desktop/mobile Playwright checks, zero retries; 1440/1280/768/390 visual review, full-frame MP4 decode/metadata and diff check PASS.
-- [ ] Commit/push only this feature branch and verify landing-only CI on the exact implementation SHA; no historical test universe or Linux fixture job.
+- [x] Commit/push implementation **7dc4abbd18e4858c034b244ffcd618da4be07afd** only to `feature/stage18-2-video-ad`; [landing-only CI 38568693113](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/38568693113) attempt 1 PASS on exact SHA, every step successful. No historical test universe, Linux fixture or provider job. Direct local-file playback also verified. Documentation-only final receipt, assets/code unchanged.
 - **One next task after delivery:** owner visual review; stop before additional implementation or execution.
 
 ## Stage 18.1 — cinematic landing only
