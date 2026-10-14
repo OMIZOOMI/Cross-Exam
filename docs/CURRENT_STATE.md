@@ -66,9 +66,11 @@ exclusion, and these documentation updates. No `.opencode/` attachment, screensh
 output, credential, private report, generated artifact, package contract, scanner/egress rule,
 browser isolation control, provider path, Judge artifact, or public-admission path is included.
 
-Implementation and ordinary CI receipt are recorded below after the validated feature commit and
-push. **One next task:** separately scope and authorize any future execution milestone; Stage 18
-does not activate real providers, browser scanning, observed reproduction, or Stage 16B authority.
+Implementation **2c0745ffd0a9bb58a1856783fa8917af5a89e13f** was committed and pushed only to
+`feature/stage18-veyra-product-redesign`. [Ordinary Tribunal/Node CI run 38516112250](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/38516112250), attempt 1, passed on that exact SHA. Frozen install, lint, typecheck, all focused/regression suites, full units, production build, Chromium installation, and the Veyra desktop/mobile Playwright suite all completed successfully. The UI step ran only because this feature branch is explicitly included; no Linux/browser-isolation job, public target, provider call, credential, paid call, observed reproduction, or Stage 16B authority ran.
+
+**One next task:** separately scope and authorize any future execution milestone; Stage 18 does not
+activate real providers, browser scanning, observed reproduction, or Stage 16B authority.
 
 ## Stage 17 — offline Judge trust boundary
 

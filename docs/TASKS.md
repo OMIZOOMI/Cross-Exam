@@ -13,7 +13,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 - [x] Preserve local deterministic HTTP/HTML collection, `safeRequest`, loopback admission, report persistence, provenance, synthetic `/report/demo`, and all provider/browser/security stop conditions.
 - [x] Complete local formatting/type/build/unit/security/scanner/UI checks and the focused mobile overflow regression; review desktop, laptop, tablet, mobile, focus, keyboard, reduced-motion, loading, partial, unavailable, and Tribunal states.
 - [x] Review the final diff for secrets, private attachments, screenshots, logs, generated output, and unrelated changes; keep `.opencode/` untouched and uncommitted.
-- [x] Commit and push only `feature/stage18-veyra-product-redesign`; verify the ordinary Tribunal/Node CI run and record its exact receipt in `CURRENT_STATE.md`.
+- [x] Commit/push **2c0745ffd0a9bb58a1856783fa8917af5a89e13f** only to `feature/stage18-veyra-product-redesign`; ordinary Tribunal/Node [run 38516112250](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/38516112250), attempt 1, passed on that exact SHA, including the Veyra desktop/mobile UI suite.
 - [ ] **One next task:** separately scope and authorize any future execution milestone; Stage 18 does not activate real providers, browser scanning, observed reproduction, or Stage 16B authority.
 
 ## Stage 17 — offline Judge trust boundary
