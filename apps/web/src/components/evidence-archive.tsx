@@ -3,6 +3,7 @@
 import type { ScanReport } from "@crossexam/contracts";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
+import { reportClaims } from "../lib/presentation";
 import { ProvenanceBadge } from "./ui";
 
 export function EvidenceArchive({
@@ -10,20 +11,26 @@ export function EvidenceArchive({
   query,
   onQuery,
   onFinding,
+  onClaim,
 }: {
   report: ScanReport;
   query: string;
   onQuery: (value: string) => void;
   onFinding: (id: string) => void;
+  onClaim: (id: string) => void;
 }) {
   const live = report.summary.source === "live";
   const [kind, setKind] = useState("all");
-  const records = report.evidence.filter(
-    (item) =>
-      (kind === "all" || item.kind === kind) &&
-      `${item.id} ${item.title} ${item.url} ${item.detail}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
+  const exactId = report.evidence.find(
+    (item) => item.id.toLowerCase() === query.trim().toLowerCase(),
+  )?.id;
+  const records = report.evidence.filter((item) =>
+    exactId
+      ? item.id === exactId
+      : (kind === "all" || item.kind === kind) &&
+        `${item.id} ${item.title} ${item.url} ${item.detail}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
   );
   function clear() {
     onQuery("");
@@ -91,7 +98,9 @@ export function EvidenceArchive({
       </div>
       <div className="evidence-list">
         {records.map((item) => {
-          const claims = report.claims.filter((claim) => claim.evidenceIds.includes(item.id));
+          const claims = reportClaims(report).filter((claim) =>
+            claim.evidenceIds.includes(item.id),
+          );
           return (
             <article className="evidence-record" key={item.id}>
               <div className="evidence-identity">
@@ -152,7 +161,14 @@ export function EvidenceArchive({
                           <code>{claim.id}</code> ↗
                         </button>
                       ) : (
-                        <code key={claim.id}>{claim.id}</code>
+                        <button
+                          type="button"
+                          key={claim.id}
+                          onClick={() => onClaim(claim.id)}
+                          aria-label={`Review claim ${claim.id}`}
+                        >
+                          <code>{claim.id}</code> ↗
+                        </button>
                       );
                     })
                   ) : (

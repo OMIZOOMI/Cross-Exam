@@ -1,6 +1,9 @@
 # Product
 
-CrossExam is an adversarial website intelligence and verification tool for web developers, small teams, and technical reviewers who need findings they can inspect and reproduce.
+Veyra is the public presentation of CrossExam, an adversarial website intelligence and verification
+tool for web developers, small teams, and technical reviewers who need findings they can inspect and
+reproduce. CrossExam remains the repository, package, contract, scanner, security, and internal
+engine identity.
 
 ## Problem and principle
 
@@ -22,7 +25,13 @@ Bounded route discovery; navigation/network failures; console errors; lab perfor
 
 ## Current deliverable
 
-A local, bounded deterministic HTTP/HTML investigation is available from the URL form. It collects real document responses, metadata, structure, resource declarations and headers, then derives narrow evidence-backed findings. `/report/<id>` displays LIVE INVESTIGATION data; `/report/demo` remains a separate synthetic example. No target browser execution or AI provider runs. The fictional `acme.example` domain is never contacted.
+A local, bounded deterministic HTTP/HTML investigation is available from the Veyra URL form. It
+collects real document responses, metadata, structure, resource declarations and headers, then
+derives narrow evidence-backed findings. `/report/<id>` displays LIVE INVESTIGATION data;
+`/report/demo` remains a separate synthetic example. The Veyra report can present the existing
+claim/evidence/challenge/reproduction/verdict relationships, but that presentation does not create
+TribunalRun, SkepticReview, Reproducer, or Stage 17 JudgeReview authority. No target browser
+execution or AI provider runs. The fictional `acme.example` domain is never contacted.
 
 ## Non-goals
 

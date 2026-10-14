@@ -1,229 +1,203 @@
-import { ArrowRight, ArrowUpRight, Check, ChevronRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { CaseSequence, type Stage18Projection } from "../components/case-sequence";
 import { ScanForm } from "../components/scan-form";
-import { Badge, Brand, ProvenanceBadge } from "../components/ui";
+import { Brand } from "../components/ui";
+import { demoReport } from "../lib/demo-report";
+
+function createDemoProjection(): Stage18Projection {
+  const claim = demoReport.claims.find((item) => item.id === "C-005");
+  const finding = demoReport.findings.find((item) => item.claimId === "C-005");
+  const challenge = demoReport.challenges.find((item) => item.claimId === "C-005");
+  const verdict = demoReport.verdicts.find((item) => item.claimId === "C-005");
+
+  if (!claim || !finding || !challenge || !verdict) {
+    throw new Error("The demo projection requires the matching C-005 challenge and verdict.");
+  }
+
+  return {
+    source: demoReport.summary.source,
+    targetUrl: demoReport.summary.targetUrl,
+    pages: demoReport.pages.map(({ id, path, title, statusCode }) => ({
+      id,
+      path,
+      title,
+      statusCode,
+    })),
+    observation: {
+      pagePaths: finding.affectedPaths,
+      evidence: demoReport.evidence
+        .filter((item) => claim.evidenceIds.includes(item.id))
+        .map(({ id, title, kind }) => ({ id, title, kind })),
+    },
+    claim: {
+      id: claim.id,
+      statement: claim.statement,
+      evidenceIds: claim.evidenceIds,
+      affectedPaths: finding.affectedPaths,
+    },
+    challenge: {
+      id: challenge.id,
+      question: challenge.question,
+      evidenceIds: challenge.evidenceIds,
+      status: challenge.status,
+      raisedBy: challenge.raisedBy,
+    },
+    verdict: {
+      id: verdict.id,
+      status: verdict.status,
+      rationale: verdict.rationale,
+      evidenceIds: verdict.evidenceIds,
+    },
+  };
+}
+
+const demoProjection = createDemoProjection();
 
 export default function HomePage() {
   return (
-    <div className="editorial-landing">
-      <header className="masthead">
+    <div className="stage18-landing">
+      <header className="stage18-header">
         <Brand />
-        <nav aria-label="Main navigation">
-          <a href="#method">How it works</a>
-          <Link href="/report/demo">
-            Explore the demo <ArrowUpRight size={15} />
-          </Link>
+        <nav className="stage18-nav" aria-label="Main navigation">
+          <a href="#product">Product</a>
+          <a href="#how-it-works">How it works</a>
+          <Link href="/report/demo">Demo</Link>
+          <a href="https://github.com/OMIZOOMI/Cross-Exam" target="_blank" rel="noreferrer">
+            GitHub <ArrowUpRight size={14} aria-hidden="true" />
+          </a>
         </nav>
-        <span className="edition">An evidence-first approach</span>
+        <span className="stage18-header-note">Local HTTP now · roles offline-only</span>
       </header>
+
       <main id="main">
-        <section className="landing-lead">
-          <div className="landing-argument">
-            <p className="section-kicker">
-              <span />
-              Website intelligence, cross-examined.
+        <section className="stage18-hero" id="how-it-works" aria-labelledby="hero-title">
+          <div className="stage18-hero-copy">
+            <p className="stage18-eyebrow">
+              <span className="stage18-eyebrow-dot" aria-hidden="true" />
+              Evidence-backed website investigations.
             </p>
-            <h1>
-              Put your website
+            <h1 id="hero-title">
+              Your website says it works.
               <br />
-              on <em>trial.</em>
+              <em>Prove it.</em>
             </h1>
-            <p className="landing-deck">
-              Inspect a public website. Collect measurable evidence. Challenge suspicious
-              findings—and see what survives verification.
+            <p className="stage18-hero-deck">
+              See what your website serves. Follow the evidence, challenge the conclusion, and
+              understand what remains uncertain. Every verdict has a scope.
             </p>
-            <ScanForm />
-            <Link className="sample-link" href="/report/demo">
-              Read an example investigation <ArrowUpRight size={16} />
-            </Link>
-            <p className="landing-margin-note">
-              A useful finding should come with a reason to believe it.
+            <div className="stage18-hero-actions">
+              <div className="stage18-primary-cta">
+                <span className="stage18-cta-label">Run a local investigation</span>
+                <ScanForm />
+              </div>
+              <Link className="stage18-button stage18-button-secondary" href="/report/demo">
+                See the demo case <ArrowUpRight size={16} aria-hidden="true" />
+              </Link>
+            </div>
+            <p className="stage18-hero-caption">
+              Runs on your local Node server, not a public scanning service. The demo is synthetic;
+              browser execution, real providers, and observed reproduction are unavailable here.
             </p>
           </div>
-          <InvestigationPreview />
+          <CaseSequence projection={demoProjection} />
         </section>
-        <section className="method-editorial" id="method">
-          <div className="method-intro">
-            <p className="section-kicker">The method</p>
-            <h2>
-              A claim is a beginning.
-              <br />
-              <em>Not a conclusion.</em>
-            </h2>
+
+        <section className="stage18-product" id="product" aria-labelledby="product-title">
+          <div className="stage18-section-intro">
+            <p className="stage18-eyebrow">The product</p>
+            <h2 id="product-title">A clearer answer starts with a narrower claim.</h2>
             <p>
-              More assertions won’t make a website better. A clear trail from observation to verdict
-              will.
+              Veyra keeps collection, interpretation, and uncertainty distinct so a useful finding
+              can be checked instead of merely repeated.
             </p>
-            <span className="method-footnote">
-              Five specialist roles. One burden of proof.
-              <br />
-              The demo illustrates the workflow; agents are not running yet.
-            </span>
           </div>
-          <div className="method-record">
+          <div className="stage18-product-grid">
             <article>
-              <span className="method-number">01</span>
-              <div>
-                <h3>Observe what the browser can prove.</h3>
-                <p>
-                  Measurements, responses, and the rendered page become inspectable records. In the
-                  example: two homepage paints, recorded at 4.3 and 4.1 seconds.
-                </p>
-                <div className="method-citation">
-                  <ProvenanceBadge value="OBSERVED" />
-                  <code>E-001</code>
-                  <code>E-002</code>
-                </div>
-              </div>
+              <span className="stage18-product-number">01</span>
+              <h3>Inspect the surface</h3>
+              <p>
+                See what the submitted website serves, how its routes respond, and what is in scope.
+              </p>
             </article>
             <article>
-              <span className="method-number">02</span>
-              <div>
-                <h3>Give the claim a worthy opponent.</h3>
-                <p>
-                  Explorer proposes. Breaker looks for counterexamples. Skeptic asks the
-                  uncomfortable question.
-                </p>
-                <blockquote>
-                  “Does the script payload cause the delay, or merely coincide with it?”
-                </blockquote>
-                <span className="quote-credit">
-                  Skeptic’s challenge to claim <code>C-005</code> · Fixture example
-                </span>
-              </div>
+              <span className="stage18-product-number">02</span>
+              <h3>Keep the record</h3>
+              <p>
+                Connect each conclusion to bounded evidence with explicit observed and derived
+                provenance.
+              </p>
             </article>
             <article>
-              <span className="method-number">03</span>
-              <div>
-                <h3>Reproduce. Then reach a verdict.</h3>
-                <p>
-                  Reproducer tests the claim. Judge weighs what holds up. When evidence falls short,
-                  the result stays uncertain.
-                </p>
-                <div className="method-outcomes">
-                  <span className="status-pill confirmed">
-                    <Check size={13} />3 confirmed
-                  </span>
-                  <span className="status-pill contested">1 contested</span>
-                  <span className="status-pill unresolved">1 needs evidence</span>
-                </div>
-              </div>
+              <span className="stage18-product-number">03</span>
+              <h3>Make room for doubt</h3>
+              <p>When evidence is incomplete or a challenge survives, uncertainty stays visible.</p>
             </article>
           </div>
         </section>
-        <section className="closing-note">
-          <p>
-            See the finding.
-            <br />
-            <em>Question the evidence.</em>
-          </p>
-          <Link className="button button-primary" href="/report/demo">
-            Open the demo report <ArrowRight size={17} />
-          </Link>
+
+        <section className="stage18-roles" aria-labelledby="roles-title">
+          <div className="stage18-section-intro stage18-section-intro-roles">
+            <p className="stage18-eyebrow">After the record</p>
+            <h2 id="roles-title">Specialists come after the evidence.</h2>
+            <p>
+              The CrossExam engine has offline role boundaries for Explorer, Breaker, Skeptic,
+              Reproducer, and Judge. They are not part of the local HTTP scan and do not run here.
+            </p>
+          </div>
+          <div className="stage18-role-list">
+            <div>
+              <span>Explorer</span>
+              <small>proposes a claim</small>
+            </div>
+            <ChevronRight size={16} aria-hidden="true" />
+            <div>
+              <span>Breaker</span>
+              <small>looks for a counterexample</small>
+            </div>
+            <ChevronRight size={16} aria-hidden="true" />
+            <div>
+              <span>Skeptic</span>
+              <small>asks what is missing</small>
+            </div>
+            <ChevronRight size={16} aria-hidden="true" />
+            <div>
+              <span>Reproducer</span>
+              <small>plans a permitted repeat</small>
+            </div>
+            <ChevronRight size={16} aria-hidden="true" />
+            <div>
+              <span>Judge</span>
+              <small>keeps the result bounded</small>
+            </div>
+          </div>
+          <div className="stage18-role-footnote">
+            <span className="stage18-status-dot" aria-hidden="true" />
+            <span>Fixture projection only. No model activity is implied here.</span>
+          </div>
+        </section>
+
+        <section className="stage18-demo" id="demo" aria-labelledby="demo-title">
+          <div>
+            <p className="stage18-eyebrow">Open case file</p>
+            <h2 id="demo-title">See the chain before you trust the conclusion.</h2>
+          </div>
+          <div className="stage18-demo-action">
+            <p>
+              Explore the clearly labeled fixture report and its evidence, challenges, and limits.
+            </p>
+            <Link className="stage18-button stage18-button-light" href="/report/demo">
+              Open the demo report <ArrowRight size={17} aria-hidden="true" />
+            </Link>
+          </div>
         </section>
       </main>
-      <footer className="editorial-footer">
-        <Brand />
-        <span>Evidence first. Certainty earned.</span>
-        <span>HTML investigations · Browser and AI analysis unavailable</span>
+
+      <footer className="stage18-footer">
+        <Brand compact />
+        <span>Evidence-backed website investigations.</span>
+        <span>Local collection · Honest limits · No invented activity</span>
       </footer>
     </div>
-  );
-}
-
-function InvestigationPreview() {
-  return (
-    <aside className="investigation-preview" aria-label="Example investigation preview">
-      <div className="preview-caption">
-        <span>From the case file</span>
-        <Badge tone="violet">Fixture data</Badge>
-      </div>
-      <div className="preview-document">
-        <div className="preview-source">
-          <code>acme.example</code>
-          <span>Finding 01 / 05</span>
-        </div>
-        <h2>
-          A slow first
-          <br />
-          <em>impression.</em>
-        </h2>
-        <div className="preview-measure">
-          <strong>
-            4.2<span>s</span>
-          </strong>
-          <div>
-            Largest contentful paint
-            <br />
-            <ProvenanceBadge value="DERIVED" />
-          </div>
-        </div>
-        <div className="preview-trace">
-          <span>Run A</span>
-          <i style={{ width: "86%" }} />
-          <code>4.3 s</code>
-          <span>Run B</span>
-          <i style={{ width: "82%" }} />
-          <code>4.1 s</code>
-        </div>
-        <p className="preview-context">
-          The hero paints late in both example runs.
-          <br />
-          The observation repeats. The cause is still a question.
-        </p>
-        <div className="preview-proof">
-          <div>
-            <code>E-001</code>
-            <code>E-002</code>
-            <ChevronRight size={14} />
-            <span className="status-pill confirmed">
-              <Check size={13} />
-              Confirmed
-            </span>
-          </div>
-          <small>Two supporting records · Example verdict</small>
-        </div>
-      </div>
-      <div className="preview-map">
-        <div className="preview-map-label">
-          <span>Put the finding in context</span>
-          <span>8 mapped routes</span>
-        </div>
-        <svg
-          viewBox="0 0 400 115"
-          role="img"
-          aria-label="Example site relationships: homepage links to work, journal and studio; journal links to a missing page."
-        >
-          <g fill="none" stroke="#c0c8d0" strokeWidth="1">
-            <path d="M95 30H219M58 44V69H121" />
-            <path d="M263 44V69H291" stroke="#ba786c" strokeDasharray="4 3" />
-          </g>
-          <g fill="#fffefa" stroke="#b6c3d2">
-            <rect x="20" y="15" width="75" height="29" rx="3" stroke="#2458a6" />
-            <rect x="121" y="55" width="86" height="29" rx="3" />
-            <rect x="219" y="15" width="88" height="29" rx="3" />
-            <rect x="291" y="55" width="94" height="29" rx="3" stroke="#b5473d" />
-          </g>
-          <g fill="#4d5560" fontFamily="monospace" fontSize="11">
-            <text x="55" y="34" fill="#2458a6">
-              /
-            </text>
-            <text x="146" y="74">
-              /work
-            </text>
-            <text x="238" y="34">
-              /journal
-            </text>
-            <text x="310" y="74" fill="#a14338">
-              404 page
-            </text>
-          </g>
-          <circle cx="20" cy="15" r="4" fill="#2458a6" />
-        </svg>
-      </div>
-      <Link className="preview-open" href="/report/demo">
-        Follow the evidence <ArrowUpRight size={16} />
-      </Link>
-    </aside>
   );
 }

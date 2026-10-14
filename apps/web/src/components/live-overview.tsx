@@ -3,6 +3,7 @@
 import type { ScanReport } from "@crossexam/contracts";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import dynamic from "next/dynamic";
+import { ReportScope } from "./report-scope";
 import { ProvenanceBadge } from "./ui";
 
 const SiteGraph = dynamic(() => import("./site-graph"), { ssr: false });
@@ -12,12 +13,14 @@ export function LiveOverview({
   report,
   affected,
   onFinding,
+  onEvidence,
   onNavigate,
 }: {
   report: ScanReport;
   affected: Record<string, number>;
   onFinding: (id: string) => void;
-  onNavigate: (section: "site-map" | "findings" | "evidence" | "solutions") => void;
+  onEvidence: (id: string) => void;
+  onNavigate: (section: "site-map" | "findings" | "evidence" | "tribunal" | "solutions") => void;
 }) {
   const first = report.findings[0];
   return (
@@ -72,6 +75,7 @@ export function LiveOverview({
           </div>
         </dl>
       </section>
+      <ReportScope report={report} onEvidence={onEvidence} />
       {first ? (
         <section className="priority-editorial" aria-labelledby="priority-title">
           <div className="priority-main">
@@ -144,6 +148,8 @@ export function LiveOverview({
           pages={report.pages}
           affected={affected}
           findings={report.findings}
+          evidence={report.evidence}
+          onEvidence={onEvidence}
           onFinding={onFinding}
           source="live"
         />
@@ -186,6 +192,19 @@ export function LiveOverview({
             <li key={note}>{note}</li>
           ))}
         </ul>
+      </section>
+      <section className="live-tribunal-note" aria-labelledby="live-tribunal-title">
+        <div>
+          <p className="section-kicker">Tribunal boundary</p>
+          <h2 id="live-tribunal-title">Challenge and reproduction are unavailable here.</h2>
+          <p>
+            This live report contains deterministic HTTP observations only. No TribunalRun,
+            SkepticReview, Reproducer artifact, or JudgeReview is attached.
+          </p>
+        </div>
+        <button type="button" className="text-link" onClick={() => onNavigate("tribunal")}>
+          Inspect the honest state <ArrowUpRight size={15} />
+        </button>
       </section>
       <div className="overview-next">
         <span>Every conclusion has a record.</span>

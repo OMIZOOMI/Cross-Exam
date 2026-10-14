@@ -2,6 +2,32 @@
 
 Accepted 2026-10-01. The visual identity is an investigative research report with the precision of developer analytics. The content determines the composition.
 
+## Stage 18 public presentation — Veyra
+
+The public web identity is **Veyra — Evidence-backed website investigations.** Veyra is a
+presentation layer over CrossExam's existing deterministic contracts and local collection flow; it
+does not rename repositories, packages, schemas, security identifiers, scanner code, or internal
+engine roles. The landing page leads with a local HTTP investigation, then makes the synthetic case
+sequence and the offline-only specialist boundary explicit. The report keeps the target and scope
+visible before the evidence archive, and groups Site Map, Findings, and planned Solutions under
+Investigation.
+
+The Tribunal view is an evidence-chain reading surface, not an execution surface. It follows a
+claim through cited evidence, challenge availability, Skeptic/reproduction state, and the bounded
+verdict meaning already present in the supplied `ScanReport`. Synthetic demo rows remain labeled as
+fixture records; live reports expose deterministic HTTP/HTML results only and state that Tribunal,
+provider, browser, and reproduction layers are unavailable. The display helpers may explain
+provenance and legacy experiment labels, but never construct authority artifacts or upgrade a
+synthetic result to an observed reproduction.
+
+The Stage 18 responsive system uses the same editorial paper/graphite/blue language across the
+landing and report. Desktop and laptop preserve asymmetrical compositions; tablet collapses the
+landing argument and case record into a readable sequence; mobile turns tabbed relationship and
+claim selectors into horizontally scrollable controls inside the page gutter, with route details
+below the Site Map. Focus outlines, native controls, skip navigation, descriptive labels,
+keyboard-selected graph nodes, explicit empty/error/unavailable copy, and reduced-motion rules are
+part of the visual system. Screenshots are review evidence only and are not repository artifacts.
+
 ## Philosophy and hierarchy
 
 Answer, in order: which website, what survived scrutiny, what matters most, where the problem sits, what proves it, and what to inspect next. The target dominates the report header. Three confirmed findings become an executive narrative, with scope facts in a quiet column and a single prominent performance finding supported by two measured runs. Other confirmed findings are compact links. A wide route graph precedes the claim-survival sequence and response-time comparison.
@@ -47,4 +73,9 @@ Equal KPI cards, repeated bordered containers, four-column feature grids, olive 
 
 ## Implementation boundary
 
-`apps/web/src/app/globals.css` contains the reset and common structural utilities; `editorial.css` contains the visual system and responsive compositions. Report sections use a small number of focused components. Existing React Flow, Recharts, contracts, fixtures, scanner, and provider boundaries are retained. No dependency or backend changes were needed.
+`apps/web/src/app/globals.css` contains the reset and common structural utilities; `editorial.css`
+contains the established CrossExam visual system, while the Stage 18 landing, report, and Site Map
+rules are isolated in `landing-stage18.css`, `report-stage18.css`, and `site-map-stage18.css`.
+Report sections use focused components and pure display helpers. Existing React Flow, Recharts,
+contracts, fixtures, scanner, and provider boundaries are retained. No dependency or backend
+changes were needed.

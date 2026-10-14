@@ -28,7 +28,7 @@ export function ScanForm() {
     }
     setInvalid(false);
     setPending(true);
-    setFeedback("Reading the website and collecting document evidence…");
+    setFeedback("Reading website evidence locally…");
     const active = new AbortController();
     controller.current = active;
     try {
@@ -88,7 +88,7 @@ export function ScanForm() {
           required
         />
         <button className="button button-primary" type="submit" disabled={pending}>
-          {pending ? "Investigating…" : "Begin Cross-Exam"} <ArrowRight size={17} />
+          {pending ? "Investigating locally…" : "Investigate locally"} <ArrowRight size={17} />
         </button>
       </form>
       {feedback ? (
@@ -108,7 +108,7 @@ export function ScanForm() {
       ) : (
         <p id="scan-note" className="form-note">
           <span className="tiny-dot" />
-          Read-only HTML investigation · Up to 8 pages · No browser or AI agents
+          Read-only HTML investigation · Up to 8 pages · Browser and AI analysis unavailable
         </p>
       )}
     </div>

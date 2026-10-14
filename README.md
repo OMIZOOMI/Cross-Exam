@@ -1,8 +1,13 @@
-# CrossExam
+# Veyra / CrossExam
 
-**Put your website on trial.** Evidence-first website intelligence, with claims that must survive challenge and reproduction.
+**Evidence-backed website investigations.** Veyra is the public product presentation for CrossExam:
+evidence-first website intelligence with claims that must survive challenge and reproduction.
+CrossExam remains the repository, package, contract, scanner, security, and internal engine name.
 
-CrossExam now runs a **real, bounded HTTP/HTML investigation** from its local URL form and renders a LIVE INVESTIGATION report. The separate `/report/demo` remains synthetic fixture data. Browser scanning and AI providers are intentionally unavailable.
+Veyra now runs a **real, bounded HTTP/HTML investigation** from its local URL form and renders a
+LIVE INVESTIGATION report. The separate `/report/demo` remains synthetic fixture data. Browser
+scanning, AI providers, Tribunal execution, and reproduction are intentionally unavailable in the
+web flow; the report presentation names those boundaries rather than implying activity.
 
 ## Run
 

@@ -2,6 +2,7 @@
 
 import type { Finding, ScanReport } from "@crossexam/contracts";
 import { ArrowUpRight, Check, ChevronDown } from "lucide-react";
+import { experimentLabel } from "../lib/presentation";
 import { ProvenanceBadge } from "./ui";
 
 export const verdictLabels: Record<string, string> = {
@@ -55,7 +56,7 @@ export function FindingRow({
         <ProvenanceBadge value={finding.provenance} />
         <span className={`verdict-label verdict-${verdict?.status}`}>
           {verdict?.status === "confirmed" ? <Check size={13} /> : <i />}
-          {live ? "Rule matched" : verdictLabels[verdict?.status ?? ""]}
+          {live ? "Rule matched" : `Synthetic verdict · ${verdictLabels[verdict?.status ?? ""]}`}
         </span>
         <ChevronDown className={open ? "rotated" : ""} size={16} />
       </button>
@@ -66,7 +67,7 @@ export function FindingRow({
             <span>
               {live
                 ? "Derived by a deterministic rule from returned HTML or response headers. No AI review or browser verification."
-                : "This is an example investigation. Every step and record is fixture data."}
+                : "Synthetic fixture investigation. Every step and record is fixture data; no TribunalRun or Stage 17 JudgeReview artifact is attached."}
             </span>
           </div>
           <ol className="case-chain">
@@ -95,11 +96,7 @@ export function FindingRow({
                 <span className="chain-number">3</span>
                 <div className="chain-label">
                   <strong>Experiment</strong>
-                  <span>
-                    {experiment?.status === "completed"
-                      ? "Reproduced in the example"
-                      : "Planned · not yet tested"}
-                  </span>
+                  <span>{experimentLabel(experiment)}</span>
                 </div>
                 <p>{experiment?.method}</p>
               </li>
@@ -107,7 +104,7 @@ export function FindingRow({
             <li className={`chain-verdict ${verdict?.status}`}>
               <span className="chain-number">{live ? "2" : "4"}</span>
               <div className="chain-label">
-                <strong>{live ? "Rule result" : "Verdict"}</strong>
+                <strong>{live ? "Rule result" : "Synthetic verdict"}</strong>
                 <span>{live ? "Rule matched" : verdictLabels[verdict?.status ?? ""]}</span>
               </div>
               <p>{verdict?.rationale}</p>

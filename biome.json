@@ -3,6 +3,7 @@
   "files": {
     "includes": [
       "**",
+      "!**/.opencode/omnirush",
       "!**/.next",
       "!**/.crossexam",
       "!**/dist",

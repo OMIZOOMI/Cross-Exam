@@ -6,12 +6,14 @@ import { ArrowUpRight, Check, ChevronRight, Download, FlaskConical, Plus } from 
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
+import { reportClaims } from "../lib/presentation";
 import { EvidenceArchive } from "./evidence-archive";
 import { FindingRow } from "./finding-row";
 import { LiveOverview } from "./live-overview";
 import { ReportOverview } from "./report-overview";
 import { ReportSolutions } from "./report-solutions";
-import { Badge, Brand } from "./ui";
+import { TribunalView } from "./tribunal-view";
+import { Badge, Brand, ProvenanceKey } from "./ui";
 
 const SiteGraph = dynamic(() => import("./site-graph"), {
   ssr: false,
@@ -19,12 +21,16 @@ const SiteGraph = dynamic(() => import("./site-graph"), {
 });
 const sections = [
   { id: "overview", label: "Overview" },
+  { id: "investigation", label: "Investigation" },
+  { id: "tribunal", label: "Tribunal" },
+  { id: "evidence", label: "Evidence" },
+] as const;
+const investigationViews = [
   { id: "site-map", label: "Site Map" },
   { id: "findings", label: "Findings" },
-  { id: "evidence", label: "Evidence" },
   { id: "solutions", label: "Solutions" },
 ] as const;
-type Section = (typeof sections)[number]["id"];
+type Section = (typeof sections)[number]["id"] | (typeof investigationViews)[number]["id"];
 
 export function ReportView({ report }: { report: ScanReport }) {
   const live = report.summary.source === "live";
@@ -33,22 +39,33 @@ export function ReportView({ report }: { report: ScanReport }) {
   const [severity, setSeverity] = useState("all");
   const [openFinding, setOpenFinding] = useState<string | null>(null);
   const [exported, setExported] = useState(false);
+  const [claimId, setClaimId] = useState<string | undefined>();
   const contentRef = useRef<HTMLElement>(null);
+  const investigation = ["site-map", "findings", "solutions"].includes(section);
+  const activeSection = investigation ? "investigation" : section;
   const counts = summarizeVerdicts(report);
   const affected = useMemo(
     () =>
-      report.findings.reduce<Record<string, number>>((acc, finding) => {
-        for (const path of finding.affectedPaths) acc[path] = (acc[path] ?? 0) + 1;
-        return acc;
-      }, {}),
-    [report.findings],
+      report.findings.reduce<Record<string, number>>(
+        (acc, finding) => {
+          for (const path of finding.affectedPaths) acc[path] = (acc[path] ?? 0) + 1;
+          return acc;
+        },
+        Object.fromEntries(report.pages.map((page) => [page.path, 0])),
+      ),
+    [report.findings, report.pages],
   );
 
   function navigate(next: Section) {
-    setSection(next);
+    setSection(next === "investigation" ? "site-map" : next);
     setQuery("");
     setSeverity("all");
     setOpenFinding(null);
+    requestAnimationFrame(() => contentRef.current?.focus());
+  }
+  function showClaim(id: string) {
+    setClaimId(id);
+    navigate("tribunal");
   }
   function showEvidence(id: string) {
     setSection("evidence");
@@ -66,9 +83,7 @@ export function ReportView({ report }: { report: ScanReport }) {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = live
-      ? `crossexam-${report.summary.id}.json`
-      : "crossexam-fixture-report.json";
+    anchor.download = live ? `veyra-${report.summary.id}.json` : "veyra-fixture-report.json";
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     setExported(true);
@@ -88,8 +103,8 @@ export function ReportView({ report }: { report: ScanReport }) {
   }
 
   return (
-    <div className="report-document">
-      <header className="report-masthead">
+    <div className="report-document report-stage18">
+      <header className="report-masthead report-stage18-masthead">
         <Brand />
         <div>
           <Link href="/">Workspace</Link>
@@ -103,13 +118,13 @@ export function ReportView({ report }: { report: ScanReport }) {
         </Link>
       </header>
       <main id="main" className="report-paper">
-        <div className={`fixture-notice ${live ? "live-notice" : ""}`}>
+        <div className={`fixture-notice ${live ? "live-notice" : ""} report-boundary-strip`}>
           <FlaskConical size={15} />
-          <strong>{live ? "LIVE INVESTIGATION" : "Fixture investigation"}</strong>
+          <strong>{live ? "LIVE INVESTIGATION" : "SYNTHETIC FIXTURE"}</strong>
           <span>
             {live
               ? "Real HTTP and HTML evidence. No browser or AI agents were run."
-              : "No website was scanned and no AI agents were run."}
+              : "No website was scanned and no AI agents were run. Report records are synthetic."}
           </span>
         </div>
         <header className="case-heading">
@@ -155,22 +170,37 @@ export function ReportView({ report }: { report: ScanReport }) {
             <button
               type="button"
               key={id}
-              className={section === id ? "active" : ""}
+              className={activeSection === id ? "active" : ""}
               onClick={() => navigate(id)}
-              aria-pressed={section === id}
+              aria-pressed={activeSection === id}
             >
               {label}
-              {id === "findings" && <span>{report.findings.length}</span>}
+              {id === "investigation" && <span>{report.findings.length}</span>}
               {id === "evidence" && <span>{report.evidence.length}</span>}
+              {id === "tribunal" && <span>{reportClaims(report).length}</span>}
             </button>
           ))}
-          <span>Evidence, not assumptions.</span>
+          <span>Evidence, with limits.</span>
         </nav>
+        {investigation && (
+          <nav className="investigation-subnav" aria-label="Investigation details">
+            {investigationViews.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={section === id}
+                onClick={() => navigate(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+        )}
         <section
           ref={contentRef}
           tabIndex={-1}
           className="report-content"
-          aria-label={`${sections.find((item) => item.id === section)?.label} content`}
+          aria-label={`${[...sections, ...investigationViews].find((item) => item.id === section)?.label} content`}
         >
           {section === "overview" && live && (
             <LiveOverview
@@ -178,6 +208,7 @@ export function ReportView({ report }: { report: ScanReport }) {
               affected={affected}
               onNavigate={navigate}
               onFinding={showFinding}
+              onEvidence={showEvidence}
             />
           )}
           {section === "overview" && !live && (
@@ -208,6 +239,8 @@ export function ReportView({ report }: { report: ScanReport }) {
                 pages={report.pages}
                 affected={affected}
                 findings={report.findings}
+                evidence={report.evidence}
+                onEvidence={showEvidence}
                 onFinding={showFinding}
                 expanded
                 source={report.summary.source}
@@ -234,7 +267,7 @@ export function ReportView({ report }: { report: ScanReport }) {
                           <code>{page.path}</code>
                         </td>
                         <td>
-                          <Badge tone={page.statusCode === 200 ? "green" : "coral"}>
+                          <Badge tone={page.statusCode >= 400 ? "coral" : "neutral"}>
                             {page.statusCode}
                           </Badge>
                         </td>
@@ -298,7 +331,7 @@ export function ReportView({ report }: { report: ScanReport }) {
               )}
               <p className="archive-note">
                 {live
-                  ? "Open a finding to inspect its rule and supporting evidence. No AI challenge or reproduction experiment was performed."
+                  ? "Open a finding to inspect its rule and supporting evidence. Tribunal and reproduction are unavailable for live reports."
                   : "Open any finding to follow its claim, challenge, experiment, and verdict. All records are fixture data."}
               </p>
             </section>
@@ -309,18 +342,29 @@ export function ReportView({ report }: { report: ScanReport }) {
               query={query}
               onQuery={setQuery}
               onFinding={showFinding}
+              onClaim={showClaim}
+            />
+          )}
+          {section === "tribunal" && (
+            <TribunalView
+              key={claimId ?? "default"}
+              initialClaimId={claimId}
+              report={report}
+              onEvidence={showEvidence}
+              onFinding={showFinding}
             />
           )}
           {section === "solutions" && (
             <ReportSolutions report={report} onFinding={showFinding} onEvidence={showEvidence} />
           )}
         </section>
+        <ProvenanceKey />
         <footer className="case-footer">
           <span>
-            CrossExam <span>·</span> Every conclusion has a record.
+            Veyra <span>·</span> Every conclusion has a record.
           </span>
-          <span>{live ? "Live observations" : "Fixture data"} · Schema v1</span>
-          <a href="/#method">
+          <span>{live ? "Live observations" : "Fixture data"} · ScanReport v2</span>
+          <a href="/#how-it-works">
             About the method <ArrowUpRight size={13} />
           </a>
         </footer>

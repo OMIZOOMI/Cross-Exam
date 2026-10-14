@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import "./editorial.css";
+import "./landing-stage18.css";
+import "./report-stage18.css";
 
 export const metadata: Metadata = {
-  title: { default: "CrossExam — Put your website on trial", template: "%s · CrossExam" },
+  title: {
+    default: "Veyra — Evidence-backed website investigations",
+    template: "%s · Veyra",
+  },
   description:
-    "Website intelligence that puts evidence first. Inspect real HTTP and HTML evidence, or explore the clearly labeled fixture investigation.",
+    "Evidence-backed website investigations. Inspect bounded HTTP and HTML evidence, challenge conclusions, and keep uncertainty visible.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -40,14 +40,15 @@ test("local scan submission shows honest waiting then renders a controlled live-
   });
   await page.goto("/");
   await page.getByLabel("Website URL").fill("https://example.com");
-  await page.getByRole("button", { name: "Begin Cross-Exam" }).click();
-  await expect(page.getByRole("status")).toContainText("collecting document evidence");
-  await expect(page.getByRole("button", { name: "Investigating…" })).toBeDisabled();
+  await page.getByRole("button", { name: "Investigate locally" }).click();
+  await expect(page.getByRole("status")).toContainText("Reading website evidence locally");
+  await expect(page.getByRole("button", { name: "Investigating locally…" })).toBeDisabled();
   complete();
   await expect(page).toHaveURL(`/report/${id}`);
   await expect(page.getByText("LIVE INVESTIGATION", { exact: true })).toBeVisible();
   await expect(page.locator(".case-metadata")).toContainText("Partial investigation");
   await expect(page.locator(".scope-facts")).toContainText("1.3");
+  await page.getByRole("button", { name: "Show graph", exact: true }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(2);
   await expect(page.locator(".react-flow__edge")).toHaveCount(1);
   expect(external).toEqual([]);
@@ -63,7 +64,7 @@ test("live findings, graph, evidence and export use report data without fixture 
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(`/report/${id}`);
   const navigation = page.getByRole("navigation", { name: "Investigation views" });
-  await navigation.getByRole("button", { name: "Site Map", exact: true }).click();
+  await navigation.getByRole("button", { name: "Investigation" }).click();
   await page.getByLabel("INSPECT ROUTE").selectOption("P-2");
   await expect(page.locator(".graph-inspector")).toContainText("404 response");
   await expect(page.locator(".route-table tbody tr")).toHaveCount(2);
@@ -79,14 +80,18 @@ test("live findings, graph, evidence and export use report data without fixture 
     "<script>window.attacked=true</script>",
   );
   expect(await page.evaluate(() => Reflect.get(window, "attacked"))).toBeUndefined();
-  await navigation.getByRole("button", { name: "Solutions", exact: true }).click();
+  await navigation.getByRole("button", { name: "Investigation" }).click();
+  await page
+    .getByRole("navigation", { name: "Investigation details" })
+    .getByRole("button", { name: "Solutions", exact: true })
+    .click();
   await expect(page.locator(".solution-row")).toHaveCount(1);
   await expect(page.locator(".solutions-index")).not.toContainText("homepage hero");
   await expect(page.locator(".solutions-index")).not.toContainText("fixture investigation");
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export investigation" }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe(`crossexam-${id}.json`);
+  expect(download.suggestedFilename()).toBe(`veyra-${id}.json`);
   const chunks = [];
   for await (const chunk of await download.createReadStream()) chunks.push(chunk);
   const report = JSON.parse(Buffer.concat(chunks).toString("utf8"));
@@ -108,10 +113,10 @@ test("cancellation resets the form without fabricating a completed report", asyn
   });
   await page.goto("/");
   await page.getByLabel("Website URL").fill("https://example.com");
-  await page.getByRole("button", { name: "Begin Cross-Exam" }).click();
+  await page.getByRole("button", { name: "Investigate locally" }).click();
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Investigation cancelled");
-  await expect(page.getByRole("button", { name: "Begin Cross-Exam" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Investigate locally" })).toBeEnabled();
   finish();
   await expect(page).toHaveURL("/");
 });

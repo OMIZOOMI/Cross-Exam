@@ -15,17 +15,19 @@ test("URL form validates, calls only the local API, and handles scan failure", a
     }),
   );
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Put your website on trial." })).toBeVisible();
-  await page.getByRole("button", { name: "Begin Cross-Exam" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Your website says it works. Prove it." }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Investigate locally" }).click();
   await expect(page.getByRole("status")).toContainText("Enter a full HTTP or HTTPS URL");
   await page.getByLabel("Website URL").fill("https://example.com");
-  await page.getByRole("button", { name: "Begin Cross-Exam" }).click();
+  await page.getByRole("button", { name: "Investigate locally" }).click();
   await expect(page.getByRole("status")).toContainText("could not be investigated");
   expect(externalRequests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  await page.getByRole("link", { name: "Explore the demo", exact: true }).click();
+  await page.getByRole("link", { name: "See the demo case", exact: true }).click();
   await expect(page).toHaveURL(/\/report\/demo$/);
 });
 
@@ -36,6 +38,7 @@ test("fixture investigation exposes evidence and uncertainty", async ({ page }) 
   await expect(
     page.getByText("No website was scanned and no AI agents were run.", { exact: false }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Show graph", exact: true }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(8);
   await page.getByRole("button", { name: "See the contested claim" }).click();
   await expect(page.locator("#detail-F-005")).toContainText(
@@ -59,8 +62,13 @@ test("fixture investigation exposes evidence and uncertainty", async ({ page }) 
 
 test("site graph, filters, and solutions are usable", async ({ page }) => {
   await page.goto("/report/demo");
-  const navigation = page.getByRole("navigation", { name: "Investigation views" });
+  await page
+    .getByRole("navigation", { name: "Investigation views" })
+    .getByRole("button", { name: "Investigation" })
+    .click();
+  const navigation = page.getByRole("navigation", { name: "Investigation details" });
   await navigation.getByRole("button", { name: "Site Map", exact: true }).click();
+  await page.getByRole("button", { name: "Show graph", exact: true }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(8);
   await page.getByLabel("INSPECT ROUTE").selectOption("legacy");
   await expect(page.locator(".graph-inspector")).toContainText("404 response");
@@ -87,7 +95,7 @@ test("export retains fixture identity and the evidence record", async ({ page })
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export fixture" }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe("crossexam-fixture-report.json");
+  expect(download.suggestedFilename()).toBe("veyra-fixture-report.json");
   const stream = await download.createReadStream();
   const chunks = [];
   for await (const chunk of stream) chunks.push(chunk);
@@ -116,12 +124,22 @@ test("archive filters and route context lead back to the supporting claim", asyn
   await expect(page.locator("#detail-F-005")).toContainText(
     "Correlation does not establish causation",
   );
-  await navigation.getByRole("button", { name: "Site Map", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Investigation views" })
+    .getByRole("button", { name: "Investigation" })
+    .click();
+  await page
+    .getByRole("navigation", { name: "Investigation details" })
+    .getByRole("button", { name: "Site Map", exact: true })
+    .click();
   await page.getByLabel("INSPECT ROUTE").selectOption("legacy");
   await page.locator(".graph-inspector").getByRole("button", { name: /F-002/ }).click();
   await expect(page.locator("#detail-F-002")).toBeVisible();
-  await navigation.getByRole("button", { name: "Solutions", exact: true }).click();
-  await expect(page.getByText("Cross-Exam Fix", { exact: false })).toContainText("planned");
+  await page
+    .getByRole("navigation", { name: "Investigation details" })
+    .getByRole("button", { name: "Solutions", exact: true })
+    .click();
+  await expect(page.getByText("Veyra Fix", { exact: false })).toContainText("planned");
   const proposal = page.locator(".solution-row").first();
   await proposal.getByText("How to verify", { exact: true }).click();
   await expect(proposal.locator("details")).toHaveAttribute("open", "");
@@ -158,12 +176,66 @@ test("unsafe URL feedback is local and does not disclose internal policy details
     "file:///etc/passwd",
   ]) {
     await page.getByLabel("Website URL").fill(url);
-    await page.getByRole("button", { name: "Begin Cross-Exam" }).click();
+    await page.getByRole("button", { name: "Investigate locally" }).click();
     await expect(page.getByRole("status")).toHaveText("This destination cannot be scanned.");
     await expect(page.getByLabel("Website URL")).toHaveAttribute("aria-invalid", "true");
   }
   await page.getByLabel("Website URL").fill("https://public-looking.com");
-  await page.getByRole("button", { name: "Begin Cross-Exam" }).click();
+  await page.getByRole("button", { name: "Investigate locally" }).click();
   await expect(page.getByRole("status")).toContainText("could not be investigated");
   expect(targetRequests).toEqual([]);
+});
+
+test("Veyra landing explains the case sequence without implying live activity", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page).toHaveTitle(/Veyra/);
+  const tabs = page.getByRole("tablist", { name: "Investigation relationship stages" });
+  await expect(tabs).toBeVisible();
+  await tabs.getByRole("tab", { name: /Website/ }).click();
+  await expect(page.getByRole("tabpanel")).toContainText("acme.example");
+  await tabs.getByRole("tab", { name: /Website/ }).press("ArrowRight");
+  await expect(page.getByRole("tabpanel")).toContainText("E-009");
+  await page.getByRole("tab", { name: /Observation/ }).press("End");
+  await expect(page.getByRole("tabpanel")).toContainText(
+    "Correlation does not establish causation",
+  );
+  await expect(page.getByText("no process is running", { exact: false })).toBeVisible();
+});
+
+test("fixture Tribunal view exposes the chain and artifact boundary", async ({ page }) => {
+  await page.goto("/report/demo");
+  await page
+    .getByRole("navigation", { name: "Investigation views" })
+    .getByRole("button", {
+      name: "Tribunal",
+    })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "A claim should survive each handoff." }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".tribunal-boundary").getByText("no Stage 17 JudgeReview artifact", {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await expect(page.locator(".tribunal-claim")).toHaveCount(1);
+  await expect(page.locator(".tribunal-claim")).toContainText("not an observed reproduction");
+  await page
+    .getByRole("navigation", { name: "Claims in this record" })
+    .getByRole("button", {
+      name: /C-005/,
+    })
+    .click();
+  await expect(page.locator(".tribunal-claim")).toContainText("Is JavaScript delaying the hero?");
+  await expect(page.locator(".tribunal-claim")).toContainText("Planned-only");
+  await page
+    .locator(".tribunal-claim")
+    .first()
+    .getByRole("button", { name: /E-009/ })
+    .first()
+    .click();
+  await expect(page.getByLabel("Search evidence")).toHaveValue("E-009");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

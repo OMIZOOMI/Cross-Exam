@@ -7,7 +7,7 @@ export default function NotFound() {
       <Brand />
       <span className="eyebrow">404 / OUTSIDE THE RECORD</span>
       <h1>This case file isn’t here.</h1>
-      <p>Return to the workspace or explore the example investigation.</p>
+      <p>Return to Veyra or explore the example investigation.</p>
       <Link className="button button-primary" href="/report/demo">
         Open demo report
       </Link>

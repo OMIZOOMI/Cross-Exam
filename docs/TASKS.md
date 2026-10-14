@@ -2,6 +2,20 @@
 
 Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery promises. Keep each task independently reviewable.
 
+## Stage 18 — Veyra product redesign and Tribunal visualization
+
+- [x] Preserve CrossExam internals and present the public surface as Veyra — Evidence-backed website investigations.
+- [x] Complete the Veyra landing argument, local investigation form, fixture case sequence, honest capability copy, recovery page, metadata, and responsive layout.
+- [x] Recompose the report around Overview, Investigation, Tribunal, Evidence, and Solutions without changing ScanReport v2 or report storage.
+- [x] Add display-only provenance/verdict explanations, collection-scope disclosure, evidence routing, synthetic/live boundary copy, and planned/simulated reproduction labels.
+- [x] Add the relationship-derived Site Map graph/list view with route inspection, evidence/finding links, accessible route inventory, 4xx/5xx semantics, empty handling, and responsive states.
+- [x] Add the presentation-only Tribunal chain for claims, evidence, challenges, Skeptic availability, reproduction state, and bounded verdict meaning; no missing Stage 17 artifact is inferred.
+- [x] Preserve local deterministic HTTP/HTML collection, `safeRequest`, loopback admission, report persistence, provenance, synthetic `/report/demo`, and all provider/browser/security stop conditions.
+- [x] Complete local formatting/type/build/unit/security/scanner/UI checks and the focused mobile overflow regression; review desktop, laptop, tablet, mobile, focus, keyboard, reduced-motion, loading, partial, unavailable, and Tribunal states.
+- [x] Review the final diff for secrets, private attachments, screenshots, logs, generated output, and unrelated changes; keep `.opencode/` untouched and uncommitted.
+- [x] Commit and push only `feature/stage18-veyra-product-redesign`; verify the ordinary Tribunal/Node CI run and record its exact receipt in `CURRENT_STATE.md`.
+- [ ] **One next task:** separately scope and authorize any future execution milestone; Stage 18 does not activate real providers, browser scanning, observed reproduction, or Stage 16B authority.
+
 ## Stage 17 — offline Judge trust boundary
 
 - [x] Choose a separate `JudgeReview`/`JudgeVerdict` artifact because existing deterministic `Verdict` cannot represent empty support, challenge/reproduction links or exact parent binding without changing its meaning; keep ScanReport v2 unchanged.
@@ -13,7 +27,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 - [x] Add adversarial Judge contract/host coverage for authority/reference/semantic/reproduction/replay/failure/privacy/prompt-injection boundaries; no real provider, browser, fixture, public route or UI integration.
 - [x] Complete the required local validation/privacy review: 40 Judge, 133 Skeptic, 136 Reproducer, 321 controlled Reproducer, 164 fixture-preflight, 139 Linux-preflight, 561 Tribunal/contracts, 66 provider, 72 ledger, 29 operator and 1,843 full unit tests; lint/typecheck/build/diff check PASS. No execution or provider call.
 - [x] Push implementation **11a3f850a534be9f587fa61914524fdec50895ec** only to `feature/stage17-judge-offline`; [ordinary offline Node CI 37489088586](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/37489088586), attempt 1, passed on that exact SHA with every step successful. No Linux/browser job, provider call, fixture execution or public target.
-- [ ] **One next task:** Stage 18 — Tribunal Visualization + UI Redesign Planning using the owner's visual references. Keep presentation work separate from real provider/browser/public execution.
+- [x] Stage 18 — Veyra product redesign and Tribunal visualization is complete as a presentation-only milestone; real provider/browser/public execution remains separate.
 
 ## Stage 16B.2 — Linux identity/manual-authority, no execution
 

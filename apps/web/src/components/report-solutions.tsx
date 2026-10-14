@@ -36,7 +36,7 @@ export function ReportSolutions({
           <h2>A next step, with a way to verify it.</h2>
         </div>
         <span className="planned-feature">
-          Cross-Exam Fix <span>— planned</span>
+          Veyra Fix <span>— planned</span>
         </span>
       </div>
       <p className="view-intro">
@@ -64,7 +64,9 @@ export function ReportSolutions({
                 <h3>{finding.title}</h3>
                 <span className={`verdict-label verdict-${verdict?.status}`}>
                   <i />
-                  {live ? "Rule matched" : verdictLabels[verdict?.status ?? ""]}
+                  {live
+                    ? "Rule matched"
+                    : `Synthetic verdict · ${verdictLabels[verdict?.status ?? ""]}`}
                 </span>
               </div>
               <p className="solution-problem">{finding.description}</p>
@@ -112,7 +114,7 @@ export function ReportSolutions({
       <p className="archive-note">
         {live
           ? "Recommendations follow deterministic observations. Changes and their effects have not been tested."
-          : "Recommendations belong to this fixture investigation. They have not been tested against a live website."}
+          : "Recommendations belong to this synthetic fixture investigation. They have not been tested against a live website or validated by a TribunalRun."}
       </p>
     </section>
   );

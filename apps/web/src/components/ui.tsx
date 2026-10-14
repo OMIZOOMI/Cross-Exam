@@ -1,16 +1,12 @@
-import { Crosshair } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { provenanceMeanings } from "../lib/presentation";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <Link className={`brand ${compact ? "compact" : ""}`} href="/" aria-label="CrossExam home">
-      <span className="brand-symbol">
-        <Crosshair size={23} strokeWidth={1.7} />
-      </span>
+    <Link className={`brand ${compact ? "compact" : ""}`} href="/" aria-label="Veyra home">
       <span>
-        Cross<span className="brand-light">Exam</span>
-        <span className="brand-period">.</span>
+        Veyra<span className="brand-period">.</span>
       </span>
     </Link>
   );
@@ -22,10 +18,34 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
 
 export function ProvenanceBadge({ value }: { value: string }) {
   return (
-    <span className={`provenance provenance-${value.toLowerCase()}`}>
+    <span
+      className={`provenance provenance-${value.toLowerCase()}`}
+      title={provenanceMeanings[value]}
+    >
       <span className="provenance-dot" />
       {value.charAt(0) + value.slice(1).toLowerCase()}
     </span>
+  );
+}
+
+export function ProvenanceKey() {
+  return (
+    <details className="provenance-key">
+      <summary>How to read provenance</summary>
+      <dl>
+        {Object.entries(provenanceMeanings).map(([label, meaning]) => (
+          <div key={label}>
+            <dt>
+              <ProvenanceBadge value={label} />
+            </dt>
+            <dd>{meaning}</dd>
+          </div>
+        ))}
+      </dl>
+      <p>
+        Source is separate: a synthetic demo’s OBSERVED label does not make it a live observation.
+      </p>
+    </details>
   );
 }
 

@@ -4,6 +4,7 @@ import type { ScanReport } from "@crossexam/contracts";
 import { ArrowRight, ArrowUpRight, Check, ChevronRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useSyncExternalStore } from "react";
+import { ReportScope } from "./report-scope";
 import { Badge, ProvenanceBadge } from "./ui";
 
 const SiteGraph = dynamic(() => import("./site-graph"), {
@@ -19,7 +20,7 @@ type Props = {
   report: ScanReport;
   counts: { confirmed: number; contested: number; unresolved: number; rejected: number };
   affected: Record<string, number>;
-  onNavigate: (section: "site-map" | "findings" | "evidence" | "solutions") => void;
+  onNavigate: (section: "site-map" | "findings" | "evidence" | "tribunal" | "solutions") => void;
   onFinding: (id: string) => void;
   onEvidence: (id: string) => void;
 };
@@ -44,7 +45,7 @@ export function ReportOverview({
     () => false,
   );
   const challenged = new Set(report.challenges.map((item) => item.claimId)).size;
-  const tested = new Set(
+  const completedFixtureRecords = new Set(
     report.experiments.filter((item) => item.status === "completed").map((item) => item.claimId),
   ).size;
   return (
@@ -53,13 +54,14 @@ export function ReportOverview({
         <div>
           <p className="section-kicker">The short version</p>
           <h2>
-            {counts.confirmed} findings
+            {counts.confirmed} fixture verdicts
             <br />
-            <em>survived scrutiny.</em>
+            <em>are marked confirmed.</em>
           </h2>
           <p>
-            Five claims raised. Three reproduced and confirmed. One remains contested; one needs
-            more evidence.
+            Five synthetic claims are shown. Three carry synthetic confirmed verdicts, one is
+            contested, and one needs more evidence. No TribunalRun or Stage 17 JudgeReview artifact
+            is attached to this fixture.
           </p>
           <div className="summary-verdicts">
             <span className="status-pill confirmed">
@@ -103,6 +105,7 @@ export function ReportOverview({
           </div>
         </dl>
       </section>
+      <ReportScope report={report} onEvidence={onEvidence} />
       <section className="priority-editorial" aria-labelledby="priority-title">
         <div className="priority-main">
           <div className="priority-byline">
@@ -115,14 +118,14 @@ export function ReportOverview({
             takes <em>4.2 seconds.</em>
           </h2>
           <p>
-            The homepage hero paints late in both example runs. The delay is repeatable; its cause
-            is still open.
+            The homepage hero is recorded as painting late in two synthetic runs. The fixture record
+            does not establish a cause.
           </p>
           <div className="priority-labels">
-            <span>Performance</span>
+            <span>Performance · synthetic fixture</span>
             <span className="status-pill confirmed">
               <Check size={13} />
-              Confirmed
+              Synthetic verdict · Confirmed
             </span>
             <ProvenanceBadge value="DERIVED" />
           </div>
@@ -189,6 +192,8 @@ export function ReportOverview({
           pages={report.pages}
           affected={affected}
           findings={report.findings}
+          evidence={report.evidence}
+          onEvidence={onEvidence}
           onFinding={onFinding}
         />
         <p className="figure-caption">
@@ -205,8 +210,8 @@ export function ReportOverview({
             <em>Evidence is.</em>
           </h2>
           <p>
-            The example checks support three narrow claims. They don’t explain everything. A larger
-            script payload, for instance, does not prove what delayed the hero.
+            The synthetic checks support three narrow claims. They don’t explain everything. A
+            larger script payload, for instance, does not prove what delayed the hero.
           </p>
           <button type="button" className="text-link" onClick={() => onFinding("F-005")}>
             See the contested claim <ArrowUpRight size={15} />
@@ -214,13 +219,13 @@ export function ReportOverview({
           <div
             className="claim-flow"
             role="img"
-            aria-label={`${report.claims.length} claims raised, ${challenged} challenged, ${tested} tested, ${counts.confirmed} confirmed`}
+            aria-label={`${report.claims.length} claims raised, ${challenged} challenged, ${completedFixtureRecords} synthetic experiment records marked completed, ${counts.confirmed} synthetic verdicts marked confirmed`}
           >
             {[
               { label: "Raised", count: report.claims.length },
               { label: "Challenged", count: challenged },
-              { label: "Tested", count: tested },
-              { label: "Confirmed", count: counts.confirmed },
+              { label: "Recorded", count: completedFixtureRecords },
+              { label: "Marked confirmed", count: counts.confirmed },
             ].map((item, index) => (
               <div key={item.label}>
                 <strong>{item.count}</strong>
@@ -229,7 +234,9 @@ export function ReportOverview({
               </div>
             ))}
           </div>
-          <p className="flow-note">Completed example experiments only. Two remain planned.</p>
+          <p className="flow-note">
+            Synthetic fixture records only. A completed label is not an observed reproduction.
+          </p>
         </div>
         <details className="investigation-log" open={!compact}>
           <summary>
@@ -243,7 +250,10 @@ export function ReportOverview({
                   <strong>{run.role}</strong>
                   <time>{(run.elapsedMs / 1000).toFixed(1)}s</time>
                 </div>
-                <p>{run.summary}</p>
+                <p>
+                  Synthetic fixture activity record; not evidence of a live agent run or an
+                  execution receipt.
+                </p>
               </li>
             ))}
           </ol>
@@ -274,10 +284,10 @@ export function ReportOverview({
       </section>
       <div className="overview-next">
         <span>
-          <Badge tone="green">Next step</Badge>Start with the verified findings.
+          <Badge tone="green">Next step</Badge>Start with the recorded findings.
         </span>
-        <button type="button" className="text-link" onClick={() => onNavigate("findings")}>
-          Review all five findings <ArrowRight size={16} />
+        <button type="button" className="text-link" onClick={() => onNavigate("tribunal")}>
+          Review the claim chain <ArrowRight size={16} />
         </button>
       </div>
     </div>

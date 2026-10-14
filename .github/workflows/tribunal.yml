@@ -2,7 +2,7 @@ name: Tribunal trust boundary
 
 on:
   push:
-    branches: ["feature/stage14-explorer-breaker", "feature/stage14c-controlled-provider", "feature/stage15-skeptic-offline", "feature/stage16-reproducer-offline", "feature/stage16b-controlled-reproducer-offline", "feature/stage16b1-fixture-preflight", "feature/stage16b2-linux-preflight", "feature/stage17-judge-offline"]
+    branches: ["feature/stage14-explorer-breaker", "feature/stage14c-controlled-provider", "feature/stage15-skeptic-offline", "feature/stage16-reproducer-offline", "feature/stage16b-controlled-reproducer-offline", "feature/stage16b1-fixture-preflight", "feature/stage16b2-linux-preflight", "feature/stage17-judge-offline", "feature/stage18-veyra-product-redesign"]
 
 permissions:
   contents: read
@@ -38,3 +38,9 @@ jobs:
       - run: pnpm test:provider-operator
       - run: pnpm test
       - run: pnpm build
+      - name: Install UI test browser (no scanner browser execution)
+        if: github.ref == 'refs/heads/feature/stage18-veyra-product-redesign'
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Veyra desktop and mobile UI
+        if: github.ref == 'refs/heads/feature/stage18-veyra-product-redesign'
+        run: E2E_PRODUCTION=1 pnpm test:e2e

@@ -1,5 +1,75 @@
 # Current state
 
+## Stage 18 — Veyra product redesign and Tribunal visualization
+
+Stage 18 is complete in the working tree on `feature/stage18-veyra-product-redesign`, starting from
+the accepted Stage 17 Judge source **75fcf3a573ea8b03837c8f4386b3d735ed365930**. The public web
+presentation is now **Veyra — Evidence-backed website investigations**; CrossExam remains the
+repository, package, schema, security, scanner, and internal engine identity. The landing page,
+report information architecture, provenance key, Site Map graph/list view, Tribunal chain, loading,
+empty/recovery, partial/live-unavailable, responsive, keyboard, focus, and reduced-motion states
+were completed without changing ScanReport v2, scanner behavior, security gates, storage, or the
+offline provider/Judge boundaries.
+
+The landing and report surfaces use display-only projections. `/report/demo` remains explicitly
+synthetic and does not create a TribunalRun, SkepticReview, Reproducer receipt, or Stage 17
+JudgeReview. Live reports continue to expose only the bounded deterministic HTTP/HTML layer and
+honestly mark browser, AI, Tribunal, and reproduction layers unavailable. No target, browser,
+provider, credential, paid call, observed reproduction, public admission, Stage 16B authority, or
+billing operation was run.
+
+The only resumed surgical correction was the mobile Tribunal selector's four-pixel page overflow:
+the Stage 18 `max-width: 450px` rule now matches the report's 20-pixel mobile gutter. A focused
+E2E assertion protects that boundary. No new component, contract, dependency, backend path, or
+feature was added during the resume.
+
+### Stage 18 validation receipt
+
+The paused implementation's completed receipts remain applicable because the resume did not alter
+engine, contracts, scanner, security, provider, or report data semantics:
+
+| Check | Result |
+| --- | --- |
+| `corepack pnpm lint` | PASS; Biome checked 211 files |
+| `corepack pnpm -r typecheck` | PASS; all 9 participating workspace projects |
+| `corepack pnpm exec vitest run apps/web/src/lib/presentation.test.ts` | PASS; 4 tests |
+| `corepack pnpm build` | PASS after an external temporary pnpm shim; no repository workaround or dependency change |
+| `corepack pnpm test` | PASS; 1,847 tests / 52 files, from the paused final implementation receipt |
+| `corepack pnpm test:security` | PASS; 288 tests / 6 files, from the paused final implementation receipt |
+| `corepack pnpm test:scanner` | PASS; 94 tests / 4 files, from the paused final implementation receipt |
+| `corepack pnpm exec playwright test tests/e2e/product.spec.ts` | PASS; 18 tests across desktop/mobile after the resume fix |
+| Canonical Stage 18 Playwright suite | PASS; 26/26 in the paused final implementation receipt; ordinary CI reruns the full suite |
+| `git diff --check` | PASS |
+
+The root `corepack pnpm build` command initially exposed the host's nested direct-`pnpm` lookup
+limitation (`pnpm: command not found`). The successful build used only a temporary executable shim
+outside the repository so recursive scripts could resolve `pnpm`; CI has the ordinary pnpm setup.
+The root `corepack pnpm typecheck` script has the same host limitation, while the equivalent
+`corepack pnpm -r typecheck` completed successfully.
+
+### Stage 18 visual and boundary review
+
+Fresh production screenshots were reviewed outside Git at desktop (1440), laptop (1280), tablet
+(768), and mobile (390) widths for the Veyra landing; report overview, Tribunal, Site Map graph and
+route-list views were reviewed at desktop; Tribunal and the partial live report were reviewed at
+mobile. Every inspected viewport reported `document.documentElement.scrollWidth === innerWidth`.
+The review also verified skip-link focus, Case Sequence arrow-key selection, reduced-motion timing,
+synthetic fixture labeling, the 404 route styling, partial live scope, live Tribunal-unavailable
+copy, 4xx route styling, contested/insufficient/planned/simulated record states, and the loading
+skeleton. Temporary screenshots and local logs remain outside the repository.
+
+### Stage 18 privacy/security review
+
+The final diff contains only the Veyra presentation, display-only presentation helpers/tests, the
+focused UI E2E updates, the ordinary Stage 18 UI workflow step, the explicit Biome attachment
+exclusion, and these documentation updates. No `.opencode/` attachment, screenshot, log, build
+output, credential, private report, generated artifact, package contract, scanner/egress rule,
+browser isolation control, provider path, Judge artifact, or public-admission path is included.
+
+Implementation and ordinary CI receipt are recorded below after the validated feature commit and
+push. **One next task:** separately scope and authorize any future execution milestone; Stage 18
+does not activate real providers, browser scanning, observed reproduction, or Stage 16B authority.
+
 ## Stage 17 — offline Judge trust boundary
 
 Started on exact accepted Stage 16B.2 source **37455074f8b1699e80eac7eda4fddc5e5afefdf0** in the feature-only branch `feature/stage17-judge-offline`; main and prior milestone branches remain unchanged. The existing deterministic `Verdict` contract is intentionally not reused. Separate JudgeReview/JudgeVerdict v1 contracts and a provider-neutral injected-fake host boundary now implement strict parent/report/Skeptic/Reproducer binding, a bounded provider-safe view, host canonicalization and no ScanReport/Findings mutation. Stage 16A Reproducer objects require original-object admission; Stage 16B injected-fake lineage receipts are accepted only as hash-checked SIMULATED/test-only status. Future real observed fixture artifacts are not admitted.

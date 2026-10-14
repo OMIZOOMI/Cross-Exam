@@ -352,7 +352,7 @@ export const demoReport = ScanReportSchema.parse({
     claimId: item.claimId,
     status: index < 3 ? "confirmed" : index === 3 ? "insufficient-evidence" : "contested",
     rationale: [
-      "Two example runs reproduce the late paint; this verdict covers these lab conditions only.",
+      "Two synthetic run records show late paint; this example verdict covers the illustrated lab conditions only. No observed reproduction occurred.",
       "Two example requests return 404 for the linked destination.",
       "The example DOM and accessibility tree agree that link names are missing.",
       "Missing descriptions are visible, but the proposed search impact has not been measured.",
@@ -392,7 +392,8 @@ export const demoReport = ScanReportSchema.parse({
       role: "Reproducer",
       elapsedMs: 38200,
       status: "completed",
-      summary: "Example checks reproduced 3 narrow claims.",
+      summary:
+        "Three synthetic experiment records are marked completed; no observed reproduction occurred.",
       claimIds: ["C-001", "C-002", "C-003"],
     },
     {

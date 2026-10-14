@@ -11,7 +11,11 @@ const getReport = cache(readReport);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!(await getReport((await params).id))) notFound();
-  return { title: "Live investigation", robots: { index: false, follow: false } };
+  return {
+    title: "Live investigation",
+    description: "A bounded local Veyra HTTP and HTML investigation.",
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function LiveReportPage({ params }: Props) {
