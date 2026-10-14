@@ -38,7 +38,11 @@
     "test:provider": "vitest run packages/provider-openai/src",
     "test:provider-ledger": "vitest run packages/controlled-provider/src",
     "test:provider-operator": "vitest run scripts/provider-acceptance/operator.test.ts",
-    "provider:acceptance": "tsx scripts/provider-acceptance.ts"
+    "provider:acceptance": "tsx scripts/provider-acceptance.ts",
+    "film:render": "pnpm --dir tools/veyra-film render",
+    "film:poster": "pnpm --dir tools/veyra-film poster",
+    "test:landing": "vitest run apps/web/src/lib/demo-report.test.ts apps/web/src/lib/product-film.test.ts",
+    "film:typecheck": "pnpm --dir tools/veyra-film typecheck"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

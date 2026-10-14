@@ -1,0 +1,23 @@
+{
+  "name": "@veyra/product-film",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "render": "remotion render src/index.tsx VeyraFilm ../../apps/web/public/media/veyra-product-film.mp4 --codec=h264 --pixel-format=yuv420p --crf=22 --x264-preset=slow --concurrency=4 --log=error",
+    "poster": "node poster.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/barlow-condensed": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@remotion/cli": "4.0.535",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.535",
+    "sharp": "0.35.5"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0"
+  }
+}

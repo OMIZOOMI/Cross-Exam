@@ -163,7 +163,10 @@ test("unsafe URL feedback is local and does not disclose internal policy details
   );
   await page.goto("/");
   page.on("request", (request) => {
-    if (!request.url().startsWith("http://127.0.0.1:3000/") && !request.url().startsWith("data:"))
+    if (
+      !request.url().startsWith(`${new URL(page.url()).origin}/`) &&
+      !request.url().startsWith("data:")
+    )
       targetRequests.push(request.url());
   });
   for (const url of [
@@ -186,144 +189,19 @@ test("unsafe URL feedback is local and does not disclose internal policy details
   expect(targetRequests).toEqual([]);
 });
 
-test("Veyra landing explains the case sequence without implying live activity", async ({
-  page,
-}) => {
+test("Veyra landing keeps demo navigation and honest capability scope", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Veyra/);
-  const tabs = page.getByRole("tablist", { name: "Investigation relationship stages" });
-  await expect(tabs).toBeVisible();
-  await tabs.getByRole("tab", { name: /Website/ }).click();
-  await expect(page.getByRole("tabpanel")).toContainText("acme.example");
-  await tabs.getByRole("tab", { name: /Website/ }).press("ArrowRight");
-  await expect(page.getByRole("tabpanel")).toContainText("E-009");
-  await page.getByRole("tab", { name: /Observation/ }).press("End");
-  await expect(page.getByRole("tabpanel")).toContainText(
-    "Correlation does not establish causation",
+  await expect(page.locator(".stage182-hero-caption")).toContainText("synthetic");
+  await page.getByText("Read the film · text equivalent", { exact: true }).click();
+  await expect(page.locator(".stage182-film-transcript")).toContainText(
+    "No code is automatically changed",
   );
-  await expect(page.locator(".stage18-case-panel-note")).toContainText("no process is running");
-});
-
-test("Veyra landing stages the cinematic investigation scene without inventing activity", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const width = await page.evaluate(() => innerWidth);
-  const hero = page.locator(".stage181-hero");
-  await expect(hero).toBeVisible();
-  await expect(page.locator(".stage181-case-topline")).toContainText(
-    "Synthetic fixture · no process is running",
+  await expect(page.locator(".stage182-film-transcript")).toContainText(
+    "Public browser scanning and real providers remain unavailable",
   );
-  await expect(page.locator(".stage181-object")).toHaveCount(6);
-  await expect(page.locator(".stage181-cinematic-scene")).toHaveAttribute(
-    "data-active-stage",
-    "website",
-  );
-  if (width <= 680) {
-    await expect(page.locator(".stage181-mobile-step")).toHaveCount(5);
-    await expect(page.locator(".stage181-cinematic-scene")).toBeHidden();
-  } else {
-    await expect(page.locator(".stage181-cinematic-scene")).toBeVisible();
-    await expect(page.locator(".stage181-connections")).toBeVisible();
-  }
-  await page.getByRole("button", { name: "Skip intro", exact: true }).click();
-  await expect(page.locator(".stage181-case-sequence")).toHaveAttribute("data-motion", "settled");
-  await expect(page.locator(".stage181-verdict-object")).toContainText("contested");
-  await expect(page.locator(".stage181-verdict-seal")).toHaveCSS("color", "rgb(139, 90, 19)");
-  await expect(page.locator(".stage181-record-details")).not.toHaveAttribute("open");
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-});
-
-test("Veyra cinematic landing resolves to a static reduced-motion composition", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
-  await expect(page.locator(".stage181-case-sequence")).toHaveAttribute("data-motion", "settled");
-  await expect(page.locator(".stage181-object").first()).toHaveCSS("opacity", "1");
-  await expect(page.locator(".stage181-challenge-cross")).toHaveCSS("opacity", "0.92");
-  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
-});
-
-test("Veyra landing plays one ordered twelve-second illustration then stays still", async ({
-  page,
-}) => {
-  const external: string[] = [];
-  await page.route("**/*", (route) => {
-    if (new URL(route.request().url()).origin !== "http://127.0.0.1:3000") {
-      external.push(route.request().url());
-      return route.abort();
-    }
-    return route.continue();
-  });
-  await page.goto("/");
-  const sequence = page.locator(".stage181-case-sequence");
-  await expect(sequence).toHaveAttribute("data-motion", "intro");
-  const timing = await page
-    .locator(".stage181-object")
-    .evaluateAll((nodes) =>
-      nodes.map((node) => Number.parseFloat(getComputedStyle(node).animationDelay)),
-    );
-  expect(timing).toEqual([0.18, 1.8, 3.4, 5, 6.5, 9.6]);
-  await expect(page.locator(".stage181-link-reconnect")).toHaveCSS("animation-delay", "8.2s");
-  await expect(sequence).toHaveAttribute("data-motion", "settled", { timeout: 16000 });
-  for (const object of await page.locator(".stage181-object").all()) {
-    await expect(object).toHaveCSS("opacity", "1");
-  }
-  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
-  await page.screenshot({ fullPage: true });
-  await expect(page.locator(".stage181-object").first()).toHaveCSS("opacity", "1");
-  expect(external).toEqual([]);
-});
-
-test("Veyra landing keeps hero scale and controls readable across the four review widths", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  for (const [width, height] of [
-    [1440, 1000],
-    [1280, 800],
-    [768, 1024],
-    [390, 844],
-  ] as const) {
-    await page.setViewportSize({ width, height });
-    await page.goto("/");
-    await expect(
-      page.getByRole("button", { name: "Investigate locally", exact: true }),
-    ).toBeInViewport();
-    await expect(
-      page.getByRole("link", { name: "See the demo case", exact: true }),
-    ).toBeInViewport();
-    const metrics = await page.evaluate(() => {
-      const hero = document.querySelector(".stage181-hero")?.getBoundingClientRect();
-      const cards = [...document.querySelectorAll(".stage181-object")].map((el) =>
-        el.getBoundingClientRect(),
-      );
-      return {
-        overflow: document.documentElement.scrollWidth > innerWidth,
-        heroWidth: hero?.width ?? 0,
-        heroBottom: hero?.bottom ?? 0,
-        collisions: cards.some((a, i) =>
-          cards
-            .slice(i + 1)
-            .some(
-              (b) =>
-                Math.min(a.right, b.right) > Math.max(a.left, b.left) &&
-                Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top),
-            ),
-        ),
-      };
-    });
-    expect(metrics.overflow).toBe(false);
-    expect(metrics.collisions).toBe(false);
-    if (width >= 1280) {
-      expect(metrics.heroWidth).toBeGreaterThan(width * 0.9);
-      expect(metrics.heroBottom).toBeGreaterThanOrEqual(height * 0.9);
-      expect(metrics.heroBottom).toBeLessThanOrEqual(height + 2);
-    }
-  }
+  await page.getByRole("link", { name: "See the demo case", exact: true }).click();
+  await expect(page).toHaveURL(/\/report\/demo$/);
 });
 
 test("fixture Tribunal view exposes the chain and artifact boundary", async ({ page }) => {

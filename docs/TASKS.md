@@ -2,6 +2,17 @@
 
 Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery promises. Keep each task independently reviewable.
 
+## Stage 18.2 — real cinematic MP4 advertisement
+
+- [x] Verify exact Stage 18.1 source, branch only to `feature/stage18-2-video-ad`, preserve accepted branches/private attachments.
+- [x] Author the connected exploded website film with problem propagation, inspection, evidence, claim/challenge, scoped root cause/verdict/recommendation and reassembly/brand frame; keep fictional content honest.
+- [x] Isolate the pinned renderer/fonts/poster tooling and its lockfile; preserve the product dependency graph and all security/execution boundaries.
+- [x] Deliver an independent 35-second 1920×1080 H.264 MP4 and compressed WebP poster; no audio/copyrighted music or remote media.
+- [x] Prominent dark campaign landing, full-width video, unchanged local/demo CTAs, intentional mobile poster, explicit muted inline playback, static reduced-motion fallback and complete text equivalent.
+- [x] Final focused validation: 14 units; lint/root and isolated tool typecheck/build PASS; 18 production desktop/mobile Playwright checks, zero retries; 1440/1280/768/390 visual review, full-frame MP4 decode/metadata and diff check PASS.
+- [ ] Commit/push only this feature branch and verify landing-only CI on the exact implementation SHA; no historical test universe or Linux fixture job.
+- **One next task after delivery:** owner visual review; stop before additional implementation or execution.
+
 ## Stage 18.1 — cinematic landing only
 
 - [x] Preserve exact Stage 18 source `caecbe04010a37d4db27cd25105793b968268e34` and resume only `feature/stage18-1-cinematic-landing`; preserve private untracked attachments.

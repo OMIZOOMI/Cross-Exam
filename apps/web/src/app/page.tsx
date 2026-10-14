@@ -1,62 +1,12 @@
 import { ArrowRight, ArrowUpRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { CaseSequence, type Stage18Projection } from "../components/case-sequence";
+import { ProductFilm } from "../components/product-film";
 import { ScanForm } from "../components/scan-form";
 import { Brand } from "../components/ui";
-import { demoReport } from "../lib/demo-report";
-
-function createDemoProjection(): Stage18Projection {
-  const claim = demoReport.claims.find((item) => item.id === "C-005");
-  const finding = demoReport.findings.find((item) => item.claimId === "C-005");
-  const challenge = demoReport.challenges.find((item) => item.claimId === "C-005");
-  const verdict = demoReport.verdicts.find((item) => item.claimId === "C-005");
-
-  if (!claim || !finding || !challenge || !verdict) {
-    throw new Error("The demo projection requires the matching C-005 challenge and verdict.");
-  }
-
-  return {
-    source: demoReport.summary.source,
-    targetUrl: demoReport.summary.targetUrl,
-    pages: demoReport.pages.map(({ id, path, title, statusCode }) => ({
-      id,
-      path,
-      title,
-      statusCode,
-    })),
-    observation: {
-      pagePaths: finding.affectedPaths,
-      evidence: demoReport.evidence
-        .filter((item) => claim.evidenceIds.includes(item.id))
-        .map(({ id, title, kind }) => ({ id, title, kind })),
-    },
-    claim: {
-      id: claim.id,
-      statement: claim.statement,
-      evidenceIds: claim.evidenceIds,
-      affectedPaths: finding.affectedPaths,
-    },
-    challenge: {
-      id: challenge.id,
-      question: challenge.question,
-      evidenceIds: challenge.evidenceIds,
-      status: challenge.status,
-      raisedBy: challenge.raisedBy,
-    },
-    verdict: {
-      id: verdict.id,
-      status: verdict.status,
-      rationale: verdict.rationale,
-      evidenceIds: verdict.evidenceIds,
-    },
-  };
-}
-
-const demoProjection = createDemoProjection();
 
 export default function HomePage() {
   return (
-    <div className="stage18-landing stage181-landing">
+    <div className="stage18-landing stage182-landing">
       <header className="stage18-header">
         <Brand />
         <nav className="stage18-nav" aria-label="Main navigation">
@@ -72,11 +22,11 @@ export default function HomePage() {
 
       <main id="main">
         <section
-          className="stage18-hero stage181-hero"
+          className="stage18-hero stage182-hero"
           id="how-it-works"
           aria-labelledby="hero-title"
         >
-          <div className="stage18-hero-copy stage181-hero-copy">
+          <div className="stage18-hero-copy stage182-hero-copy">
             <p className="stage18-eyebrow">
               <span className="stage18-eyebrow-dot" aria-hidden="true" />
               Evidence-backed website investigations.
@@ -84,10 +34,10 @@ export default function HomePage() {
             <h1 id="hero-title">
               <span>Your website</span> <span>says it works.</span> <em>Prove it.</em>
             </h1>
-            <p className="stage18-hero-deck stage181-hero-deck">
-              Map the surface. Keep the evidence. Let every verdict carry its limit.
+            <p className="stage18-hero-deck stage182-hero-deck">
+              Look beyond the surface. Follow the evidence. Challenge the first conclusion.
             </p>
-            <div className="stage18-hero-actions stage181-hero-actions">
+            <div className="stage18-hero-actions stage182-hero-actions">
               <div className="stage18-primary-cta">
                 <span className="stage18-cta-label">Run a local investigation</span>
                 <ScanForm />
@@ -96,12 +46,12 @@ export default function HomePage() {
                 See the demo case <ArrowUpRight size={16} aria-hidden="true" />
               </Link>
             </div>
-            <p className="stage18-hero-caption stage181-hero-caption">
+            <p className="stage18-hero-caption stage182-hero-caption">
               Local HTTP collection now. The visual record is synthetic; browser execution, real
               providers, and observed reproduction are unavailable here.
             </p>
           </div>
-          <CaseSequence projection={demoProjection} />
+          <ProductFilm />
         </section>
 
         <section className="stage18-product" id="product" aria-labelledby="product-title">

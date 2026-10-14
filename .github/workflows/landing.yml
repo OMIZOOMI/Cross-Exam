@@ -2,7 +2,7 @@ name: Veyra cinematic landing
 
 on:
   push:
-    branches: ["feature/stage18-1-cinematic-landing"]
+    branches: ["feature/stage18-1-cinematic-landing", "feature/stage18-2-video-ad"]
 
 permissions:
   contents: read
@@ -24,12 +24,15 @@ jobs:
         with:
           version: 11.19.0
       - run: pnpm install --frozen-lockfile
+      - name: Install isolated film authoring tool
+        run: pnpm --dir tools/veyra-film install --frozen-lockfile
+      - run: pnpm film:typecheck
       - run: pnpm lint
       - name: Validate the synthetic landing source
-        run: pnpm exec vitest run apps/web/src/lib/demo-report.test.ts
+        run: pnpm test:landing
       - name: Root and workspace typecheck, then production build
         run: pnpm build
       - name: Install UI test browser only
         run: pnpm exec playwright install --with-deps chromium
       - name: Landing-only desktop and mobile checks
-        run: E2E_PRODUCTION=1 pnpm exec playwright test tests/e2e/product.spec.ts --grep 'Veyra.*landing|URL form validates|unsafe URL feedback'
+        run: pnpm exec playwright test -c landing-video.config.ts
