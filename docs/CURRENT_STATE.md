@@ -27,8 +27,9 @@ video, textures, remote fonts, animation library, or new dependency was added.
 | Check | Actual result |
 | --- | --- |
 | `corepack pnpm lint` | PASS; 212 files |
+| Root TypeScript and all nine workspace typechecks, executed by `pnpm build` | PASS |
 | `corepack pnpm exec vitest run apps/web/src/lib/demo-report.test.ts` | PASS; 9 synthetic-source integrity tests |
-| `corepack pnpm build` with the existing external pnpm shim on PATH | PASS; root `tsc`, all nine workspace typechecks, Next production compilation/static generation |
+| `corepack pnpm build` with the existing external pnpm shim on PATH | PASS; Next production compilation/static generation |
 | `corepack pnpm exec playwright test tests/e2e/product.spec.ts --grep 'Veyra.*landing\|URL form validates\|unsafe URL feedback'` | PASS; 14 focused desktop/mobile checks on the development server |
 | Same focused command with `E2E_PRODUCTION=1` | PASS; 14 checks on the freshly built production server, zero retries |
 | `git diff --check` | PASS |
@@ -54,7 +55,22 @@ providers, Judge, Reproducer, browser worker, Linux isolation and public admissi
 No credential, provider call, target scan, observed reproduction, paid operation, deployment,
 Stage 16B authority, `.opencode/`, screenshot, log or generated build output is delivered.
 
-Local validation is complete; feature commit/push and exact CI receipt are pending below.
+### Delivery receipt
+
+Implementation **599f80324bafb9cbab70e19df4dd2196d2ade8aa** was committed and pushed only to
+`feature/stage18-1-cinematic-landing`. [Landing-only CI run 38557431834](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/38557431834),
+attempt 1, completed successfully on that exact SHA. Frozen install, lint, synthetic-source tests,
+root/workspace typecheck, production build, UI Chromium installation and focused desktop/mobile
+Playwright checks all passed. Run conclusion, head SHA and every job step were verified through
+GitHub's public status API; test counts above are local receipts. The branch run inventory contains
+only this landing workflow. No Linux isolation or scanner/browser-execution acceptance job ran.
+
+Remote `main` remains **9bafdb5df0d97668abd66e09fa342610da323ace** and the accepted Stage 18
+source branch remains **caecbe04010a37d4db27cd25105793b968268e34**. The final receipt is a separate
+documentation-only `[skip ci]` commit with validated implementation and CI policy unchanged.
+Stage 18.1 is **COMPLETE for the landing-only scope**; no merge, deployment or execution authority
+is implied. Private attachments remain untouched and uncommitted.
+
 **One next task:** owner review of the delivered landing; no additional implementation or execution
 milestone is authorised by Stage 18.1.
 

@@ -10,7 +10,7 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 - [x] Complete lint, root/workspace typecheck and production build, 9 fixture-source units and 14 landing-only Playwright checks on development and production.
 - [x] Review production screenshots at 1440/1280/768/390, staged animation, keyboard, navigation and reduced motion; no page overflow or card overlap at those sizes.
 - [x] Review the scoped diff/privacy; exclude attachments, screenshots, logs and generated files. Preserve reports, contracts and all security/execution boundaries.
-- [ ] Commit/push only the cinematic feature branch and verify its landing-only CI receipt.
+- [x] Commit/push **599f80324bafb9cbab70e19df4dd2196d2ade8aa** only to `feature/stage18-1-cinematic-landing`; [landing-only CI run 38557431834](https://github.com/OMIZOOMI/Cross-Exam/actions/runs/38557431834), attempt 1, passed on that exact SHA, with every validation step successful. Final receipt is documentation-only; main and the Stage 18 source branch remain unchanged.
 - **One next task after delivery:** owner visual review; stop before any further implementation or execution milestone.
 
 ## Stage 18 — Veyra product redesign and Tribunal visualization
