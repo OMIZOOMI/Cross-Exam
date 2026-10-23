@@ -1,5 +1,249 @@
 # Current state
 
+## Veyra final desktop approval pass — full-bleed hero and removed thread label (2026-10-23)
+
+Applied only the two approved final-touch changes to the standalone `prototypes/veyra-cross-section/`
+experience. The hero's `FOLLOW THE THREAD 01—05` markup, pill styling, text, dot, responsive rules,
+and typography references were removed completely; no replacement label was added. The far-right white
+strip was caused by the hero `.intro-rail` ending inside the `.app-shell`'s horizontal padding while
+the electric atmosphere was clipped to that narrower box. The hero is now full-bleed across the viewport
+at desktop and the existing responsive padding breakpoints, while `.app-shell` uses `overflow-x: clip`
+and retains `overflow-y: visible`; this fills the intended electric-blue/violet area without horizontal
+overflow. Navigation, hero copy, typography, gradients, spacing, scroll-driven 3D animation, layer
+interactions, supporting sections, and the synthetic fixture behavior were otherwise left unchanged.
+
+Fresh Playwright Chromium review covered 1440×1000 and 1280×900 at the hero and scroll positions 0%,
+22%, 50%, 65%, 80%, and 100%, plus Routes & Resources hover. At both widths, `scrollWidth` matched
+`clientWidth`, `body.scrollWidth` matched the viewport, the hero ran from `x=0` to the viewport edge,
+the thread-label selector count was `0`, external requests were `0`, and page/console errors were `0`.
+The final state remained `Veyra follows the evidence`, `05 / 05`, `06 / VERDICT`; hover still produced
+4 dimmed layers and 9 highlighted traces. Fresh screenshots are outside Git at
+`/tmp/veyra-final-approved-1440-hero.png`, `/tmp/veyra-final-approved-1280-hero.png`, matching
+`stage-000` through `stage-100` paths, and matching `stage-100-hover` paths.
+
+Actual checks: `node --check prototypes/veyra-cross-section/main.js` PASS; `git diff --check` PASS;
+root TypeScript check via `node node_modules/typescript/bin/tsc --noEmit` PASS; web TypeScript check via
+`node ../../node_modules/typescript/bin/tsc --noEmit` from `apps/web` PASS; direct Next production build
+via `node node_modules/next/dist/bin/next build` from `apps/web` PASS; `curl -sS -I --max-time 5
+http://127.0.0.1:4173/` returned HTTP 200. The focused Biome check remains non-clean only on the
+pre-existing prototype findings: 11 errors, 5 warnings, and 4 infos covering existing Math.pow,
+forEach-return, formatting, accessibility tabindex/ARIA, and `!important` rules; no formatter was run.
+The root `corepack pnpm build` wrapper could not complete in this shell because its nested `pnpm`
+command is unavailable, so the equivalent root/web TypeScript and direct web Next build checks above
+were run successfully.
+
+This approval pass remains scoped to the current `feature/stage18-2-video-ad` branch. The untracked
+`.opencode/` attachment and generated files remain untouched and excluded from the implementation
+commit. No production, backend, network, security, deployment, or main-branch changes were made.
+
+## Uncommitted Veyra final desktop UI polish — typography, cursor cue, contrast, and narrative rhythm (2026-10-23)
+
+Applied one focused visual refinement pass to the standalone `prototypes/veyra-cross-section/` experience
+only. The CSS 3D scene, scroll-driven camera choreography, five-layer relationship, 16 conceptual trace
+graph, layer hover/focus behavior, and synthetic Pricing → `/pricing-v2` → `GET /api/v2/pricing` → `404`
+fixture remain unchanged in behavior. No production landing, scanner, backend, security, report contract,
+provider, Judge, Reproducer, agent, deployment, commit, push, or network boundary was changed.
+
+The final pass replaces the remaining cyberpunk/monospace presentation in the public UI with a consistent
+contemporary sans system. Navigation is now a balanced pill group with clear spacing and hover/focus states;
+the header disclosure reads `DEMO MODE · SYNTHETIC DATA` while retaining the accessible synthetic-fixture
+meaning; `VEYRA / SYNTHETIC DEMO`, `SCROLL TO LIFT`, `THE INVISIBLE CHAIN`, `BUILT FOR CLARITY`, captions,
+and supporting labels are larger, heavier, and readable at normal desktop zoom. The hero keeps its blue/
+violet atmosphere but moves the orb farther right, adds a soft contrast halo, and changes `Prove it.` to a
+deep ultramarine treatment so it remains legible over the luminous background.
+
+Narrative spacing was tightened without collapsing the premium breathing room: the dark proof section,
+five-layer explanation, and boundary statement now transition with shorter, intentional gaps. The
+Evidence → Claim → Challenge → Verdict sequence is a non-overlapping serpentine layout: Evidence → Claim
+across the first row, then Challenge → Verdict back across the second row, with connectors behind opaque
+cards and larger supporting copy. The final evidence inspector also has larger summary, evidence,
+hypothesis, recommendation, and synthetic-boundary copy at both requested widths. The cards were checked
+for pairwise overlap at both requested widths.
+
+The final cursor cleanup keeps the scroll cue as a visible SVG pointer rather than a click label. Its
+trail is an empty decorative dot with no inherited text padding, and the cursor remains
+`pointer-events: none` so the cue cannot block the fictional Pricing control. The CTA target state is
+still scroll-driven; the existing `hypothesis-click` and `hypothesis-auth` elements remain the inspector's
+synthetic candidate state, not click handlers or live requests. The Layer 1 surface remains face-on and
+readable during the interaction beat, with the cursor placed over the Pricing thread at both approved
+desktop widths.
+
+Focused browser self-review after the pass used Playwright Chromium at 1440×1000 and 1280×900. Fresh
+receipts are outside Git at `/tmp/veyra-polish-final-1440-hero.png`,
+`/tmp/veyra-polish-final-1440-navigation.png`, `/tmp/veyra-polish-final-1440-stage-000.png`,
+`/tmp/veyra-polish-final-1440-stage-050.png`, `/tmp/veyra-polish-final-1440-stage-100.png`,
+`/tmp/veyra-polish-final-1440-section-0.png`, `/tmp/veyra-polish-final-1440-section-1.png`,
+`/tmp/veyra-polish-final-1440-section-2.png`, and matching `1280` paths. Stable final-stage receipts are
+represented by the final-stage paths above; hover receipts are at `/tmp/veyra-polish-after-1440-stage-100-hover.png`
+and matching `1280` paths.
+
+Actual checks: `node --check prototypes/veyra-cross-section/main.js` PASS; `git diff --check` PASS;
+`curl -sS -I --max-time 5 http://127.0.0.1:4173/` returned HTTP 200. The final Playwright Chromium
+run covered 1440×1000 and 1280×900 at 0%, 22%, 50%, 65%, 80%, and 100% scroll positions, forward and
+reverse scroll, manual keyboard orbit, final Routes & Resources hover/focus, cursor geometry, section
+positions, footer columns, and proof-card overlap. It found zero page errors, zero console errors, zero
+external requests, no horizontal overflow (`scrollWidth === clientWidth`), preserved the 500vh stage
+(5000px at 1440×1000; 4500px at 1280×900), and reached the final evidence state. At 22%, cursor opacity
+was `0.703704`, the cursor had `pointer-events: none`, the trail had empty text/zero padding, and the
+cursor cue was intentionally over the CTA. Routes & Resources hover produced 4 dimmed layers and 9
+bright traces; keyboard orbit changed yaw `-16deg → -12deg` and pitch `39deg → 43deg`; reverse scroll
+returned to `0%` and `01 / 05`; proof-card overlap checks returned none. Fresh receipts are outside Git
+at `/tmp/veyra-final-receipt-1440-hero.png`, `/tmp/veyra-final-receipt-1440-stage-022.png`,
+`/tmp/veyra-final-receipt-1440-stage-100-hover.png`, `/tmp/veyra-final-receipt-1440-stage-100-orbit.png`,
+matching `1280` paths, and `/tmp/veyra-final-receipt-1440-section-0.png` through `section-2.png`.
+`corepack pnpm --version` returned 11.19.0; the shell `pnpm` command itself is not on PATH. Direct
+targeted Biome checks remain non-clean on pre-existing prototype findings: `main.js` has existing
+Math.pow/forEach-return/format diagnostics, `index.html` has the existing viewport/layer tabindex
+accessibility diagnostics, and `styles.css` has existing `!important`/format diagnostics. No formatter
+or unrelated refactor was applied.
+
+Known limits remain CSS 3D/DOM depth ambiguity at extreme orbit angles and Chromium-only visual review;
+Safari, Firefox, and physical devices were not checked. One next task: owner approval of the polished
+desktop direction before tablet/mobile work or any further implementation.
+
+## Uncommitted Veyra immersive landing refinement — electric blue visual system (2026-10-23)
+
+Continued refining only the standalone `prototypes/veyra-cross-section/` experience in place. Production
+landing, report/backend, scanner, security, provider, Judge, Reproducer, and private attachment files
+remain untouched. The existing scroll choreography, camera path, five-layer fixture relationship, and
+synthetic Pricing → `/pricing-v2` → `GET /api/v2/pricing` → `404` evidence path remain intact.
+
+The public art direction is now a deliberate electric-blue/ultramarine/indigo/violet system rather than
+the prior beige/orange editorial presentation: bright paper hero, black contemporary sans typography,
+large luminous gradient atmosphere, dark full-viewport investigation stage, white/blue/violet layer
+surfaces, blue/violet signal traces, and a restrained coral fault color used only for the synthetic 404.
+The old rounded stage frame and always-present side inspector are gone. The browser viewport is now the
+stage; the inspector fades in as an integrated evidence note only during the investigation end state.
+
+The trace graph expanded from 10 to 16 conceptual DOM-anchored connections. Ambient bridges, branching
+paths, blue/violet signal pulses, active attachment points, a coral evidence path, and a teal recommended
+fix path are visually richer while remaining clearly conceptual. The synthetic finding is still the only
+technically supported conclusion; illustrative connections are not presented as verified evidence.
+
+After the scroll reaches the expanded state, layer hover/focus exploration is available. The selected
+layer receives blue/violet lighting, surrounding planes dim, associated traces brighten, and an integrated
+note explains the selected system. Two non-card storytelling sections were added below the scene: a dark
+Evidence → Claim → Challenge → Verdict proof loop and a light “Make the invisible legible” boundary
+statement. Existing responsive rules are preserved, but this iteration was focused on desktop/laptop.
+
+Focused verification after this refinement: `node --check prototypes/veyra-cross-section/main.js` PASS;
+`git diff --check` PASS; `curl -sS -I --max-time 5 http://127.0.0.1:4173/` returned HTTP 200;
+Playwright Chromium rendered the hero and scroll states at 1440×1000 and 1280×900, with no page or
+console errors, no horizontal overflow, only local `/`, `/styles.css`, and `/main.js` requests, and a
+sticky full-viewport stage with no border. The 0%, 25%, 50%, 65%, 80%, and 100% scroll states were
+captured; the final 100% state showed the route verdict; layer hover on Routes & Resources dimmed the
+other four layers and brightened 9 associated traces; the two added story sections were visually
+inspected at 1440px. Temporary receipts are outside Git at `/tmp/veyra-electric-1440-hero.png`,
+`/tmp/veyra-electric-1440-00.png`, `/tmp/veyra-electric-1440-25.png`,
+`/tmp/veyra-electric-1440-50.png`, `/tmp/veyra-electric-1440-65.png`,
+`/tmp/veyra-electric-1440-80.png`, `/tmp/veyra-electric-1440-100.png`,
+`/tmp/veyra-electric-1440-hover-route.png`, and `/tmp/veyra-electric-story-0.png` through
+`/tmp/veyra-electric-story-2.png`.
+
+Known limits: the scene remains CSS 3D/DOM rather than a true WebGL depth buffer; extreme orbit angles
+may still produce transparency ambiguity. Chromium was used for browser review; Safari, Firefox, and
+physical devices were not checked. No React/Motion, Three.js, WebGL, external dependency, backend,
+scanner, security-boundary, report, deployment, commit, or push was added. One next task: owner visual
+review of the electric-blue landing direction before any further iteration.
+
+## Uncommitted scroll-driven Veyra prototype — visual approval milestone (2026-10-22)
+
+Reworked the isolated `prototypes/veyra-cross-section/` experience in place; production landing,
+report/backend, scanner, security, provider, Judge, Reproducer, and private attachment files remain
+untouched. The previous timed playback controls are no longer the public animation controller. The
+prototype now uses a pinned `480vh` desktop / `500vh` responsive scroll section with deterministic
+scroll progress, reversible intermediate states, and a final held investigation composition.
+
+The new choreography follows the requested story: 0–20% presents a complete front-facing synthetic
+website; 20–30% stages a precise Pricing CTA interaction; 30–50% prepares camera space; 50–65%
+pulls the surface into an upper-left elevated three-quarter view; 60–85% cascades the DOM, route,
+request, and response planes down and to the right; 70–95% reveals background, active, and fault
+connection traces; and 85–100% holds Veyra's synthetic 404 investigation and scoped recommendation.
+The existing DOM-anchored trace geometry and five-plane evidence relationship remain in use. CSS 3D
+is retained deliberately as the existing foundation; this milestone does not introduce Three.js,
+React, Motion, WebGL, or an external dependency.
+
+The public visual direction was reset from the prior dark/blue/Qarin presentation to a light editorial
+composition: warm paper canvas, charcoal serif display type, restrained borders, orange evidence
+accent, compact navigation, generous hero spacing, clean stage frame, and a readable external
+inspector. Prototype world/camera readouts and playback controls were removed from the public UI.
+The inspector continues to label the fixture **SYNTHETIC DEMO**, distinguish observed evidence from
+hypotheses, and keep the recommendation explicitly non-mutating. Reduced-motion media removes easing
+and ambient loops while preserving a scrollable deterministic story. Drag orbit and keyboard orbit
+remain secondary inspection aids; page scrolling remains primary and the viewport does not trap wheel
+scrolling.
+
+Focused verification after this change: `node --check prototypes/veyra-cross-section/main.js` PASS;
+`git diff --check` PASS; Playwright Chromium rendered screenshots at 0%, 25%, 50%, 65%, 80%, and
+100% on 1440×1000, plus the hero and final mobile/tablet states; forward scroll, backward scroll,
+intermediate stopping, pointer orbit, fast progress jumps, and reduced-motion rendering were checked;
+page/console errors were zero; only local `/`, `/styles.css`, and `/main.js` requests were observed;
+1440×1000, 1280×900, 768×1024, and 390×844 had no horizontal overflow. Local server:
+`http://127.0.0.1:4173/`. Temporary visual receipts are outside Git at `/tmp/veyra-hero.png`,
+`/tmp/veyra-scroll-00.png`, `/tmp/veyra-scroll-25.png`, `/tmp/veyra-scroll-50.png`,
+`/tmp/veyra-scroll-65-final.png`, `/tmp/veyra-scroll-80-final.png`, and
+`/tmp/veyra-scroll-100-final.png`; no commit or push was made.
+
+Known limits: the scene remains CSS 3D/DOM rather than a true WebGL depth buffer; extreme orbit
+angles may still produce transparency ambiguity. Chromium was used for browser review; Safari,
+Firefox, and physical devices were not checked. The Whenevr page was read via `webfetch` for visual
+direction only; no external page request is made by the prototype. One next task: owner visual review
+of the scroll choreography before any further redesign or production integration.
+
+## Uncommitted prototype refinement — Veyra premium cross-section (2026-10-21)
+
+Refined the existing isolated `prototypes/veyra-cross-section/` prototype in place; no production
+Veyra landing, report/backend, scanner, security, provider, Judge, or Reproducer files were changed.
+The approved five-plane scene and animation remain, but the surrounding composition is now a bright,
+Qarin-inspired Veyra product presentation with centered hero typography, a blue atmospheric product
+showcase, rounded frame, and a dedicated HTML investigation inspector beside the 3D scene.
+
+The inspector now distinguishes observed failure, candidate explanations, challenged/rule-out state,
+supported route mismatch, and scoped recommendation. The two synthetic hypotheses remain internally
+consistent: the click listener fires and the auth header is valid; the component still targets
+`/pricing-v2` while `/pricing` is active, producing the illustrative `GET /api/v2/pricing` → `404`.
+Scene labels and inactive content are dimmed during separation, the fault path uses directional
+colored depth segments, the trace layer no longer uses a topmost z-index, and the camera scale uses a
+safe expanded-structure bound rather than filling the viewport. Orbit/reset controls remain, with
+arrow-key and +/- keyboard camera controls added. The inspector is preserved on tablet/mobile.
+
+Focused verification after refinement: `node --check prototypes/veyra-cross-section/main.js` PASS;
+Chromium screenshots visually inspected for assembled, exploded, hypothesis, verdict, reassembly,
+tablet, mobile, and two manual orbit angles; desktop 1440/1000, laptop 1280/900, tablet 768/1024,
+and mobile 390/844 checks had no horizontal overflow; Play/Pause/Restart, timeline scrub, orbit,
+zoom/reset, keyboard orbit, active-node/fault color, inspector hypothesis transitions, and verdict
+recommendation were exercised; page/console errors were zero and the only requests were local `/`,
+`/styles.css`, and `/main.js`; `curl -I http://127.0.0.1:4173/` returned 200; `git diff --check`
+PASS. The built-in browser opener remains unavailable for localhost in this session; verification used
+the installed local Chromium runner. No commit or push was made. Next task: owner visual review of
+this refined isolated prototype before further iteration or production integration.
+
+## Uncommitted owner prototype — Veyra website cross-section (2026-10-21)
+
+Built an isolated, standalone browser prototype under `prototypes/veyra-cross-section/`; the
+production Next.js landing, report/backend, scanner, and security files were not changed. The
+prototype uses local HTML/CSS 3D transforms and vanilla JavaScript only: five visible website,
+DOM/components, routes/resources, requests/dependencies, and responses/behavior planes separate in
+depth, with DOM-anchored trace segments, a synthetic Pricing → `/pricing-v2` → `GET /api/v2/pricing`
+→ `404` path, healthy catalog path, Veyra inspection/recommendation callout, reassembly, transport
+controls, timeline scrubbing, mouse orbit, scroll zoom, and camera reset. It makes no network
+requests and applies no fix. Local URL: `http://127.0.0.1:4173/` (Python static server started from
+the prototype directory).
+
+Actual focused checks: `node --check main.js` PASS; Playwright Chromium rendered assembled,
+exploded, verdict, and reassembled screenshots which were visually inspected; Playwright control
+checks covered play/pause/restart, scrubber, orbit, zoom/reset, callout/recommendation visibility,
+zero page/console errors, and only local `/`, `/styles.css`, and `/main.js` requests; 1440px and
+390px viewport checks had no horizontal overflow; `curl -I http://127.0.0.1:4173/` returned 200;
+`git diff --check` PASS. The built-in browser tab opener timed out, so verification used the
+workspace-installed local Chromium runner instead. Screenshots are temporary files outside Git.
+
+Known limits: this is a proof-of-concept static scene, not Three.js/WebGL or production-integrated
+visualization; the layer surfaces intentionally become translucent in the exploded state, and the
+cross-section is clearest on a desktop viewport or with user orbit/zoom. No Safari/Firefox or
+physical-device review was performed. Next task: owner visual review and feedback on the isolated
+prototype before any production integration.
+
 ## Stage 18.2 — real Veyra product film and campaign landing
 
 Started on exact local/remote Stage 18.1 **b3fae1691e27d4938ffd8112838b3973f0e7428f** with a clean tracked tree. Created only `feature/stage18-2-video-ad`; preserved the existing untracked `.opencode/` attachments and accepted branches. No report/backend/security redesign.

@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080b24" />
+    <title>Veyra — Website Cross-Section Prototype</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <a class="brand-lockup" href="#top" aria-label="Veyra home">
+          <span class="brand-mark">V</span>
+          <span class="brand-name">VEYRA</span>
+        </a>
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <a href="#showcase">Product</a>
+          <a href="#method">How it works</a>
+          <a href="#inspector">Demo</a>
+        </nav>
+        <div class="header-actions">
+          <span class="header-status" title="Synthetic fixture: demo mode with synthetic data and no live requests">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="header-status-copy">DEMO MODE · SYNTHETIC DATA</span>
+          </span>
+          <a class="header-cta" href="#showcase">Explore the system <span>↗</span></a>
+        </div>
+      </header>
+
+      <main class="prototype-shell" id="top">
+        <section class="intro-rail" aria-labelledby="prototype-title">
+          <div class="hero-atmosphere" aria-hidden="true">
+            <span class="hero-atmosphere-orb hero-atmosphere-orb-a"></span>
+            <span class="hero-atmosphere-orb hero-atmosphere-orb-b"></span>
+            <span class="hero-atmosphere-ribbon"></span>
+          </div>
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="eyebrow-line"></span>Evidence-backed website investigations</p>
+            <h1 id="prototype-title">
+              <span class="hero-line">Your website says</span>
+              <span class="hero-line">it works. <em>Prove it.</em></span>
+            </h1>
+            <p class="intro-copy">
+              Discover what happens beneath the surface. Follow the evidence. Understand what needs attention.
+            </p>
+            <div class="hero-actions">
+              <a class="hero-button hero-button-primary" href="#showcase">Explore the system <span>↘</span></a>
+              <a class="hero-button hero-button-secondary" href="#method">How Veyra traces it <span>↓</span></a>
+            </div>
+          </div>
+          <div class="intro-note">
+            <span class="note-index">SYNTHETIC DEMO</span>
+            <span>ONE WEBSITE · FIVE CONNECTED SYSTEMS</span>
+          </div>
+        </section>
+
+        <section class="stage-scroll" id="showcase" aria-label="Scroll-driven Veyra website cross-section">
+          <div class="stage-sticky">
+            <div class="stage-layout">
+        <section class="stage-frame">
+           <div class="stage-frame-topline">
+             <div class="stage-title">
+              <span class="stage-kicker">Veyra / synthetic demo</span>
+              <strong id="stage-state" aria-live="polite">The visible surface</strong>
+            </div>
+            <div class="stage-meta">
+              <span class="stage-chip"><i></i> SCROLL TO LIFT</span>
+            </div>
+          </div>
+
+          <div class="viewport" id="viewport" tabindex="0" aria-label="3D scene. Drag to orbit. Scroll the page to reveal the systems underneath.">
+            <div class="viewport-vignette" aria-hidden="true"></div>
+            <div class="viewport-grid" aria-hidden="true"></div>
+            <div class="world" id="world">
+              <div class="trace-layer" id="trace-layer" aria-hidden="true"></div>
+
+              <article class="layer layer-1" data-layer="1" data-layer-title="Visible website" data-layer-copy="The surface people see: navigation, content, and the Pricing CTA." tabindex="0" aria-label="Layer 1: visible website. Hover to explore.">
+                <div class="layer-surface"></div>
+                <div class="layer-header">
+                  <span class="layer-number">01</span>
+                  <span class="layer-name">VISIBLE WEBSITE</span>
+                  <span class="layer-tag">RENDERED UI</span>
+                </div>
+                <div class="browser-chrome subdued">
+                  <span class="browser-dots"><i></i><i></i><i></i></span>
+                  <span class="address-bar">veyralabs.test / overview</span>
+                  <span class="browser-lock">⌁</span>
+                </div>
+                <nav class="site-nav subdued" aria-label="Synthetic site navigation">
+                  <strong>VESSEL<span>/08</span></strong>
+                  <div><span>Platform</span><span>Methods</span><span>About</span></div>
+                  <span class="nav-avatar">OM</span>
+                </nav>
+                <div class="surface-rule subdued"></div>
+                <div class="layer1-hero subdued">
+                  <p class="micro-label">A calmer operating layer</p>
+                  <h2>Your website<br /><em>says it works.</em></h2>
+                  <p class="layer1-copy">One command center for the work that keeps your teams moving.</p>
+                  <button class="pricing-cta focus-node" id="pricing-cta" type="button">View pricing <span>↗</span></button>
+                </div>
+                <div class="layer1-aside subdued">
+                  <p class="micro-label">Live workspace</p>
+                  <div class="metric-row"><strong>04</strong><span>active surfaces</span></div>
+                  <div class="metric-row"><strong>18ms</strong><span>median response</span></div>
+                  <div class="mini-line-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+                <div class="product-card subdued focus-node" id="product-card">
+                  <div class="product-card-top"><span>SKU-01</span><span class="product-dot"></span></div>
+                  <strong>Catalog intelligence</strong>
+                  <span>Synced just now</span>
+                  <div class="product-card-foot"><span>Open record</span><span>↗</span></div>
+                </div>
+                <div class="layer1-footer subdued"><span>© 2026 Vessel</span><span>Built for clear work</span><span>→</span></div>
+                <div class="anchor anchor-pricing" data-node="pricingBtn"><span></span><b>CTA</b></div>
+                <div class="anchor anchor-product" data-node="productCard"><span></span><b>SKU-01</b></div>
+              </article>
+
+              <article class="layer layer-2" data-layer="2" data-layer-title="DOM &amp; components" data-layer-copy="The mounted structure that gives each visible element its place and behavior." tabindex="0" aria-label="Layer 2: DOM and components. Hover to explore.">
+                <div class="layer-surface"></div>
+                <div class="layer-header">
+                  <span class="layer-number">02</span>
+                  <span class="layer-name">DOM &amp; COMPONENTS</span>
+                  <span class="layer-tag">STRUCTURE</span>
+                </div>
+                <div class="code-ruler subdued"><span>01</span><span>08</span><span>16</span><span>24</span><span>32</span><span>40</span></div>
+                <div class="dom-tree subdued">
+                  <span class="tree-root">&lt;AppShell&gt;</span>
+                  <span class="tree-branch branch-one">├─ &lt;Navbar /&gt;</span>
+                  <span class="tree-branch branch-two">├─ &lt;HeroSection&gt;</span>
+                  <span class="tree-branch branch-three">│  └─ &lt;PricingButton&gt;</span>
+                  <span class="tree-branch branch-four">└─ &lt;ProductGrid&gt;</span>
+                  <span class="tree-branch branch-five">   └─ &lt;ProductCard id=&quot;01&quot; /&gt;</span>
+                </div>
+                <div class="component-box navbar-box subdued"><span>Navbar</span><b>&lt;Navbar /&gt;</b><small>3 children</small></div>
+                <div class="component-box hero-box subdued"><span>HeroSection</span><b>children: 4</b><small>rendered</small></div>
+                <div class="component-box pricing-box focus-node"><span>PricingButton</span><b>onClick → route</b><small>listener fired ✓</small></div>
+                <div class="component-box product-box subdued"><span>ProductCard</span><b>id=&quot;sku-01&quot;</b><small>mounted ✓</small></div>
+                <div class="dom-footer subdued"><span class="code-accent">const</span> page = <span class="code-accent">&lt;Vessel /&gt;</span><span class="cursor-blink"></span></div>
+                <div class="anchor anchor-pricing" data-node="pricingDom"><span></span><b>&lt;PricingButton&gt;</b></div>
+                <div class="anchor anchor-product" data-node="productDom"><span></span><b>&lt;ProductCard&gt;</b></div>
+              </article>
+
+              <article class="layer layer-3" data-layer="3" data-layer-title="Routes &amp; resources" data-layer-copy="The map of destinations and assets that the interface expects to exist." tabindex="0" aria-label="Layer 3: routes and resources. Hover to explore.">
+                <div class="layer-surface"></div>
+                <div class="layer-header">
+                  <span class="layer-number">03</span>
+                  <span class="layer-name">ROUTES &amp; RESOURCES</span>
+                  <span class="layer-tag">MAP</span>
+                </div>
+                <div class="route-summary subdued"><span class="summary-pulse"></span><span>12 routes indexed</span><span>·</span><span>02 redirects</span></div>
+                <div class="route-table subdued">
+                  <div class="route-table-head"><span>METHOD</span><span>PATH</span><span>STATE</span></div>
+                  <div class="route-row route-broken focus-node"><span class="method">GET</span><strong>/pricing-v2</strong><span class="route-state route-state-bad">missing</span></div>
+                  <div class="route-row route-valid focus-node"><span class="method">GET</span><strong>/pricing</strong><span class="route-state route-state-good">active</span></div>
+                  <div class="route-row"><span class="method">GET</span><strong>/overview</strong><span class="route-state">active</span></div>
+                  <div class="route-row"><span class="method">GET</span><strong>/about</strong><span class="route-state">active</span></div>
+                </div>
+                <div class="resource-card subdued focus-node"><span class="resource-type">JSON RESOURCE</span><strong>/assets/catalog.json</strong><span>18.4 kb · cached</span><i class="resource-spark"></i></div>
+                <div class="redirect-note subdued"><span>redirect table</span><strong>/pricing-old → /pricing</strong><small>valid target</small></div>
+                <div class="route-footer subdued"><span>route manifest v2.4</span><span>last indexed 14:03:02</span></div>
+                <div class="anchor anchor-broken-route" data-node="brokenRoute"><span></span><b>/pricing-v2</b></div>
+                <div class="anchor anchor-valid-route" data-node="validRoute"><span></span><b>/pricing</b></div>
+                <div class="anchor anchor-resource" data-node="catalogRes"><span></span><b>catalog.json</b></div>
+              </article>
+
+              <article class="layer layer-4" data-layer="4" data-layer-title="Requests &amp; dependencies" data-layer-copy="The dispatch layer: what the interface asks for and which dependencies it carries." tabindex="0" aria-label="Layer 4: requests and dependencies. Hover to explore.">
+                <div class="layer-surface"></div>
+                <div class="layer-header">
+                  <span class="layer-number">04</span>
+                  <span class="layer-name">REQUESTS &amp; DEPENDENCIES</span>
+                  <span class="layer-tag">DISPATCH</span>
+                </div>
+                <div class="request-console subdued"><span class="console-led"></span><span>local request console</span><span class="console-time">t+142ms</span></div>
+                <div class="request-card request-broken focus-node"><div class="request-card-title"><span class="method method-get">GET</span><strong>/api/v2/pricing</strong><span class="request-latency">+09ms</span></div><div class="request-url">https://api.veyralabs.test<span>/api/v2/pricing</span></div><div class="request-meta"><span>initiator: PricingButton</span><span class="request-status request-status-bad">pending → 404</span></div></div>
+                <div class="dependency-card dependency-auth challenge-node"><div class="dependency-icon">⌁</div><div><span>AUTH HEADER</span><strong>Bearer · valid</strong><small>signature accepted</small></div><b class="check-mark">✓</b></div>
+                <div class="request-card request-healthy subdued focus-node"><div class="request-card-title"><span class="method method-get">GET</span><strong>/api/v1/catalog</strong><span class="request-latency">+18ms</span></div><div class="request-meta"><span>initiator: ProductCard</span><span class="request-status request-status-good">200 OK</span></div></div>
+                <div class="dependency-strip subdued"><span>tls 1.3</span><span>keep-alive</span><span>cache-control</span><span>trace-id: 7A1F</span></div>
+                <div class="anchor anchor-pricing-request" data-node="pricingReq"><span></span><b>GET /api/v2/pricing</b></div>
+                <div class="anchor anchor-auth" data-node="authDep"><span></span><b>auth valid</b></div>
+                <div class="anchor anchor-catalog-request" data-node="catalogReq"><span></span><b>GET /api/v1/catalog</b></div>
+              </article>
+
+              <article class="layer layer-5" data-layer="5" data-layer-title="Responses &amp; behavior" data-layer-copy="What comes back, and how the visible page behaves when it does not resolve." tabindex="0" aria-label="Layer 5: responses and behavior. Hover to explore.">
+                <div class="layer-surface"></div>
+                <div class="layer-header">
+                  <span class="layer-number">05</span>
+                  <span class="layer-name">RESPONSES &amp; BEHAVIOR</span>
+                  <span class="layer-tag">OUTCOME</span>
+                </div>
+                <div class="response-heading subdued"><span>Observed response stream</span><span class="response-stream-dot"></span></div>
+                <div class="response-card response-bad focus-node"><div class="response-code">404</div><div class="response-copy"><span>HTTP NOT FOUND</span><strong>/api/v2/pricing</strong><small>route did not resolve</small></div><div class="response-mark">!</div></div>
+                <div class="behavior-note focus-node"><span class="behavior-label">UI BEHAVIOR</span><strong>Silent failure</strong><small>surface remains unchanged</small><div class="behavior-bars"><i></i><i></i><i></i><i></i></div></div>
+                <div class="response-card response-good subdued"><div class="response-code">200</div><div class="response-copy"><span>HTTP OK</span><strong>/api/v1/catalog</strong><small>18ms · payload returned</small></div><div class="response-mark">✓</div></div>
+                <div class="response-footer subdued"><span>response body withheld in demo</span><span>synthetic observation</span></div>
+                <div class="anchor anchor-error" data-node="error404"><span></span><b>HTTP 404</b></div>
+                <div class="anchor anchor-ok" data-node="ok200"><span></span><b>HTTP 200</b></div>
+              </article>
+
+              <div class="inspection-ring" id="inspection-ring" aria-hidden="true"><span></span></div>
+              <div class="inspection-callout" id="inspection-callout" aria-live="polite">
+                <div class="callout-kicker"><span class="callout-pin"></span>VEYRA / INSPECTION</div>
+                <strong id="callout-title">Evidence path located</strong>
+                <p id="callout-body">Pricing CTA dispatched, but the request terminates at a missing route.</p>
+                <div class="callout-evidence"><span>OBSERVED</span><b>GET /api/v2/pricing → 404</b></div>
+                <div class="callout-recommendation"><span>RECOMMENDED FIX</span><b>Update target prop → /pricing</b></div>
+              </div>
+
+              <div class="scene-cursor" id="scene-cursor" aria-hidden="true">
+                <svg class="cursor-pointer" viewBox="0 0 28 36" role="presentation">
+                  <path d="M3.2 2.4 24.8 20l-10.1 1.2 5.4 10.9-4.2 2.1-5.5-10.8-6.1 8.1Z"></path>
+                </svg>
+                <span class="cursor-trail"></span>
+              </div>
+            </div>
+
+             <div class="viewport-corner viewport-corner-tl"><span>SYNTHETIC DEMO</span></div>
+             <div class="viewport-focus-label" id="focus-label">A familiar website, before the reveal</div>
+           </div>
+         </section>
+
+         <aside class="reading-rail inspector-panel" id="inspector" aria-labelledby="inspector-title">
+          <div class="inspector-topline">
+            <div>
+              <p class="rail-label">Investigation inspector</p>
+              <h2 id="inspector-title">What Veyra sees</h2>
+            </div>
+            <span class="inspector-status"><span class="status-dot" aria-hidden="true"></span> SYNTHETIC</span>
+          </div>
+          <div class="inspector-summary">
+            <span class="summary-step" id="inspector-step">01 / SURFACE</span>
+            <strong id="inspector-heading">A polished page, at first glance.</strong>
+            <p id="inspector-summary">The CTA looks healthy from the front. Play the sequence to follow the request behind it.</p>
+          </div>
+          <div class="inspector-evidence">
+            <div class="evidence-row evidence-observed">
+              <span class="evidence-marker">01</span>
+              <div><small>OBSERVED EVIDENCE</small><strong id="inspector-observed">Pricing CTA → GET /api/v2/pricing → HTTP 404</strong></div>
+            </div>
+            <div class="evidence-row">
+              <span class="evidence-marker">02</span>
+              <div><small>SUPPORTED CONCLUSION</small><strong id="inspector-conclusion">The component points to an unmigrated route target.</strong></div>
+            </div>
+          </div>
+          <div class="hypothesis-list">
+            <p class="rail-label">Candidate explanations</p>
+            <article class="hypothesis-card" id="hypothesis-click">
+              <div class="hypothesis-icon">A</div>
+              <div class="hypothesis-copy"><strong>Broken click listener</strong><span>&lt;PricingButton onClick&gt;</span></div>
+              <span class="hypothesis-state" id="hypothesis-click-state">PENDING</span>
+            </article>
+            <article class="hypothesis-card" id="hypothesis-auth">
+              <div class="hypothesis-icon">B</div>
+              <div class="hypothesis-copy"><strong>Rejected auth header</strong><span>Bearer token dependency</span></div>
+              <span class="hypothesis-state" id="hypothesis-auth-state">PENDING</span>
+            </article>
+          </div>
+          <div class="inspector-recommendation">
+            <span class="recommendation-label">RECOMMENDED FIX</span>
+            <strong id="inspector-recommendation">Update the target prop from <code>/pricing-v2</code> to <code>/pricing</code>.</strong>
+            <small>Recommendation only. No production code is changed.</small>
+          </div>
+           <div class="inspector-boundary"><span class="boundary-mark">SIM</span><span>Test-only synthetic data · no network requests · no automatic fix</span>
+           </div>
+          </aside>
+              <aside class="layer-hover-note" id="layer-hover-note" aria-live="polite">
+                <span class="layer-hover-kicker">EXPLORE THE ARCHITECTURE</span>
+                <strong id="layer-hover-title">Hover a layer to see what it represents.</strong>
+                <p id="layer-hover-copy">The expanded structure stays connected. The highlighted path is the synthetic investigation only.</p>
+              </aside>
+             </div>
+            <div class="scroll-signpost" aria-hidden="true">
+              <span class="scroll-signpost-label">Scroll to lift the surface</span>
+              <span class="scroll-signpost-line"><i id="scroll-progress-bar"></i></span>
+              <span class="scroll-signpost-stage" id="scroll-stage-label">01 / 05</span>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <section class="story-panel story-panel-dark" aria-labelledby="story-title">
+        <div class="story-panel-copy">
+          <p class="story-kicker"><span></span>THE INVISIBLE CHAIN</p>
+          <h2 id="story-title">A smooth surface can hide a <em>complex truth.</em></h2>
+          <p>Veyra turns the unseen relationship between interface, route, request, and response into something people can understand.</p>
+        </div>
+        <ol class="proof-loop" aria-label="Veyra investigation sequence">
+          <li><span>01</span><strong>Evidence</strong><small>what is observable</small></li>
+          <li><span>02</span><strong>Claim</strong><small>what might explain it</small></li>
+          <li><span>03</span><strong>Challenge</strong><small>what does not hold</small></li>
+          <li><span>04</span><strong>Verdict</strong><small>what the evidence supports</small></li>
+        </ol>
+      </section>
+
+      <section class="layer-explainer" id="method" aria-labelledby="method-title">
+        <div class="method-heading">
+          <p class="eyebrow"><span class="eyebrow-line"></span>How Veyra follows the thread</p>
+          <h2 id="method-title">A website is more than what it <em>shows.</em></h2>
+          <p>Move from the rendered surface to the response that shaped the experience. Every plane keeps its place in the chain.</p>
+        </div>
+        <ol class="layer-steps">
+          <li><span>01</span><strong>Visible UI</strong><small>what the visitor sees</small></li>
+          <li><span>02</span><strong>DOM &amp; components</strong><small>what is mounted</small></li>
+          <li><span>03</span><strong>Routes &amp; resources</strong><small>where it points</small></li>
+          <li><span>04</span><strong>Requests &amp; dependencies</strong><small>what it dispatches</small></li>
+          <li><span>05</span><strong>Responses &amp; behavior</strong><small>what comes back</small></li>
+        </ol>
+      </section>
+
+      <section class="story-panel story-panel-light" aria-labelledby="boundary-title">
+        <div class="boundary-statement">
+          <span class="story-kicker"><span></span>BUILT FOR CLARITY</span>
+          <h2 id="boundary-title">Make the invisible <em>legible.</em></h2>
+        </div>
+        <div class="boundary-copy">
+          <p>Veyra does not pretend to repair what it has not proven. It follows available evidence, names uncertainty, and leaves the next action clear.</p>
+          <span class="boundary-pill"><i></i> SYNTHETIC DEMO · NO AUTO-FIX</span>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <span>VEYRA</span>
+        <span>Evidence over assumption</span>
+        <span>Prototype — not a live investigation</span>
+      </footer>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
