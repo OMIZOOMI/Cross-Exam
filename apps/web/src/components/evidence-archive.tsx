@@ -3,6 +3,7 @@
 import type { ScanReport } from "@crossexam/contracts";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
+import { liveChecks, liveEvidenceLabel } from "../lib/live-checks";
 import { reportClaims } from "../lib/presentation";
 import { ProvenanceBadge } from "./ui";
 
@@ -21,14 +22,19 @@ export function EvidenceArchive({
 }) {
   const live = report.summary.source === "live";
   const [kind, setKind] = useState("all");
+  const search = query.trim().toLowerCase();
+  const labels = new Map(
+    report.evidence.map((item) => [item.id, live ? liveEvidenceLabel(report, item.id) : item.id]),
+  );
+  const checks = live ? liveChecks(report) : [];
   const exactId = report.evidence.find(
-    (item) => item.id.toLowerCase() === query.trim().toLowerCase(),
+    (item) => item.id.toLowerCase() === search || labels.get(item.id)?.toLowerCase() === search,
   )?.id;
   const records = report.evidence.filter((item) =>
     exactId
       ? item.id === exactId
       : (kind === "all" || item.kind === kind) &&
-        `${item.id} ${item.title} ${item.url} ${item.detail}`
+        `${labels.get(item.id)} ${checks.find((check) => check.id === item.id)?.question ?? ""} ${item.title} ${item.url} ${item.detail}`
           .toLowerCase()
           .includes(query.toLowerCase()),
   );
@@ -60,7 +66,11 @@ export function EvidenceArchive({
           </label>
           <input
             id="evidence-search"
-            placeholder="Search by ID, observation, or URL…"
+            placeholder={
+              live
+                ? "Search by check number, question, or page…"
+                : "Search by ID, observation, or URL…"
+            }
             value={query}
             onChange={(event) => onQuery(event.target.value)}
           />
@@ -98,21 +108,27 @@ export function EvidenceArchive({
       </div>
       <div className="evidence-list">
         {records.map((item) => {
+          const check = checks.find((entry) => entry.id === item.id);
           const claims = reportClaims(report).filter((claim) =>
             claim.evidenceIds.includes(item.id),
           );
           return (
             <article className="evidence-record" key={item.id}>
               <div className="evidence-identity">
-                <code>{item.id}</code>
+                <code>{labels.get(item.id)}</code>
                 <ProvenanceBadge value={item.provenance} />
                 <span>{item.kind}</span>
               </div>
               <div className="evidence-observation">
-                <h3>{item.title}</h3>
+                <h3>{check?.question ?? item.title}</h3>
                 <code className="evidence-source">{item.url}</code>
-                <details open={query.trim().toUpperCase() === item.id}>
-                  <summary>Read observation</summary>
+                {check && (
+                  <p>
+                    <strong>Result</strong> {check.result}
+                  </p>
+                )}
+                <details open={exactId === item.id}>
+                  <summary>{live ? "Show recorded details" : "Read observation"}</summary>
                   <p>{item.detail}</p>
                   <small>
                     Collector: {item.collector} · Source: {item.source}
@@ -156,18 +172,25 @@ export function EvidenceArchive({
                           type="button"
                           key={claim.id}
                           onClick={() => onFinding(finding.id)}
-                          aria-label={`Review claim ${claim.id}`}
+                          aria-label={
+                            live
+                              ? `Review Problem ${report.findings.indexOf(finding) + 1}`
+                              : `Review claim ${claim.id}`
+                          }
                         >
-                          <code>{claim.id}</code> ↗
+                          <code>
+                            {live ? `Problem ${report.findings.indexOf(finding) + 1}` : claim.id}
+                          </code>{" "}
+                          ↗
                         </button>
                       ) : (
                         <button
                           type="button"
                           key={claim.id}
                           onClick={() => onClaim(claim.id)}
-                          aria-label={`Review claim ${claim.id}`}
+                          aria-label={live ? "Review linked claim" : `Review claim ${claim.id}`}
                         >
-                          <code>{claim.id}</code> ↗
+                          <code>{live ? "Linked claim" : claim.id}</code> ↗
                         </button>
                       );
                     })
@@ -184,7 +207,11 @@ export function EvidenceArchive({
         <div className="empty-state">
           <Search size={28} />
           <h3>No evidence matches “{query}”</h3>
-          <p>Try a record ID such as E-001, a route, or another category.</p>
+          <p>
+            {live
+              ? "Try a check number, a page address, or another category."
+              : "Try a record ID such as E-001, a route, or another category."}
+          </p>
           <button type="button" className="button button-secondary" onClick={clear}>
             Clear search
           </button>

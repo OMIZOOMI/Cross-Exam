@@ -1,0 +1,97 @@
+.readable {
+  --sans: "Avenir Next", ui-rounded, Avenir, "Trebuchet MS", system-ui, sans-serif;
+  --serif: var(--sans);
+  font-family: var(--sans);
+  font-size: 1rem;
+}
+
+.comparison {
+  overflow-wrap: anywhere;
+}
+
+.comparison h2 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.comparison p {
+  margin: 0 0 0.375rem;
+}
+
+.comparison strong {
+  font-size: 1.125rem;
+}
+
+.fetchChart {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  margin: 0;
+  padding: 0;
+}
+
+.fetchChart > li::marker {
+  content: "";
+}
+
+.timingLabels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.375rem;
+  font-weight: 600;
+}
+
+.pageName {
+  overflow-wrap: anywhere;
+}
+
+.pageTime {
+  color: #506176;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.timingBar {
+  display: block;
+  border-radius: 999px;
+}
+
+.coverage {
+  padding: 1.5rem 0 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.coverage h2 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-weight: 600;
+}
+
+.coverage p {
+  max-width: 65ch;
+  margin: 0 0 0.5rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.coverage summary {
+  width: fit-content;
+  padding: 0.625rem 0;
+  color: var(--blue);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.coverage ul {
+  max-width: 65ch;
+  margin: 0.75rem 0;
+  padding-inline-start: 1.4rem;
+  list-style: disc;
+  line-height: 1.6;
+}
+
+.coverage li + li {
+  margin-top: 0.5rem;
+}

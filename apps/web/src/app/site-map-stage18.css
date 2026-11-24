@@ -105,6 +105,11 @@
   height: 44px;
 }
 
+.site-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
 .site-map-graph .react-flow__node:focus-visible {
   outline: 2px solid var(--site-map-blue);
   outline-offset: 3px;
@@ -419,6 +424,37 @@
   white-space: nowrap;
 }
 
+.site-map-inspector-live .site-map-detail-links button span {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.site-map-inspector-live .site-map-detail-heading h3 {
+  font-size: 1.375rem;
+  font-weight: 600;
+}
+
+.site-map-inspector-live
+  :is(
+    select,
+    .site-map-detail-status,
+    .site-map-detail-links button span,
+    .site-map-detail-empty,
+    .site-map-record-note
+  ) {
+  font: 0.9375rem / 1.5 var(--sans);
+}
+
+.site-map-inspector-live .site-map-detail-label {
+  font: 600 0.875rem var(--sans);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.site-map-inspector-live .site-map-detail-heading code {
+  overflow-wrap: anywhere;
+}
+
 .site-map-detail-empty {
   margin: 0;
   color: var(--site-map-muted);
@@ -441,7 +477,61 @@
   text-align: left;
 }
 
+.site-map-live .site-map-panel {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.site-map-live .site-map-graph,
+.site-map-live.site-map-expanded .site-map-graph.expanded {
+  height: auto;
+  min-height: 430px;
+}
+
+.site-map-live .site-map-route-list {
+  min-height: 0;
+}
+
+.site-map-live .site-map-route-list ul {
+  padding-top: 0.875rem;
+}
+
+.site-map-live
+  :is(.site-map-view-toggle button, .graph-inspector label, .site-map-route-list small) {
+  font-size: 0.9375rem;
+}
+
+.site-map-live .site-map-route-title,
+.site-map-live .site-map-route-node .route-code,
+.site-map-live .site-map-route-node .route-node-bottom,
+.site-map-live .site-map-detail-label {
+  font: 600 0.875rem / 1.35 var(--sans);
+}
+
+.site-map-live .site-map-route-node > strong,
+.site-map-live .site-map-route-list button > code {
+  font: 600 1rem / 1.35 var(--sans);
+}
+
+.site-map-live .site-map-route-list button > code {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.site-map-live .site-map-status-text {
+  max-width: none;
+}
+
+.site-map-live .site-map-inspector select {
+  min-height: 44px;
+}
+
 @media (max-width: 760px) {
+  .site-map-live .site-map-graph,
+  .site-map-live.site-map-expanded .site-map-graph.expanded {
+    min-height: 21rem;
+  }
+
   .site-map-stage18 {
     display: block;
   }

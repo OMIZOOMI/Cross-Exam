@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: veyra
+    runtime: node
+    plan: free
+    numInstances: 1
+    buildCommand: corepack enable pnpm && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start:public
+    envVars:
+      - key: NODE_VERSION
+        value: "24.22.1"
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
+      - key: VEYRA_REPORT_DIR
+        value: /tmp/veyra-reports
+      # Set this to the service's exact HTTPS origin in Render. No trailing slash.
+      - key: VEYRA_PUBLIC_ORIGIN
+        sync: false

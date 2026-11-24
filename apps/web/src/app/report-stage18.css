@@ -250,33 +250,6 @@
   display: none;
 }
 
-.report-stage18 .live-tribunal-note {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 35px;
-  padding: 34px 0 38px;
-  border-top: 1px solid var(--v18-line);
-}
-
-.report-stage18 .live-tribunal-note h2 {
-  max-width: 540px;
-  margin: 11px 0 15px;
-  font: 400 31px / 1.2 var(--serif);
-  letter-spacing: -0.7px;
-}
-
-.report-stage18 .live-tribunal-note p:not(.section-kicker) {
-  max-width: 520px;
-  color: var(--v18-muted);
-  font-size: 13px;
-  line-height: 1.85;
-}
-
-.report-stage18 .live-tribunal-note .text-link {
-  flex: 0 0 auto;
-}
-
 .report-stage18 .tribunal-view {
   padding-bottom: 32px;
 }
@@ -915,12 +888,10 @@
     display: none;
   }
 
-  .report-stage18 .live-tribunal-note,
   .report-stage18 .tribunal-hero {
     display: block;
   }
 
-  .report-stage18 .live-tribunal-note .text-link,
   .report-stage18 .tribunal-hero-mark {
     margin-top: 22px;
   }
@@ -1156,5 +1127,140 @@
     animation-iteration-count: 1;
     scroll-behavior: auto;
     transition-duration: 0.01ms;
+  }
+}
+
+.live-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+.report-rescan {
+  max-width: 20rem;
+}
+.report-rescan p {
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0;
+}
+.live-checks {
+  display: grid;
+  gap: 1.75rem;
+}
+.live-checks h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  margin: 0 0 0.5rem;
+}
+.live-checks h3 {
+  font-size: 1.12rem;
+  margin: 0 0 0.5rem;
+}
+.live-checks p {
+  overflow-wrap: anywhere;
+}
+.live-check-list {
+  list-style: decimal;
+  padding-inline-start: 1.65rem;
+}
+.live-check-list > li {
+  padding: 0.7rem 0.2rem;
+  overflow-wrap: anywhere;
+}
+.live-check-list > li + li {
+  border-top: 1px solid var(--line, #d8dfec);
+}
+.live-check-list > li::marker {
+  font-weight: 650;
+  color: var(--check-ink, #922e34);
+}
+.live-check-list li p {
+  margin: 0.25rem 0;
+}
+.live-check-group {
+  border: 1px solid var(--check-border);
+  border-radius: 0.75rem;
+  background: var(--check-tint);
+  margin-block-start: 0.6rem;
+  padding-inline: 1rem;
+}
+.live-check-group > summary {
+  color: var(--check-ink);
+  font-weight: 700;
+  cursor: pointer;
+  padding-block: 0.75rem;
+}
+.live-check-failed {
+  --check-ink: #922e34;
+  --check-border: #efc5c5;
+  --check-tint: #fff2f2;
+}
+.live-check-passed {
+  --check-ink: #19583b;
+  --check-border: #bbdfca;
+  --check-tint: #eef9f1;
+}
+.live-check-unchecked {
+  --check-ink: #4b5567;
+  --check-border: #ced5e1;
+  --check-tint: #f3f5f9;
+}
+.live-check-scope {
+  background: #f3f5f9;
+  border-radius: 0.5rem;
+  padding: 0.7rem;
+}
+
+.report-live
+  :is(
+    .fixture-notice,
+    .case-metadata,
+    .scope-facts dt,
+    .section-kicker,
+    .figure-caption,
+    .text-link
+  ) {
+  font-size: 0.9375rem;
+}
+
+.report-live
+  :is(.report-navigation > button, .investigation-subnav > button, .provenance-key, .view-intro) {
+  font-size: 1rem;
+}
+
+.report-live .network-note p {
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.report-live :is(.network-note h2, .overview-map .section-heading h2) {
+  font-size: clamp(1.875rem, 3vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.report-live :is(.finding-title, .evidence-observation h3, .solution-title h3) {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.report-live
+  :is(
+    .evidence-observation details p,
+    .evidence-observation summary,
+    .finding-context p,
+    .solution-problem
+  ) {
+  font-size: 1rem;
+}
+
+.report-live .network-note > * {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .live-report-actions {
+    justify-content: flex-start;
+    margin-top: 0.85rem;
   }
 }

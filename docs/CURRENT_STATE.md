@@ -1,5 +1,495 @@
 # Current state
 
+## Single-instance Render preparation (2026-11-24)
+
+The Node web app can opt into one exact public HTTPS origin with
+`VEYRA_PUBLIC_ORIGIN` and start on the host’s port with `pnpm start:public`.
+`VEYRA_REPORT_DIR` selects temporary storage. The default commands and scan
+admission remain loopback-only. The existing scanner and its 8-page, 45-second
+limits are unchanged. The web handler still allows one active scan and six starts
+per minute per process.
+
+The admission and storage tests passed (37), along with workspace typecheck,
+production build, Biome on the six changed code files, Blueprint YAML parsing,
+and diff checks. For workspace commands, the local pnpm dependency precheck was
+disabled to preserve the existing installation. The production smoke started on
+an assigned port, verified direct and proxy host handling, rejected cross-site,
+invalid-body and private-destination input, and completed one real read-only
+scan of the owned Pricing site. Its two-page report was stored in the temporary
+directory and opened successfully. Both deployment traces exclude local reports.
+
+Next: deploy the reviewed branch with the [Render checklist](DEPLOY_RENDER.md)
+and verify a first scan on the assigned public address.
+
+## Simpler live overview and WebKit check (2026-11-24)
+
+The live site map now fills the panel beside the selected page and refits its centered diagram
+when the panel changes size. The timing bars use native SVG and keep visible labels and exact
+times when the report stylesheet fails to load. The overview summarizes what the scan covers in
+plain language and puts the original collection notes behind “Technical scan details.”
+
+Checked the saved portfolio report after reload in WebKit at 1280 px and 390 px. All four page
+timings rendered and the desktop canvas had no gap below it. Forty-four focused browser tests
+passed across desktop and mobile Chrome and WebKit, including the fixture regressions. Web
+TypeScript, changed-file Biome, and diff checks passed. The standalone Safari app was unavailable
+to automation during this review.
+
+## Readable live report and page timings (2026-11-24)
+
+The live report uses a larger rounded system font. Its timing chart puts each full page path and
+recorded time above a horizontal bar, with wrapping for long paths. The chart labels the root
+page “Homepage” and explains what the timings measure.
+
+Visually checked the four timings in the saved portfolio report at desktop and narrow widths.
+All 12 live report Chrome tests passed across desktop and mobile, including the long-path chart
+regression. Web TypeScript, changed-file Biome, and diff checks passed.
+
+## Plain-language page details (2026-11-24)
+
+The live site map now shows numbered problems and page checks in the same red Failed and green
+Passed groups as the overview. The evidence archive and problem links carry the same numbers through
+to recorded details. Reports and JSON exports retain their original record IDs.
+
+Verified on the saved portfolio report without a new scan. Two focused check tests, ten live
+report browser tests, and six demo browser regression tests passed. The browser checks covered
+desktop and mobile Chrome. Web TypeScript, changed-file Biome, and diff checks passed.
+
+## Plain-language live reports and repeat scans (2026-11-24)
+
+The local live HTTP overview now explains what needs attention, where it happened,
+and what to do next. Numbered checks distinguish failed, passed, and could not check,
+with links back to the recorded evidence. Partial reports disclose incomplete coverage.
+“Scan again” uses the existing local scan API and opens a fresh report. The new report
+links to the earlier one when it is still saved and belongs to the same target.
+
+Verified the real Pricing fixture by rescanning its saved broken-link report
+(`cefd2982-c68c-43c2-8121-ebba368a8640`). The new report
+(`aa3dec2a-f294-425d-ba47-13118f2a7c5b`) showed no flagged problems and linked back to
+the earlier report. Report/API/storage focused tests (18), desktop/mobile live-report
+browser tests using installed Chrome (10), changed-file lint, TypeScript, production
+build, and diff checks passed. The broader suite reported 1,854 passes and one failure
+because the product-film MP4 was already missing from the checkout. Repository-wide
+lint still reports prototype diagnostics. These unrelated files were preserved.
+
+Next: run one guided scan with a tester on a site they own and watch whether they
+can find an issue, decide what to do, and use the new report to verify a change.
+
+## Veyra public Pricing evidence demo (2026-11-24)
+
+Published the [public walkthrough](https://veyra-pricing-demo.nurturingkelp2.chatgpt.site/)
+as a separate Site. It shows selected evidence from the two saved hosted scans: the
+homepage link (`E-004`) and the destination response (`E-008`). Visitors can reveal
+both the 404 before the fix and the 200 after it. Report IDs and full report files remain
+local, and the page offers no scan submission.
+
+The published demo also includes two collapsible lists under “About these results,”
+one for each scan. Each summarizes all 12 observations as plain questions and answers.
+The comparison cards explain both status numbers in everyday language. Evidence IDs
+remain in the saved reports. Verified both lists on the live page after the wording
+update (source `2b12874618241f0e9a2edf28db171a0bd90af9db`).
+Both live lists now number the 12 checks and put a “Result” label on each answer.
+The summaries distinguish one problem before the fix from zero after it. Verified
+both lists on the published page (source `e162d9235bdac99b7704ae28b7b808693260a93a`).
+
+The current checks section shows the first scan only, with one red failed check and
+eleven green checks that raised no finding. The original numbering and result labels
+remain. The comparison cards above still show the fix. Verified both groups live
+(source `3be252b069c5b48b0cefd76e35be8e59931a1dbd`).
+
+Verified the published page and stylesheet load without signing in. On the published
+page, keyboard and pointer checks revealed the correct evidence in both panels. The
+static hosting attempt returned Unauthorized. Packaging the same HTML and CSS as a
+read-only Worker on the same Site succeeded (source `7d4b03428f76124e706c797834e921ef68d88bd1`).
+The original Pricing fixture stays live with its link fixed.
+
+Next: share the walkthrough with a first tester and see if they can identify the broken
+link and explain how Veyra knew without guidance.
+
+## Veyra hosted Pricing link before-and-after check (2026-11-24)
+
+Published the separate [Pricing test site](https://veyra-pricing-link-check.nurturingkelp2.chatgpt.site/)
+with owner approval. Submitted the same public homepage through Veyra's normal local form
+before and after changing the link. Both scans used the production HTTP request path
+with real DNS and HTTPS against the hosted site.
+
+| Version | Linked address | Observed response | Findings | Local report |
+| --- | --- | --- | --- | --- |
+| Before | `/pricing-old` | HTTP 404 (`E-008`) | One, linked to `E-008` | `cefd2982-c68c-43c2-8121-ebba368a8640` |
+| After | `/pricing` | HTTP 200 (`E-008`) | Zero | `0828cfbc-f786-4386-aa1d-8991affac41b` |
+
+Both reports completed with two collected pages and 12 evidence records. The report UI
+and saved JSON independently showed the expected results. The repaired test site is live.
+Veyra itself still runs locally, and the report exports and screenshots are outside Git.
+
+Next: prepare a public demo of this before-and-after example, with live scan submission
+remaining local until access controls are ready.
+
+## Veyra Pricing link before-and-after check (2026-11-24)
+
+A local HTTP test site served a homepage with a Pricing link to `/pricing-old`. The real
+deterministic scanner followed it, recorded HTTP 404 as observed evidence, and linked the
+finding to that response. Changing only the homepage link to `/pricing` produced a fresh
+report showing HTTP 200 on the linked route and zero findings. Each report contained two
+pages and 12 evidence records.
+
+The test uses a fixed loopback fixture and substitutes DNS and routing only inside the
+test process. It exercises actual HTTP responses, scanner discovery, evidence, findings,
+and report schema validation. It does not exercise the production transport or public
+deployment. The paired JSON reports are exported outside Git on request.
+
+- Scanner suite: `VEYRA_EXPORT_PRICING_TEST=1 node node_modules/vitest/vitest.mjs run apps/scanner/src`
+  passed 95 tests across five files with local socket permission. The sandboxed first
+  attempt was blocked from binding the fixture socket.
+- Scanner TypeScript check, targeted Biome check, and diff whitespace check passed.
+- To rerun just this case, use the same command with
+  `apps/scanner/src/pricing-link.integration.test.ts` in place of `apps/scanner/src`.
+
+Next: repeat the Pricing check through the web form against a publicly reachable staging
+site we control, and inspect the two saved reports before opening scan access to testers.
+
+## Veyra V2 — Inside the website local prototype (2026-10-26)
+
+Built a new isolated Veyra V2 prototype at `prototypes/veyra-v2/`. The existing working V1 at
+`prototypes/veyra-cross-section/` and the frozen baseline archive at
+`/Users/Om/Documents/Codex/2026-10-24/referenced-chatgpt-conversation-this-is-an/outputs/veyra-v1-2026-10-26.zip`
+were not modified. The production Next.js app and unrelated working-tree changes remain untouched.
+The four V1 source hashes still match the frozen sibling manifest exactly.
+
+V2 is a standalone local HTML/CSS/SVG experience with no remote assets, providers, scanner, backend, or
+network requests. A canonical `DEMO` object in `prototypes/veyra-v2/main.js` drives the five architectural
+layers, inspector copy, proof cards, method diagram, and the preserved local story:
+
+```text
+PricingButton target /pricing-v2
+active route /pricing
+observed GET /api/v2/pricing
+response HTTP 404
+```
+
+The scroll narrative is Surface → Interaction → Evidence → Challenge → Verdict. It uses one scroll target and one
+frame loop, smoothly sampled camera/layer transforms, a blue/violet thread with coral fault and teal alternative
+paths, responsive HTML explanation, touch/keyboard/persistent layer selection, reachable Clear selection, reduced
+motion, and a static DOM/SVG fallback rather than WebGL dependencies. The visible page has no progress bar, repeated
+synthetic labels, decorative separator chrome, fabricated customers, metrics, live scans, or automatic fix.
+
+Local preview and comparison links:
+
+- V2: `http://127.0.0.1:4174/veyra-v2/`
+- V1: `http://127.0.0.1:4174/veyra-cross-section/`
+- Walkthrough recording: `prototypes/veyra-v2/veyra-v2-walkthrough.webm`
+
+Focused verification after implementation:
+
+- `node --check prototypes/veyra-v2/main.js` PASS.
+- `git diff --check -- prototypes/veyra-v2` PASS.
+- Local preview `curl` returned HTTP 200.
+- Chromium review using the installed system Chrome at 1440×1000, 1280×720, 768×1024, and 390×844 passed all
+  forward stage checkpoints, zero horizontal overflow, finite layer opacity, zero page/console errors, zero
+  external requests, and computed proof typography of desktop 28px/20px/15px and mobile 24px/18px/15px. Method
+  support copy measured 20px on desktop/tablet and 18px on mobile.
+- Chromium forward/reverse traversal, repeated fast jumps, keyboard Enter/Escape, pointer-to-panel persistence,
+  touch pin/reset, reduced motion, and stationary 10-second Challenge/Verdict holds passed. The final 1440×1000
+  hold check kept the scene transform byte-identical over each 10-second sample.
+- Screenshots are outside Git under `/tmp/veyra-v2-final-chromium-*.png`. The walkthrough is the tracked-scope
+  prototype artifact `prototypes/veyra-v2/veyra-v2-walkthrough.webm` for local review only.
+- Standalone Safari was opened at the V2 URL and the page title/URL were confirmed through Safari AppleScript.
+  Playwright WebKit could not launch because `/Users/Om/Library/Caches/ms-playwright/webkit-2359/pw_run.sh` is not
+  installed; this is not claimed as WebKit/Safari automation coverage.
+
+No commit, push, deployment, production route, or V1 repair was performed. The next step is owner visual review of
+the V2 concept and recording; do not integrate it into the production app without a separate task.
+
+## Veyra trace flattening and diagram completion — owner review (2026-10-25)
+
+Continued the scoped review of `prototypes/veyra-cross-section/` after the prior presentation-simplification and
+expanded-hold work. The remaining late-stage trace stepping now has a demonstrated rendering cause: `.trace-path`
+uses `transform-style: preserve-3d`, while parent opacity and filters are CSS grouping properties. In both Chromium
+and Safari-compatible Playwright WebKit, toggling a trace parent's opacity from `0.999` to `1` moved its first three
+3D segments by approximately 18.8 CSS pixels even with animation effects isolated. This reproduced the reported
+late-stage jump without relying on a screenshot-only inference.
+
+The focused fix keeps the 3D context intact. `updateTraces()` now writes the calculated value to an inherited
+`--trace-opacity` custom property, and each `.trace-segment` applies visibility locally. Background emphasis,
+challenged grayscale, and hover brightness/shadow also apply to the segment rather than the preserve-3d parent.
+The experimental scroll-time animation pause, inspector blur override, and threshold changes were not retained as
+the cause of the geometry fault; designed signal, focus, ring, and atmosphere motion remains available. The old
+decorative proof-loop pseudo-connectors are disabled so they cannot cross the directional SVG arrows.
+
+The diagram pass is complete within the same prototype scope:
+
+- The Evidence → Claim → Challenge → Verdict chain has four readable cards, directional desktop/mobile arrows, and
+  no connector crossing card text. The existing blue/violet atmospheric rings remain decorative background only.
+- The method walkthrough is a semantic five-node ordered list with miniature browser, component, route, request, and
+  response visuals. The route/request mini-visuals were shortened so the concrete examples remain readable without
+  clipped or ellipsized text.
+- Measured typography is 24px intro copy, 20px supporting story copy, 22px method intro/body copy, 20px flow-node
+  titles, and 16px flow-node body text on desktop. At 390×844, intro/method/story supporting copy is 18px, flow-node
+  titles remain 20px, flow-node body remains 16px, and proof-card support text is 15px.
+
+Focused browser evidence used Playwright Chromium and Safari-compatible Playwright WebKit at 1440×1000, 1280×720,
+and 390×844. Forward stage checkpoints (`01` Surface, `02` Interaction, `03` Evidence, `04` Challenge, `05`
+Verdict) and corrected reverse checkpoints passed in both engines. Slow forward and reverse traversal reached Verdict
+and returned to Surface at every viewport. Late checkpoints at 0.70, 0.72, 0.79, 0.80, and 0.84 showed finite
+segment opacity and the expected challenge fade/challenged state. A 10-second final hold remained at Verdict with
+opacity `0.28` and every layer expanded. Segment geometry was unchanged over a 700ms stationary sample and while
+changing opacity (`0px` measured delta in both cases) in the focused matrix.
+
+The same matrix reported zero page errors, zero console errors, zero external requests, no horizontal overflow,
+all proof/flow rectangles inside the viewport, and the inspector above the viewport bottom. It found four proof cards,
+five flow nodes, eight SVG path elements including marker definitions, and no legacy pseudo-connectors. Desktop hover
+selected one layer and dimmed four; pointer exit cleared it. Keyboard Enter/Escape selection/reset, candidate-details
+disclosure, mobile touch selection/reset, `touch-action: pan-y`, and reduced motion all passed. Reduced motion matched,
+disabled the hero atmosphere animation, and kept document scrolling `auto`. Standalone Safari was not run; WebKit is
+the Safari-compatible engine receipt.
+
+Fresh screenshots are outside Git under `/tmp/veyra-final-chain-<engine>-<viewport>.png` and
+`/tmp/veyra-final-method-<engine>-<viewport>.png` for all six engine/viewport combinations.
+
+Actual checks after the final edit: `node --check prototypes/veyra-cross-section/main.js` PASS; `git diff --check`
+PASS; direct root TypeScript `node node_modules/typescript/bin/tsc --noEmit` PASS; direct `apps/web` and
+`tools/veyra-film` TypeScript checks PASS; direct Vitest `node node_modules/vitest/vitest.mjs run` PASS with 53 files
+and 1,852 tests. Direct Biome remains non-clean on existing prototype diagnostics: 6 errors, 7 warnings, and 4
+infos (Math.pow, intentional `!important`, viewport accessibility/tabindex, iterable callback, and formatting
+findings); no formatter was run. `corepack pnpm` was attempted with five-minute timeouts but its dependency-status
+preflight stopped at `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`; the recursive package script also cannot find
+`pnpm` in the current shell. The direct checks above are the available post-edit receipts.
+
+No commit, push, deployment, production route, backend, scanner, provider, security boundary, or network behavior
+was changed. `.opencode/` remains untouched and untracked. Remaining work: owner visual approval only; keep the
+current work uncommitted and unpushed.
+
+## Veyra demo presentation simplification — owner review (2026-10-25)
+
+Simplified the standalone `prototypes/veyra-cross-section/` presentation using the requested Wise-inspired
+direction: clearer grouping, more generous spacing, readable UI typography, and direct language while preserving
+Veyra's electric-blue/violet layered scene, internal five-stage scroll narrative, progressive evidence disclosure,
+Demo navigation, reduced motion, keyboard/touch layer selection, reset behavior, and the completed flicker fixes.
+
+The visible demo chrome no longer shows a bottom progress bar, stage counter, `Scroll to lift` instruction, corner
+demo labels, or repeated synthetic/SIM disclaimers. `Veyra demo` appears once in the header. The right panel now
+uses one stage label, one headline, one short explanation, a concise observed path, compact candidate checks behind
+an accessible `View details` disclosure, layer context only when selected, and one scoped recommendation at the
+Verdict stage. Verdict copy now reads: `The Pricing link points to an old route.` / `It uses /pricing-v2; the
+active route is /pricing.` / `Suggested fix: update the target to /pricing, then verify the response.`
+
+Decorative divider lines around the presentation chrome and supporting headings were removed; meaningful diagram
+connectors and layer outlines remain. The inspector is grouped with a restrained translucent dark surface so its
+content remains readable over the scene, including at 1280×720. Mobile content remains in the pinned stage and the
+reset control stays available after touch selection.
+
+The reference direction was based on Wise's page structure: a clear primary statement, short supporting copy,
+focused grouped controls, and progressive supporting detail rather than dense technical chrome.
+
+Focused browser validation used Playwright Chromium and Safari-compatible Playwright WebKit at 1440×1000,
+1280×720, and 390×844. All forward checkpoints (`01` through `05`) and reverse checkpoints returned to `01` in
+both engines; opacity values were finite, the expanded state remained stable, the page had no horizontal overflow,
+the one visible `Veyra demo` label and forbidden-copy scan passed, and there were zero page/console errors or
+external requests. Desktop keyboard/hover selection produced one selected layer and four dimmed layers; Escape
+cleared selection. Mobile touch selection and the visible Clear selection reset passed. Candidate details opened
+through the disclosure, and the panel stayed above the viewport bottom at 1280×720. Reduced-motion checks kept the
+camera calm, hero atmosphere animation disabled, finite opacity, and the final expanded state intact.
+
+Screenshots are outside Git at `/tmp/veyra-simple-final-chromium-1440x1000-stage-01.png` through
+`stage-05.png`, the matching `1280x720` and `390x844` paths, plus the selected-layer receipts generated during
+the focused review. No commit, push, deployment, backend, scanner, provider, security boundary, or network behavior
+was changed.
+
+Actual checks: `node --check prototypes/veyra-cross-section/main.js` PASS; `git diff --check` PASS; browser matrix
+PASS as described above. `pnpm run typecheck`, `pnpm run lint`, and `pnpm test` were attempted after the edit but
+each stopped immediately with `pnpm: command not found` in the current shell (exit 127); therefore no post-edit
+pnpm typecheck, lint, or test result is claimed. Earlier recorded baseline results remain in the prior sections.
+
+Remaining work: owner visual review only. Keep all current work uncommitted and unpushed.
+
+## Veyra expanded-hold flicker correction — owner review (2026-10-24)
+
+Reproduced and corrected the expanded `05 / 05` hold in the standalone
+`prototypes/veyra-cross-section/` experience while preserving the approved Pass A/B narrative,
+interaction behavior, responsive composition, synthetic fixture boundary, and reduced-motion behavior.
+The work remains uncommitted and unpushed pending owner visual review.
+
+The verified JavaScript defect was corrected in `narrativeFrameFor()`: its returned frame now includes the
+clamped `progress` value consumed by `traceOpacity()`. Before the fix, healthy and ambient trace calculations
+received `undefined`, producing `NaN` inline opacity values. The visual hold investigation also reproduced a
+WebKit-specific stale-opacity state when scroll-driven opacity transitions were active: the inline layer
+visibility values were correct, but computed layer opacity could remain at `0` after the scene reached the final
+hold. The smallest demonstrated CSS correction removes opacity transitions from `.layer`, `.trace-path`, and
+isolated `.subdued` content; scroll-driven opacity now applies directly while the existing border, shadow, filter,
+and intentional signal/atmosphere animations remain available.
+
+Focused browser evidence used Playwright Chromium and Safari-compatible Playwright WebKit at 1440×1000,
+1280×720, and 390×844. At every viewport, checkpoint opacity values were finite, the expanded class remained
+active through the final hold, no horizontal overflow or external request occurred, slow/fast forward reached
+`05 / 05`, reverse returned to `01 / 05`, and desktop layer hover still produced one hovered layer plus four
+dimmed layers. A 10.5-second final-hold sample kept the narrative/style state stable in both engines. CSS screenshot
+hashes still vary when intentional ambient/signal animations are allowed; pausing animations produced one stable
+hash, so this receipt does not claim that all designed motion was removed. WebKit validation is Safari-compatible
+engine coverage, not a claim of testing the standalone Safari application.
+
+Actual checks: `node --check prototypes/veyra-cross-section/main.js` PASS; `git diff --check` PASS;
+`pnpm run typecheck` PASS across the workspace; Chromium/WebKit browser matrix PASS with zero page errors,
+console errors, and external requests. `pnpm run lint` remains non-clean on the existing prototype diagnostics
+(6 errors, 6 warnings, and 4 infos); no formatter was run. `pnpm test` remains non-clean only in the unrelated
+`apps/browser-worker/src/linux-root.test.ts` file (2 failures, 52 files passing, 1,850 tests passing). The
+repository requires Node `>=24`; these checks ran under Node `v22.23.3` and emitted the existing engine warning.
+
+Remaining work: owner visual review only. No commit, push, deployment, production route, scanner, backend,
+security boundary, provider, or network behavior was changed. Keep `.opencode/` untouched and uncommitted.
+
+## Veyra Pass B interaction and usability correction — owner review (2026-10-24)
+
+Implemented the focused Pass B interaction correction in the standalone `prototypes/veyra-cross-section/`
+experience while preserving Pass A's five-stage narrative, approved electric-blue/violet design, 3D geometry,
+camera choreography, responsive layouts, and layer interactions. The work remains uncommitted and unpushed pending
+owner visual review.
+
+Demo navigation now targets `#showcase` instead of the inspector anchor. Desktop and mobile Demo clicks land at the
+visible beginning of the interactive stage with `01 / 05`, `01 / SURFACE`, and progress `0.000`; the mobile menu
+closes after the route click.
+
+Hidden layers are removed from the tab order before Challenge. At `01`–`03`, they have no `tabindex` attribute and
+`aria-disabled="true"`. At Challenge and Verdict they receive `tabindex="0"`, `aria-disabled="false"`, and a
+stage-aware accessible label describing their role and Enter/Space/Escape controls. Focus uses a visible cyan
+outline. Enter or Space selects the focused layer; Escape clears it. The inspector's new Architecture Context row
+is synchronized with the selected layer and does not change the narrative conclusion or reveal later-stage copy.
+
+Hover/tap/focus selection now highlights one layer, dims the other four to a readable `0.66` opacity, updates the
+inspector context and existing architecture note, and provides a visible `Clear selection` button on compact widths
+and desktop. The stronger previous glow was reduced so layer contents remain legible. The inspector rail accepts
+pointer input so its reset control works without interfering with the scene.
+
+Reduced motion now uses a stable, bounded camera pose instead of the full yaw/pitch/zoom choreography while the
+scroll-driven five-stage inspector and progress counter continue to explain Surface, Interaction, Evidence & initial
+claim, Challenge, and Verdict & recommendation. This keeps the experience usable without large camera movement.
+
+Focused browser review used the running local preview `http://127.0.0.1:4173/` at 1440×1000, 1280×720, and
+390×844. Demo navigation, hidden-layer tab behavior, Challenge keyboard selection/reset, hover selection, touch
+selection/reset, inspector bounds/readability, `touch-action: pan-y`, no horizontal overflow, and reduced-motion
+camera stability were exercised. At all three sizes the expected stage labels and inspector steps matched, inspector
+content fit the viewport, and no page or console errors or external requests were observed.
+
+Fresh screenshots are outside Git at `/tmp/veyra-passB-1440-challenge.png`, `/tmp/veyra-passB-1440-verdict.png`,
+`/tmp/veyra-passB-1280-stage-04.png`, `/tmp/veyra-passB-1280-verdict.png`, `/tmp/veyra-passB-390-challenge.png`,
+`/tmp/veyra-passB-390-verdict.png`, `/tmp/veyra-passB-1440-stage-04-selected.png`, and
+`/tmp/veyra-passB-390-stage-04-selected.png`.
+
+Actual focused checks: `node --check prototypes/veyra-cross-section/main.js` PASS; `git diff --check` PASS;
+`pnpm run typecheck` PASS across the workspace; local preview `curl -sS -I --max-time 5
+http://127.0.0.1:4173/` returned HTTP 200; and the browser interaction/screenshot matrix passed. `pnpm run lint`
+remains non-clean on existing prototype diagnostics: 6 errors, 6 warnings, and 4 infos covering the prior
+Math.pow, existing `!important`, accessibility/tabindex, iterable callback, and formatting findings; no formatter
+was run. `pnpm test` completed with 1 unrelated existing test file failing (2 failures in
+`apps/browser-worker/src/linux-root.test.ts`) and 52 test files passing / 1,850 tests passing; no test files changed.
+
+Remaining work: owner visual review only. No scanner, backend, security boundary, report contract, deployment,
+commit, or push was performed. Keep `.opencode/` untouched and uncommitted.
+
+## Veyra Pass A investigation storytelling correction — owner review (2026-10-24)
+
+Corrected the standalone `prototypes/veyra-cross-section/` scroll narrative without changing the approved
+electric-blue/violet identity, 3D geometry, camera choreography, responsive layouts, or layer interactions. The
+work remains uncommitted and unpushed pending owner review. A single `NARRATIVE_STAGES` model now owns the five
+stage boundaries, progress counter, inspector copy/visibility, path milestones, active-node highlights, and layer
+exploration availability:
+
+- `01 / 05` — Surface: visible page only; no conclusion, evidence, hypotheses, or recommendation.
+- `02 / 05` — Interaction: the synthetic Pricing CTA thread is selected; the relationship remains open.
+- `03 / 05` — Evidence & initial claim: the synthetic `GET /api/v2/pricing → HTTP 404` observation is shown with
+  an explicitly qualified initial claim.
+- `04 / 05` — Challenge: candidate click/auth explanations are shown and challenged; no final recommendation is
+  disclosed.
+- `05 / 05` — Verdict & recommendation: the route mismatch is supported within the fixture scope and the
+  recommended `/pricing-v2` → `/pricing` fix is shown as a recommendation only.
+
+The inspector is now visible as a compact stable rail from the first stage, progressively reveals evidence,
+hypotheses, recommendation, and synthetic boundary details from the shared model, and uses only `01`–`05`
+numbering. Challenge occupies 62%–84% of the scroll sequence and Verdict occupies 84%–100%, leaving a meaningful
+final hold. Forward and reverse scroll use the same deterministic model. The scene's `is-expanded` class now starts
+at the existing separation point and stays applied through 100%; the blue/violet expanded material remains constant
+from 94%, 95.5%, 96.5%, 98%, through 100%, removing the old 96% reversal.
+
+Focused Chromium review against `http://127.0.0.1:4173/` covered forward and reverse samples for all five stages at
+1440×1000 and 1280×720. At every sample the inspector opacity was visible, its bounds were inside the viewport, its
+content `scrollHeight` matched `clientHeight`, no `06 /` text appeared, and the stage counter matched the inspector
+step. Stage 03 showed evidence and the initial claim; Stage 04 showed evidence and candidate explanations but no
+recommendation; Stage 05 showed the supported conclusion, candidate results, recommendation, and synthetic boundary.
+There was no horizontal overflow, page error, console error, or external request. A compact 390×844 smoke check also
+kept `touch-action: pan-y`, no overflow, and the mobile inspector stable; evidence/hypotheses remain intentionally
+compact-hidden on phone while the final recommendation remains available.
+
+Fresh screenshots are outside Git at `/tmp/veyra-passA-final-1440-stage-1-forward.png` through
+`/tmp/veyra-passA-final-1440-stage-5-forward.png`, matching `reverse` paths, and the equivalent
+`/tmp/veyra-passA-final-1280-*.png` paths. The reviewed 1440 screenshots show the inspector at 03/05, 04/05, and
+05/05; the reviewed 1280×720 final screenshot shows the full recommendation and synthetic boundary without clipping.
+
+Actual focused checks: `node --check prototypes/veyra-cross-section/main.js` PASS; `git diff --check` PASS;
+`pnpm run typecheck` PASS across the workspace; preview `curl -sS -I --max-time 5 http://127.0.0.1:4173/` returned
+HTTP 200; and the Chromium forward/reverse matrix passed with zero page/console errors and zero external requests.
+`pnpm run lint` remains non-clean with the existing prototype diagnostics: 11 errors, 5 warnings, and 4 infos
+(Math.pow, existing `!important`, prototype accessibility/tabindex, iterable callback, and formatting findings);
+no formatter was run. An incidental broad `pnpm test` invocation was not used as the Pass A acceptance gate and
+returned 11 unrelated failures across existing provider/reproducer/Linux-boundary tests; no test files changed.
+
+Recommended next step: owner visual review of the forward/reverse screenshots and the local prototype. Do not commit
+or push until explicitly requested. Keep `.opencode/` untouched and uncommitted.
+
+## Veyra Stage 19 responsive optimization — owner visual review (2026-10-24)
+
+Implemented the responsive pass in the standalone `prototypes/veyra-cross-section/` experience only. The
+approved 1280×900 and 1440×1000 desktop composition remains on its existing path; the new rules and scene
+camera tuning activate only at tablet/phone widths. No scanner, backend, agent, security, report contract,
+provider, deployment, production route, network boundary, or main branch was changed. This work is intentionally
+uncommitted and unpushed pending owner visual approval.
+
+Responsive behavior now includes an accessible mobile menu button and dark navigation panel at compact widths,
+48px navigation link targets, Escape/outside-click/route-link dismissal, hero type that wraps inside the viewport,
+stacked mobile CTAs, intentional electric-blue/violet atmosphere positioning, a compact tablet inspector rail,
+readable phone evidence cards, a vertical Evidence → Claim → Challenge → Verdict sequence, a two-column five-layer
+explanation at phone widths, and a stacked centered footer. Tablet uses a three-column layer explanation before
+phone switches to two columns. The mobile menu is hidden on the approved desktop widths.
+
+The scroll-driven 3D scene remains a complete five-layer connected structure. `sceneTuning()` reduces depth and
+layer offsets at ≤900px, `compactCameraFor()` uses a shallower phone rotation and upward-left camera lift, and
+`updateWorldScale()` fits the scene at `0.655` for the 768px tablet, `0.373` at 390px, and `0.342` at 360px.
+The layer cascade remains visible without clipping. Compact viewports use `touch-action: pan-y`; vertical touch
+movement releases orbit handling so page scroll is not trapped, while a tap at the expanded scene selects a layer,
+dimms the other four layers, and keeps the selected explanation above the final inspector card. Desktop hover and
+keyboard focus behavior remain intact. Reduced-motion still linearizes the scene, disables the atmosphere
+animation, and keeps document scrolling non-smooth.
+
+Fresh Playwright Chromium visual review covered 1440×1000, 1280×900, 768×1024, 390×844, and 360×800. At every
+width, the hero reached the viewport edges, `scrollWidth === clientWidth`, all five layer bounds stayed inside the
+viewport at 0%, 50%, 82%, and 100%, and the proof cards/layer-step cards had no pairwise overlap. Each run reached
+`01 / 05`, `03 / 05`, `04 / 05`, and `05 / 05` as expected, with zero page errors, zero console errors, and zero
+external requests. Stage heights were 5000px, 4500px, 5120px, 4220px, and 4000px respectively.
+
+Actual touch receipt at 390×844: viewport `touch-action` was `pan-y`; the page had no horizontal overflow; the
+mobile menu opened with four links whose targets were at least 48px tall; tapping `How it works` produced `#method`
+and closed the menu; tapping the expanded scene selected one layer, dimmed four, showed the selected-layer note at
+the top of the stage, and a second tap cleared the selection; reverse scroll returned to `0`, `The visible surface`,
+and `01 / 05`. Reduced-motion receipt: `prefers-reduced-motion` matched, the hero atmosphere animation was `none`,
+and `scroll-behavior` was `auto`.
+
+Fresh screenshots are outside Git at `/tmp/veyra-stage19-approved-1440-hero.png`,
+`/tmp/veyra-stage19-approved-1280-hero.png`, `/tmp/veyra-stage19-approved-768-hero.png`,
+`/tmp/veyra-stage19-approved-390-hero.png`, `/tmp/veyra-stage19-approved-360-hero.png`, plus matching
+`stage-082`, `stage-100`, `story`, `method`, `boundary`, and `footer` paths. The touch-selection receipt is at
+`/tmp/veyra-stage19-390-touch-layer-final.png`; the mobile menu receipt is at
+`/tmp/veyra-stage19-390-menu-open.png`.
+
+Actual checks: `node --check prototypes/veyra-cross-section/main.js` PASS; `git diff --check` PASS; root
+TypeScript via `node node_modules/typescript/bin/tsc --noEmit` PASS; web TypeScript via
+`node ../../node_modules/typescript/bin/tsc --noEmit` from `apps/web` PASS; direct web production build via
+`node node_modules/next/dist/bin/next build` from `apps/web` PASS; preview `curl -sS -I --max-time 5
+http://127.0.0.1:4173/` returned HTTP 200. Focused Biome remains non-clean on the existing prototype findings:
+11 errors, 5 warnings, and 4 infos covering prior Math.pow, forEach-return, formatting, accessibility tabindex/ARIA,
+and !important rules; no formatter was run. The repository `corepack pnpm build` wrapper remains unavailable in
+this shell, so the direct root/web TypeScript and web Next checks above are the recorded build evidence.
+
+Recommended next task: owner visual review of the responsive screenshots and touch flow; after approval, perform a
+final scoped diff/privacy review and commit/push only when explicitly requested. Keep `.opencode/` untouched and
+uncommitted.
+
 ## Veyra final desktop approval pass — full-bleed hero and removed thread label (2026-10-23)
 
 Applied only the two approved final-touch changes to the standalone `prototypes/veyra-cross-section/`

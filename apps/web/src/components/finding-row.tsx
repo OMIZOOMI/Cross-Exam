@@ -2,6 +2,7 @@
 
 import type { Finding, ScanReport } from "@crossexam/contracts";
 import { ArrowUpRight, Check, ChevronDown } from "lucide-react";
+import { liveEvidenceLabel, plainFinding } from "../lib/live-checks";
 import { experimentLabel } from "../lib/presentation";
 import { ProvenanceBadge } from "./ui";
 
@@ -26,6 +27,7 @@ export function FindingRow({
   onEvidence: (id: string) => void;
 }) {
   const live = report.summary.source === "live";
+  const plain = live ? plainFinding(report, finding) : undefined;
   const claim = report.claims.find((item) => item.id === finding.claimId);
   const verdict = report.verdicts.find((item) => item.id === finding.verdictId);
   const challenge = report.challenges.find((item) => item.claimId === finding.claimId);
@@ -42,10 +44,10 @@ export function FindingRow({
         <span className={`finding-severity ${finding.severity}`}>
           <i />
           {finding.severity}
-          <code>{finding.id}</code>
+          <code>{live ? `Problem ${report.findings.indexOf(finding) + 1}` : finding.id}</code>
         </span>
         <span className="finding-main">
-          <span className="finding-title">{finding.title}</span>
+          <span className="finding-title">{plain?.title ?? finding.title}</span>
           <span className="finding-meta">
             <span>{finding.category}</span>
             {finding.affectedPaths.map((path) => (
@@ -63,7 +65,7 @@ export function FindingRow({
       {open && (
         <div className="finding-detail" id={`detail-${finding.id}`}>
           <div className="finding-context">
-            <p>{finding.description}</p>
+            <p>{plain?.result ?? finding.description}</p>
             <span>
               {live
                 ? "Derived by a deterministic rule from returned HTML or response headers. No AI review or browser verification."
@@ -74,8 +76,8 @@ export function FindingRow({
             <li>
               <span className="chain-number">1</span>
               <div className="chain-label">
-                <strong>Claim</strong>
-                <code>{claim?.id}</code>
+                <strong>{live ? "What Veyra checked" : "Claim"}</strong>
+                {!live && <code>{claim?.id}</code>}
               </div>
               <p>{claim?.statement}</p>
             </li>
@@ -114,7 +116,7 @@ export function FindingRow({
             <span>Follow the supporting evidence</span>
             {finding.evidenceIds.map((id) => (
               <button type="button" key={id} onClick={() => onEvidence(id)}>
-                {id}
+                {live ? liveEvidenceLabel(report, id) : id}
                 <ArrowUpRight size={13} />
               </button>
             ))}

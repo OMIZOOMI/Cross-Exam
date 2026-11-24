@@ -12,18 +12,12 @@ import {
   YAxis,
 } from "recharts";
 
-export default function ResponseChart({
-  pages,
-  source = "fixture",
-}: {
-  pages: Page[];
-  source?: "fixture" | "live";
-}) {
+export default function ResponseChart({ pages }: { pages: Page[] }) {
   return (
     <div
       className="response-chart"
       role="img"
-      aria-label={`${source === "live" ? "Live fetch durations" : "Fixture response times"}: ${pages
+      aria-label={`Fixture response times: ${pages
         .slice(0, 6)
         .map((page) => `${page.path}: ${page.durationMs} milliseconds`)
         .join(", ")}`}
@@ -55,8 +49,8 @@ export default function ResponseChart({
             axisLine={false}
             tickLine={false}
             tick={{ fill: "#606b77", fontSize: 11 }}
-            ticks={source === "fixture" ? [0, 200, 400, 600, 800] : undefined}
-            domain={source === "fixture" ? [0, 800] : [0, "auto"]}
+            ticks={[0, 200, 400, 600, 800]}
+            domain={[0, 800]}
           />
           <Tooltip
             cursor={{ fill: "#ffffff05" }}

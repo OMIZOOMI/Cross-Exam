@@ -1,17 +1,22 @@
 "use client";
 
-import type { Evidence, Finding, Page } from "@crossexam/contracts";
+import type { Evidence, Finding, Page, ScanReport } from "@crossexam/contracts";
 import {
   Background,
   Controls,
+  getViewportForBounds,
   Handle,
   type Node,
   type NodeProps,
   Position,
   ReactFlow,
+  useReactFlow,
+  useStore,
 } from "@xyflow/react";
 import { ArrowUpRight, FileText, Globe2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { liveChecks, liveEvidenceLabel, plainFinding } from "../lib/live-checks";
+import { LiveCheckGroups } from "./live-checks";
 import "@xyflow/react/dist/style.css";
 import "../app/site-map-stage18.css";
 
@@ -21,6 +26,7 @@ type Point = { x: number; y: number };
 type RouteNodeData = {
   page: Page;
   issueCount: number | undefined;
+  live: boolean;
   onSelect: (id: string) => void;
 };
 
@@ -36,7 +42,9 @@ function isErrorStatus(statusCode: number) {
   return statusCode >= 400;
 }
 
-function issueLabel(issueCount: number | undefined) {
+function issueLabel(issueCount: number | undefined, live: boolean) {
+  if (live && issueCount !== undefined)
+    return `${issueCount} ${issueCount === 1 ? "problem" : "problems"} flagged`;
   if (issueCount === undefined) return "Finding count unavailable";
   return `${issueCount} ${issueCount === 1 ? "finding record" : "finding records"}`;
 }
@@ -46,7 +54,7 @@ function routeOrder(a: Page, b: Page) {
 }
 
 /** Place pages into relationship-derived layers instead of relying on fixture IDs. */
-function derivePositions(pages: Page[], compact: boolean) {
+function derivePositions(pages: Page[], compact: boolean, centerRows: boolean) {
   const pageById = new Map(pages.map((page) => [page.id, page]));
   const incoming = new Map(pages.map((page) => [page.id, 0]));
 
@@ -89,14 +97,20 @@ function derivePositions(pages: Page[], compact: boolean) {
   }
 
   const columns = compact ? 2 : 4;
+  const widestRow = Math.min(
+    columns,
+    Math.max(0, ...[...byLevel.values()].map((row) => row.length)),
+  );
   const positions = new Map<string, Point>();
   let rowOffset = 0;
   for (const [, levelPages] of [...byLevel.entries()].sort(([a], [b]) => a - b)) {
     levelPages.sort(routeOrder);
     levelPages.forEach((page, index) => {
+      const row = Math.floor(index / columns);
+      const rowLength = Math.min(columns, levelPages.length - row * columns);
       positions.set(page.id, {
-        x: (index % columns) * 240,
-        y: rowOffset + Math.floor(index / columns) * 165,
+        x: ((index % columns) + (centerRows ? (widestRow - rowLength) / 2 : 0)) * 240,
+        y: rowOffset + row * 165,
       });
     });
     rowOffset += Math.ceil(levelPages.length / columns) * 165;
@@ -144,7 +158,7 @@ function evidenceForPage(page: Page, evidence: Evidence[]) {
 }
 
 function RouteCard({ data, id, selected }: NodeProps<RouteNode>) {
-  const { page, issueCount, onSelect } = data;
+  const { page, issueCount, live, onSelect } = data;
   const error = isErrorStatus(page.statusCode);
   const hasIssues = issueCount !== undefined && issueCount > 0;
   return (
@@ -164,18 +178,18 @@ function RouteCard({ data, id, selected }: NodeProps<RouteNode>) {
         )}
         <span className="site-map-route-title">{page.title}</span>
         <span className={`route-code ${error ? "bad" : ""}`}>
-          {page.statusCode} <span>{statusLabel(page.statusCode)}</span>
+          {page.statusCode} {!live && <span>{statusLabel(page.statusCode)}</span>}
         </span>
       </div>
-      <strong title={page.path}>{page.path}</strong>
+      <strong title={page.path}>{live && page.path === "/" ? "Homepage" : page.path}</strong>
       <div className="route-node-bottom">
-        <span>{page.durationMs} ms</span>
+        {!live && <span>{page.durationMs} ms</span>}
         <span
           className={
             hasIssues ? "route-issues site-map-status-text" : "route-clear site-map-status-text"
           }
         >
-          {issueLabel(issueCount)}
+          {issueLabel(issueCount, live)}
         </span>
       </div>
       <Handle type="source" position={Position.Bottom} />
@@ -184,6 +198,30 @@ function RouteCard({ data, id, selected }: NodeProps<RouteNode>) {
 }
 
 const nodeTypes = { route: RouteCard };
+const graphMinZoom = 0.3;
+const graphMaxZoom = 1.5;
+
+function FitLiveGraph() {
+  const { getNodes, getNodesBounds, setViewport, viewportInitialized } = useReactFlow();
+  const nodesReady = useStore(
+    ({ nodeLookup }) =>
+      nodeLookup.size > 0 &&
+      Array.from(nodeLookup.values()).every(({ measured }) => measured.width && measured.height),
+  );
+  const width = useStore((state) => state.width);
+  const height = useStore((state) => state.height);
+
+  useEffect(() => {
+    if (viewportInitialized && nodesReady && width > 0 && height > 0) {
+      const bounds = getNodesBounds(getNodes());
+      void setViewport(
+        getViewportForBounds(bounds, width, height, graphMinZoom, graphMaxZoom, 0.15),
+      );
+    }
+  }, [getNodes, getNodesBounds, setViewport, viewportInitialized, nodesReady, width, height]);
+
+  return null;
+}
 
 function subscribeToViewport(callback: () => void) {
   const media = window.matchMedia("(max-width: 760px)");
@@ -200,6 +238,7 @@ export default function SiteGraph({
   onEvidence,
   onFinding,
   source = "fixture",
+  liveReport,
 }: {
   source?: "fixture" | "live";
   pages: Page[];
@@ -209,7 +248,9 @@ export default function SiteGraph({
   evidence?: Evidence[];
   onEvidence?: (id: string) => void;
   onFinding?: (id: string) => void;
+  liveReport?: ScanReport;
 }) {
+  const live = Boolean(liveReport);
   const compact = useSyncExternalStore(
     subscribeToViewport,
     () => window.matchMedia("(max-width: 760px)").matches,
@@ -225,7 +266,7 @@ export default function SiteGraph({
     if (!pages.some((page) => page.id === selectedId)) setSelectedId(pages[0]?.id ?? "");
   }, [pages, selectedId]);
 
-  const positions = useMemo(() => derivePositions(pages, compact), [pages, compact]);
+  const positions = useMemo(() => derivePositions(pages, compact, live), [pages, compact, live]);
   const pageById = useMemo(() => new Map(pages.map((page) => [page.id, page])), [pages]);
   const nodes: RouteNode[] = useMemo(
     () =>
@@ -240,10 +281,11 @@ export default function SiteGraph({
         data: {
           page,
           issueCount: affected[page.path],
+          live,
           onSelect: selectPage,
         },
       })),
-    [affected, compact, pages, positions, selectPage, selectedId],
+    [affected, compact, live, pages, positions, selectPage, selectedId],
   );
   const edges = useMemo(
     () =>
@@ -275,15 +317,25 @@ export default function SiteGraph({
     ? findings.filter((finding) => finding.affectedPaths.includes(selected.path))
     : [];
   const selectedEvidence = selected ? evidenceForPage(selected, evidence ?? []) : [];
+  const selectedChecks = liveReport
+    ? liveChecks(liveReport).filter((check) =>
+        selectedEvidence.some((item) => item.id === check.id),
+      )
+    : [];
+  const remainingEvidence = selectedEvidence.filter(
+    (item) => !selectedChecks.some((check) => check.id === item.id),
+  );
   const hasFindingCount = selected ? Object.hasOwn(affected, selected.path) : false;
   const sourceLabel = source === "live" ? "Live report record" : "Synthetic fixture record";
 
   return (
-    <div className={`site-graph-wrap site-map-stage18 ${expanded ? "site-map-expanded" : ""}`}>
+    <div
+      className={`site-graph-wrap site-map-stage18${expanded ? " site-map-expanded" : ""}${live ? " site-map-live" : ""}`}
+    >
       <div className="site-map-panel">
         <div className="site-map-toolbar">
           <div>
-            <p className="site-map-kicker">Site map view</p>
+            {!live && <p className="site-map-kicker">Site map view</p>}
             <fieldset className="site-map-view-toggle">
               <legend className="site-map-sr-only">Site map view</legend>
               <button
@@ -304,9 +356,11 @@ export default function SiteGraph({
               </button>
             </fieldset>
           </div>
-          <span className="site-map-mode-note">
-            {activeView === "list" ? "Route list with selected detail" : "Connected route graph"}
-          </span>
+          {!live && (
+            <span className="site-map-mode-note">
+              {activeView === "list" ? "Route list with selected detail" : "Connected route graph"}
+            </span>
+          )}
         </div>
 
         {pages.length === 0 ? (
@@ -319,57 +373,64 @@ export default function SiteGraph({
             className={`site-graph site-map-graph ${expanded ? "expanded" : ""}`}
             data-testid="site-graph"
           >
-            <ReactFlow
-              key={compact ? "compact" : "wide"}
-              nodes={nodes}
-              edges={edges}
-              nodeTypes={nodeTypes}
-              onNodeClick={(_, node) => selectPage(node.id)}
-              onNodesChange={(changes) => {
-                const selection = changes.find(
-                  (change) => change.type === "select" && change.selected,
-                );
-                if (selection?.type === "select") selectPage(selection.id);
-              }}
-              fitView
-              fitViewOptions={{ padding: 0.12 }}
-              minZoom={0.3}
-              maxZoom={1.5}
-              nodesDraggable={false}
-              nodesConnectable={false}
-              deleteKeyCode={null}
-              multiSelectionKeyCode={null}
-              edgesFocusable={false}
-              zoomOnScroll={false}
-              preventScrolling={false}
-              colorMode="light"
-              aria-label={
-                source === "live"
-                  ? "Interactive live route graph"
-                  : "Interactive synthetic fixture route graph"
-              }
-              ariaLabelConfig={{
-                "node.a11yDescription.default":
-                  "Select this route with Enter or Space to inspect it. Routes cannot be edited or deleted.",
-              }}
-            >
-              <Background color="#d7dcdf" gap={19} size={1} />
-              <Controls showInteractive={false} position="bottom-left" />
-            </ReactFlow>
-            <div className="graph-legend" role="note">
-              <span>Edges represent recorded page.linksTo relationships.</span>
-              <span>
-                <i className="legend-dot coral" aria-hidden="true" />
-                4xx/5xx statuses are marked as errors with text and dashed edges.
-              </span>
+            <div className="site-map-canvas">
+              <ReactFlow
+                key={compact ? "compact" : "wide"}
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={nodeTypes}
+                onNodeClick={(_, node) => selectPage(node.id)}
+                onNodesChange={(changes) => {
+                  const selection = changes.find(
+                    (change) => change.type === "select" && change.selected,
+                  );
+                  if (selection?.type === "select") selectPage(selection.id);
+                }}
+                fitView={!live}
+                fitViewOptions={{ padding: 0.12 }}
+                minZoom={graphMinZoom}
+                maxZoom={graphMaxZoom}
+                nodesDraggable={false}
+                nodesConnectable={false}
+                deleteKeyCode={null}
+                multiSelectionKeyCode={null}
+                edgesFocusable={false}
+                zoomOnScroll={false}
+                preventScrolling={false}
+                colorMode="light"
+                aria-label={
+                  source === "live"
+                    ? "Interactive live route graph"
+                    : "Interactive synthetic fixture route graph"
+                }
+                ariaLabelConfig={{
+                  "node.a11yDescription.default":
+                    "Select this route with Enter or Space to inspect it. Routes cannot be edited or deleted.",
+                }}
+              >
+                <Background color="#d7dcdf" gap={19} size={1} />
+                <Controls showInteractive={false} position="bottom-left" />
+                {live && <FitLiveGraph />}
+              </ReactFlow>
             </div>
+            {!live && (
+              <div className="graph-legend" role="note">
+                <span>Edges represent recorded page.linksTo relationships.</span>
+                <span>
+                  <i className="legend-dot coral" aria-hidden="true" />
+                  4xx/5xx statuses are marked as errors with text and dashed edges.
+                </span>
+              </div>
+            )}
           </div>
         ) : (
           <div className="site-map-route-list" data-testid="site-route-list">
-            <div className="site-map-list-heading">
-              <p className="site-map-kicker">Routes</p>
-              <span>Select a route to inspect its record.</span>
-            </div>
+            {!live && (
+              <div className="site-map-list-heading">
+                <p className="site-map-kicker">Routes</p>
+                <span>Select a route to inspect its record.</span>
+              </div>
+            )}
             <ul>
               {pages.map((page) => {
                 const error = isErrorStatus(page.statusCode);
@@ -381,13 +442,15 @@ export default function SiteGraph({
                       aria-pressed={selectedId === page.id}
                       onClick={() => selectPage(page.id)}
                     >
-                      <code title={page.path}>{page.path}</code>
+                      <code title={page.path}>
+                        {live && page.path === "/" ? "Homepage" : page.path}
+                      </code>
                       <span className={`site-map-list-status ${error ? "is-error" : ""}`}>
                         {error && <b aria-hidden="true">!</b>}
                         <strong>{page.statusCode}</strong>
-                        <span>{statusLabel(page.statusCode)}</span>
+                        {!live && <span>{statusLabel(page.statusCode)}</span>}
                       </span>
-                      <small>{issueLabel(affected[page.path])}</small>
+                      <small>{issueLabel(affected[page.path], live)}</small>
                     </button>
                   </li>
                 );
@@ -397,25 +460,28 @@ export default function SiteGraph({
         )}
       </div>
 
-      <aside className="graph-inspector site-map-inspector" aria-live="polite">
+      <aside
+        className={`graph-inspector site-map-inspector${liveReport ? " site-map-inspector-live" : ""}`}
+        aria-live="polite"
+      >
         {selected ? (
           <>
             <label>
-              Inspect route
+              {liveReport ? "Choose a page" : "Inspect route"}
               <select
-                aria-label="INSPECT ROUTE"
+                aria-label={liveReport ? "Choose a page" : "INSPECT ROUTE"}
                 value={selectedId}
                 onChange={(event) => selectPage(event.target.value)}
               >
                 {pages.map((page) => (
                   <option key={page.id} value={page.id}>
-                    {page.path}
+                    {live && page.path === "/" ? "Homepage" : page.path}
                   </option>
                 ))}
               </select>
             </label>
             <div className="site-map-detail-heading">
-              <p className="site-map-kicker">Selected route</p>
+              {!live && <p className="site-map-kicker">Selected route</p>}
               <h3>{selected.title}</h3>
               <code title={selected.path}>{selected.path}</code>
             </div>
@@ -423,17 +489,39 @@ export default function SiteGraph({
               className={`site-map-detail-status ${isErrorStatus(selected.statusCode) ? "is-error" : ""}`}
             >
               {isErrorStatus(selected.statusCode) && <b aria-hidden="true">!</b>}
-              <strong>{selected.statusCode}</strong> response · {statusLabel(selected.statusCode)}
+              {liveReport ? (
+                <>
+                  <strong>
+                    {selected.statusCode === 404
+                      ? "Page not found"
+                      : selected.statusCode >= 200 && selected.statusCode < 300
+                        ? "Page responded successfully"
+                        : "Page returned status"}
+                  </strong>{" "}
+                  ({selected.statusCode})
+                </>
+              ) : (
+                <>
+                  <strong>{selected.statusCode}</strong> response ·{" "}
+                  {statusLabel(selected.statusCode)}
+                </>
+              )}
               <span> · {selected.durationMs} ms</span>
             </p>
 
-            <p className="site-map-detail-label">Finding records</p>
+            <p className="site-map-detail-label">
+              {liveReport ? "Problems on this page" : "Finding records"}
+            </p>
             {selectedFindings.length > 0 ? (
               <div className="site-map-detail-links">
                 {selectedFindings.map((finding) => (
                   <button type="button" key={finding.id} onClick={() => onFinding?.(finding.id)}>
-                    <code>{finding.id}</code>
-                    <span>{finding.title}</span>
+                    <code>
+                      {liveReport ? `Problem ${findings.indexOf(finding) + 1}` : finding.id}
+                    </code>
+                    <span>
+                      {liveReport ? plainFinding(liveReport, finding).title : finding.title}
+                    </span>
                     <ArrowUpRight size={14} aria-hidden="true" />
                   </button>
                 ))}
@@ -441,21 +529,28 @@ export default function SiteGraph({
             ) : (
               <p className="site-map-detail-empty">
                 {hasFindingCount && affected[selected.path] === 0
-                  ? "No finding records are attached to this route."
+                  ? liveReport
+                    ? "Veyra flagged no problems on this page."
+                    : "No finding records are attached to this route."
                   : hasFindingCount
                     ? "Finding records are not available in this view."
                     : "Finding count is not available for this route."}
               </p>
             )}
 
-            <p className="site-map-detail-label">Evidence records</p>
-            {evidence === undefined ? (
+            <p className="site-map-detail-label">
+              {liveReport ? "Checks on this page" : "Evidence records"}
+            </p>
+            {liveReport && (
+              <LiveCheckGroups checks={selectedChecks} onEvidence={onEvidence} showPage={false} />
+            )}
+            {!liveReport && evidence === undefined ? (
               <p className="site-map-detail-empty">
                 Evidence records are not attached to this view.
               </p>
-            ) : selectedEvidence.length > 0 ? (
+            ) : remainingEvidence.length > 0 ? (
               <div className="site-map-detail-links site-map-evidence-links">
-                {selectedEvidence.map((item) => (
+                {remainingEvidence.map((item) => (
                   <button
                     type="button"
                     key={item.id}
@@ -463,20 +558,24 @@ export default function SiteGraph({
                     onClick={() => onEvidence?.(item.id)}
                     title={item.url}
                   >
-                    <code>{item.id}</code>
+                    <code>{liveReport ? liveEvidenceLabel(liveReport, item.id) : item.id}</code>
                     <span>{item.title}</span>
                     <ArrowUpRight size={14} aria-hidden="true" />
                   </button>
                 ))}
               </div>
             ) : (
-              <p className="site-map-detail-empty">No evidence records match this route URL.</p>
+              !liveReport && (
+                <p className="site-map-detail-empty">No evidence records match this route URL.</p>
+              )
             )}
 
-            <small className="site-map-record-note">
-              {sourceLabel}. Status and duration are recorded route fields; no overall health claim
-              is made.
-            </small>
+            {!live && (
+              <small className="site-map-record-note">
+                {sourceLabel}. Status and duration are recorded route fields; no overall health
+                claim is made.
+              </small>
+            )}
           </>
         ) : (
           <div className="site-map-empty site-map-empty-detail" role="status">

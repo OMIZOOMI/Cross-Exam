@@ -5,8 +5,8 @@ import { ArrowRight, Globe2, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
-export function ScanForm() {
-  const [url, setUrl] = useState("");
+export function ScanForm({ repeat }: { repeat?: { targetUrl: string; reportId: string } } = {}) {
+  const [url, setUrl] = useState(repeat?.targetUrl ?? "");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [invalid, setInvalid] = useState(false);
@@ -16,7 +16,8 @@ export function ScanForm() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (controller.current) return;
-    const decision = validateTargetUrl(url);
+    const targetUrl = repeat?.targetUrl ?? url;
+    const decision = validateTargetUrl(targetUrl);
     if (!decision.ok) {
       setInvalid(true);
       setFeedback(
@@ -36,7 +37,7 @@ export function ScanForm() {
       const response = await fetch("/api/scans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUrl: url }),
+        body: JSON.stringify({ targetUrl }),
         signal: active.signal,
       });
       const result = await response.json();
@@ -50,7 +51,8 @@ export function ScanForm() {
         return;
       }
       setFeedback("Preparing your report…");
-      router.push(`/report/${encodeURIComponent(result.id)}`);
+      const previous = repeat ? `?previous=${encodeURIComponent(repeat.reportId)}` : "";
+      router.push(`/report/${encodeURIComponent(result.id)}${previous}`);
     } catch {
       setFeedback(
         active.signal.aborted
@@ -61,6 +63,21 @@ export function ScanForm() {
       controller.current = null;
       setPending(false);
     }
+  }
+  if (repeat) {
+    return (
+      <form className="report-rescan" onSubmit={submit}>
+        <button type="submit" className="button button-primary" disabled={pending}>
+          {pending ? "Scanning again…" : "Scan again"}
+        </button>
+        {feedback && <p role="status">{feedback}</p>}
+        {pending && (
+          <button type="button" className="text-link" onClick={() => controller.current?.abort()}>
+            Cancel
+          </button>
+        )}
+      </form>
+    );
   }
   return (
     <div className="scan-form-wrap">

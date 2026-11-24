@@ -2,6 +2,7 @@
 
 import type { ScanReport } from "@crossexam/contracts";
 import { ArrowUpRight } from "lucide-react";
+import { liveEvidenceLabel, plainFinding } from "../lib/live-checks";
 import { verdictLabels } from "./finding-row";
 import { ProvenanceBadge } from "./ui";
 
@@ -53,15 +54,17 @@ export function ReportSolutions({
       </div>
       {report.findings.map((finding, index) => {
         const verdict = report.verdicts.find((item) => item.id === finding.verdictId);
+        const plain = live ? plainFinding(report, finding) : undefined;
+        const label = live ? `Problem ${index + 1}` : finding.id;
         return (
           <article className="solution-row" key={finding.id}>
             <div className="solution-number">
-              <span>0{index + 1}</span>
-              <code>{finding.id}</code>
+              {!live && <span>0{index + 1}</span>}
+              <code>{label}</code>
             </div>
             <div className="solution-body">
               <div className="solution-title">
-                <h3>{finding.title}</h3>
+                <h3>{plain?.title ?? finding.title}</h3>
                 <span className={`verdict-label verdict-${verdict?.status}`}>
                   <i />
                   {live
@@ -69,12 +72,12 @@ export function ReportSolutions({
                     : `Synthetic verdict · ${verdictLabels[verdict?.status ?? ""]}`}
                 </span>
               </div>
-              <p className="solution-problem">{finding.description}</p>
+              <p className="solution-problem">{plain?.result ?? finding.description}</p>
               <div className="solution-evidence">
                 <span>Supporting evidence</span>
                 {finding.evidenceIds.map((id) => (
                   <button type="button" key={id} onClick={() => onEvidence(id)}>
-                    <code>{id}</code> ↗
+                    <code>{live ? liveEvidenceLabel(report, id) : id}</code> ↗
                   </button>
                 ))}
               </div>
@@ -85,9 +88,9 @@ export function ReportSolutions({
                       ? "Recommended correction"
                       : "Recommended investigation"}
                   </h4>
-                  <p>{finding.recommendation}</p>
+                  <p>{plain?.next ?? finding.recommendation}</p>
                   <button type="button" className="text-link" onClick={() => onFinding(finding.id)}>
-                    Review {finding.id} and its evidence <ArrowUpRight size={14} />
+                    Review {label} and its evidence <ArrowUpRight size={14} />
                   </button>
                 </div>
                 <div className="solution-outcome">

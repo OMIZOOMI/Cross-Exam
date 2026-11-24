@@ -2,6 +2,79 @@
 
 Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery promises. Keep each task independently reviewable.
 
+- [x] Bring numbered checks, plain-language findings, and repeat scans into the local live report. Verified the repaired Pricing fixture and the previous-report link.
+- [x] Carry the same numbered problems and grouped check results through the live site map and linked evidence. Verified on the saved portfolio report.
+- [x] Make live report text larger and rounder and keep full page names visible in the timing chart. Verified at desktop and phone widths.
+- [x] Fit the live map to its panel, render timing bars when styles fail, and condense coverage into plain language with optional technical details. Verified in Chrome and WebKit.
+- [x] Prepare the single-instance Render deployment and verify a live scan on a local production server with public settings.
+- [ ] Deploy the reviewed branch on Render and verify the first scan on the assigned HTTPS address.
+- [ ] Run a guided scan with a tester who owns the target site.
+
+## Veyra V2 — Inside the website
+
+- [x] Preserve the working V1 prototype, frozen archive, production app, and unrelated working-tree changes; create the new prototype only under `prototypes/veyra-v2/`.
+- [x] Build the local five-layer website scene with canonical `/pricing-v2` → `/pricing` → `GET /api/v2/pricing` → `404` demo data, connected blue/violet thread, route distinction, authorization challenge, response behavior, and scoped recommendation.
+- [x] Implement the reversible Surface → Interaction → Evidence → Challenge → Verdict scroll model with stable HTML narrative, responsive layout, reduced motion, DOM/SVG fallback, pointer/keyboard/touch selection, persistent pinning, and Clear selection reset.
+- [x] Add the Evidence → Claim → Challenge → Verdict flow, connected five-node method diagram, V1/V2 comparison links, isolated local preview README, screenshots, and local walkthrough recording.
+- [x] Validate Chromium at 1440×1000, 1280×720, 768×1024, and 390×844: forward/reverse traversal, fast jumps, overflow, opacity, typography floors, keyboard/touch selection/reset, reduced motion, zero console/page errors, zero external requests, and 10-second Challenge/Verdict holds.
+- [x] Open the standalone Safari preview at the V2 URL for manual review and record the exact Playwright WebKit executable blocker; do not claim WebKit automation coverage.
+- [ ] Owner visual approval; do not integrate, commit, or push the V2 prototype until explicitly requested.
+
+## Veyra trace flattening and diagram completion
+
+- [x] Reproduce the late-stage trace jump in Chromium and Safari-compatible WebKit and isolate the 3D grouping-property cause: opacity/filter on a preserve-3d trace parent changes segment geometry.
+- [x] Move trace opacity, background emphasis, challenged styling, and hover emphasis to trace segments without removing designed signal/focus/ring/atmosphere motion.
+- [x] Remove obsolete proof-loop pseudo-connectors and verify directional Evidence → Claim → Challenge → Verdict arrows at desktop and mobile widths.
+- [x] Replace the method columns with a semantic five-node ordered walkthrough using readable browser, component, route, request, and response mini-visuals.
+- [x] Validate typography, overflow, forward/reverse/slow traversal, late thresholds, 10-second final hold, pointer/keyboard/touch selection/reset, candidate disclosure, reduced motion, screenshots, and browser errors in Chromium and WebKit at 1440×1000, 1280×720, and 390×844.
+- [x] Run direct syntax, TypeScript, Vitest, diff, and focused browser checks; record the `corepack pnpm` no-TTY/preflight blocker and existing Biome diagnostics in `CURRENT_STATE.md`.
+- [ ] Owner visual approval; do not commit or push until explicitly requested.
+
+## Veyra demo presentation simplification
+
+- [x] Remove visible progress/counter/scroll-instruction chrome while preserving the internal five-stage scroll model.
+- [x] Reduce repeated demo/synthetic/SIM language to one visible `Veyra demo` label and keep the evidence boundary honest.
+- [x] Simplify the right panel into one headline, short explanation, observed path, compact `View details` candidate checks, selected-layer context, and one Verdict recommendation.
+- [x] Remove decorative divider lines around presentation headings/helper sections while preserving diagram connectors and layer outlines.
+- [x] Validate forward/reverse stages, keyboard/hover/touch selection/reset, reduced motion, overflow, screenshots, and browser errors at 1440×1000, 1280×720, and 390×844 in Chromium and Safari-compatible WebKit.
+- [x] Run syntax and diff checks; record the current shell's `pnpm: command not found` blocker for typecheck/lint/test.
+- [ ] Owner visual approval; do not commit or push until explicitly requested.
+
+## Veyra expanded-hold flicker correction
+
+- [x] Reproduce the expanded `05 / 05` hold before patching and verify the missing `frame.progress` defect plus the WebKit stale-opacity transition behavior.
+- [x] Return clamped `progress` from `narrativeFrameFor()` and remove only the demonstrated scroll-driven opacity transitions from layers, traces, and isolated subdued content.
+- [x] Validate finite trace/layer opacity, stable expanded state, slow/fast forward, reverse scroll, threshold crossings, hover selection, overflow, and a 10-second final hold in Chromium and Safari-compatible WebKit at 1440×1000, 1280×720, and 390×844.
+- [x] Run focused syntax, diff, workspace typecheck, lint, and full-test checks; record existing lint/test failures without changing unrelated files.
+- [ ] Owner visual approval; do not commit or push until explicitly requested.
+
+## Pass B — interaction and usability correction
+
+- [x] Route desktop/mobile Demo navigation to the visible beginning of the interactive stage at `01 / 05`.
+- [x] Remove hidden layers from keyboard focus; expose meaningful labels, focus indicators, and Enter/Space/Escape selection controls during Challenge and Verdict.
+- [x] Synchronize hover/tap/focus layer selection with a concise inspector context, readable dimming, and a clear reset control without revealing later conclusions.
+- [x] Add a reduced-motion camera pose that preserves the five-stage explanation without large camera choreography.
+- [x] Validate navigation, keyboard, hover, touch, inspector bounds, overflow, reduced motion, screenshots, typecheck, and syntax at 1440×1000, 1280×720, and 390×844.
+- [ ] Owner visual approval; do not commit or push until explicitly requested.
+
+## Pass A — investigation storytelling correction
+
+- [x] Consolidate the scroll counter, inspector copy/visibility, path highlights, node milestones, and layer exploration into one five-stage narrative model.
+- [x] Use the approved sequence: Surface; Interaction; Evidence & initial claim; Challenge; Verdict & recommendation.
+- [x] Keep the inspector stable from the first stage, progressively disclose evidence and hypotheses, and defer the scoped recommendation until `05 / 05`.
+- [x] Give Challenge and Verdict readable scroll ranges, preserve reverse-scroll synchronization, and keep the expanded material through 100% without the old 96% flash.
+- [x] Validate the localhost prototype at 1440×1000 and 1280×720 in forward/reverse directions; record the actual receipt in `CURRENT_STATE.md`.
+- [ ] Owner visual approval; do not commit or push until explicitly requested.
+
+## Stage 19 — responsive optimization
+
+- [x] Preserve the approved 1280px–1440px desktop baseline and isolate responsive changes to the standalone Veyra prototype.
+- [x] Add purpose-built tablet/phone typography, spacing, gradients, CTAs, proof sequence, five-layer explanation, footer, and accessible mobile navigation.
+- [x] Fit the five-layer scroll-driven scene at 768px, 390px, and 360px; preserve the upward-left lift and downward cascade without horizontal overflow or card overlap.
+- [x] Replace compact-width hover-only exploration with tap selection, keep vertical touch scrolling untrapped, and preserve reduced-motion behavior.
+- [x] Complete focused typecheck/build and Playwright visual/touch review at 1440/1280/768/390/360; record actual results in `CURRENT_STATE.md`.
+- [ ] Owner visual approval; do not commit or push until explicitly requested.
+
 ## Stage 18.2 — real cinematic MP4 advertisement
 
 - [x] Verify exact Stage 18.1 source, branch only to `feature/stage18-2-video-ad`, preserve accepted branches/private attachments.

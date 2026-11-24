@@ -11,6 +11,7 @@
     "dev": "pnpm --filter @crossexam/web dev",
     "build": "pnpm typecheck && pnpm --filter @crossexam/web build",
     "start": "pnpm --filter @crossexam/web start",
+    "start:public": "pnpm --filter @crossexam/web start:public",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit && pnpm -r typecheck",

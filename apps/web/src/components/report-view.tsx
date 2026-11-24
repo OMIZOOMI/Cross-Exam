@@ -6,12 +6,15 @@ import { ArrowUpRight, Check, ChevronRight, Download, FlaskConical, Plus } from 
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
+import { liveEvidenceLabel, type ScanComparison } from "../lib/live-checks";
 import { reportClaims } from "../lib/presentation";
 import { EvidenceArchive } from "./evidence-archive";
 import { FindingRow } from "./finding-row";
 import { LiveOverview } from "./live-overview";
+import liveStyles from "./live-report.module.css";
 import { ReportOverview } from "./report-overview";
 import { ReportSolutions } from "./report-solutions";
+import { ScanForm } from "./scan-form";
 import { TribunalView } from "./tribunal-view";
 import { Badge, Brand, ProvenanceKey } from "./ui";
 
@@ -32,7 +35,13 @@ const investigationViews = [
 ] as const;
 type Section = (typeof sections)[number]["id"] | (typeof investigationViews)[number]["id"];
 
-export function ReportView({ report }: { report: ScanReport }) {
+export function ReportView({
+  report,
+  comparison,
+}: {
+  report: ScanReport;
+  comparison?: ScanComparison;
+}) {
   const live = report.summary.source === "live";
   const [section, setSection] = useState<Section>("overview");
   const [query, setQuery] = useState("");
@@ -69,7 +78,7 @@ export function ReportView({ report }: { report: ScanReport }) {
   }
   function showEvidence(id: string) {
     setSection("evidence");
-    setQuery(id);
+    setQuery(live ? liveEvidenceLabel(report, id) : id);
     requestAnimationFrame(() => contentRef.current?.focus());
   }
   function showFinding(id: string) {
@@ -103,7 +112,9 @@ export function ReportView({ report }: { report: ScanReport }) {
   }
 
   return (
-    <div className="report-document report-stage18">
+    <div
+      className={`report-document report-stage18${live ? ` report-live ${liveStyles.readable}` : ""}`}
+    >
       <header className="report-masthead report-stage18-masthead">
         <Brand />
         <div>
@@ -123,7 +134,7 @@ export function ReportView({ report }: { report: ScanReport }) {
           <strong>{live ? "LIVE INVESTIGATION" : "SYNTHETIC FIXTURE"}</strong>
           <span>
             {live
-              ? "Real HTTP and HTML evidence. No browser or AI agents were run."
+              ? "Checks based on page source and responses."
               : "No website was scanned and no AI agents were run. Report records are synthetic."}
           </span>
         </div>
@@ -153,10 +164,22 @@ export function ReportView({ report }: { report: ScanReport }) {
               </span>
             </div>
           </div>
-          <button type="button" className="button button-secondary" onClick={exportReport}>
-            <Download size={15} />
-            {live ? "Export investigation" : "Export fixture"}
-          </button>
+          {live ? (
+            <div className="live-report-actions">
+              <ScanForm
+                repeat={{ targetUrl: report.summary.targetUrl, reportId: report.summary.id }}
+              />
+              <button type="button" className="button button-secondary" onClick={exportReport}>
+                <Download size={15} />
+                Export investigation
+              </button>
+            </div>
+          ) : (
+            <button type="button" className="button button-secondary" onClick={exportReport}>
+              <Download size={15} />
+              Export fixture
+            </button>
+          )}
         </header>
         <span className="sr-only" role="status">
           {exported
@@ -166,21 +189,23 @@ export function ReportView({ report }: { report: ScanReport }) {
             : ""}
         </span>
         <nav className="report-navigation" aria-label="Investigation views">
-          {sections.map(({ id, label }) => (
-            <button
-              type="button"
-              key={id}
-              className={activeSection === id ? "active" : ""}
-              onClick={() => navigate(id)}
-              aria-pressed={activeSection === id}
-            >
-              {label}
-              {id === "investigation" && <span>{report.findings.length}</span>}
-              {id === "evidence" && <span>{report.evidence.length}</span>}
-              {id === "tribunal" && <span>{reportClaims(report).length}</span>}
-            </button>
-          ))}
-          <span>Evidence, with limits.</span>
+          {sections
+            .filter(({ id }) => !live || id !== "tribunal")
+            .map(({ id, label }) => (
+              <button
+                type="button"
+                key={id}
+                className={activeSection === id ? "active" : ""}
+                onClick={() => navigate(id)}
+                aria-pressed={activeSection === id}
+              >
+                {label}
+                {id === "investigation" && <span>{report.findings.length}</span>}
+                {id === "evidence" && <span>{report.evidence.length}</span>}
+                {id === "tribunal" && <span>{reportClaims(report).length}</span>}
+              </button>
+            ))}
+          {!live && <span>Evidence, with limits.</span>}
         </nav>
         {investigation && (
           <nav className="investigation-subnav" aria-label="Investigation details">
@@ -205,6 +230,7 @@ export function ReportView({ report }: { report: ScanReport }) {
           {section === "overview" && live && (
             <LiveOverview
               report={report}
+              comparison={comparison}
               affected={affected}
               onNavigate={navigate}
               onFinding={showFinding}
@@ -244,6 +270,7 @@ export function ReportView({ report }: { report: ScanReport }) {
                 onFinding={showFinding}
                 expanded
                 source={report.summary.source}
+                liveReport={live ? report : undefined}
               />
               <div className="route-table-wrap">
                 <table className="route-table">

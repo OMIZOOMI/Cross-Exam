@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { liveEvidenceLabel, plainFinding } from "../lib/live-checks";
 import { experimentLabel, reportClaims, verdictMeanings } from "../lib/presentation";
 import { ProvenanceBadge } from "./ui";
 
@@ -67,7 +68,7 @@ function EvidenceLinks({
         const evidence = report.evidence.find((item) => item.id === id);
         return (
           <button type="button" key={id} onClick={() => onEvidence(id)}>
-            <code>{id}</code>
+            <code>{report.summary.source === "live" ? liveEvidenceLabel(report, id) : id}</code>
             <span>{evidence?.title ?? "Evidence record"}</span>
             <ArrowUpRight size={13} />
           </button>
@@ -261,7 +262,8 @@ function ClaimChain({ claim, report, onEvidence, onFinding }: Props & { claim: C
             className="tribunal-finding-link"
             onClick={() => onFinding(finding.id)}
           >
-            Finding {finding.id} <ArrowUpRight size={14} />
+            {live ? `Problem ${report.findings.indexOf(finding) + 1}` : `Finding ${finding.id}`}{" "}
+            <ArrowUpRight size={14} />
           </button>
         )}
       </header>
@@ -531,7 +533,11 @@ export function TribunalView({ report, onEvidence, onFinding, initialClaimId }: 
                 >
                   <span>
                     <code>{claim.id}</code>
-                    <strong>{finding?.title ?? claim.statement}</strong>
+                    <strong>
+                      {finding && live
+                        ? plainFinding(report, finding).title
+                        : (finding?.title ?? claim.statement)}
+                    </strong>
                   </span>
                   <small>{verdict?.status ?? "claim record"}</small>
                 </button>

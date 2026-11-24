@@ -1,5 +1,5 @@
 import { safeRequest } from "@crossexam/engine/security";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { saveReport } from "./report-store";
 import { handleScan } from "./scan-handler";
 
@@ -20,6 +20,7 @@ const request = (
     body: JSON.stringify(body),
   });
 beforeEach(() => {
+  vi.stubEnv("VEYRA_PUBLIC_ORIGIN", undefined);
   const admission = Reflect.get(globalThis, Symbol.for("crossexam.scan-admission"));
   admission.active = false;
   admission.starts = [];
@@ -38,6 +39,7 @@ beforeEach(() => {
       };
     });
 });
+afterEach(() => vi.unstubAllEnvs());
 it("runs the collector and saves its validated report, exposing only a report ID", async () => {
   const response = await handleScan(request());
   expect(response.status).toBe(201);
@@ -82,6 +84,82 @@ it("accepts the original exact local origin when Next normalizes the internal re
   const incoming = request();
   const normalized = new Request("http://localhost:3000/api/scans", incoming);
   expect((await handleScan(normalized)).status).toBe(201);
+});
+it.each(["localhost", "[::1]"])("accepts %s in loopback mode", async (hostname) => {
+  const host = `${hostname}:3000`;
+  const local = request(undefined, { host, origin: `http://${host}` });
+  expect((await handleScan(new Request(`http://${host}/api/scans`, local))).status).toBe(201);
+});
+
+const publicOrigin = "https://veyra.onrender.com";
+const publicHost = "veyra.onrender.com";
+const publicRequest = (headers: Record<string, string> = {}, body?: unknown) =>
+  request(body, { host: publicHost, origin: publicOrigin, ...headers });
+
+it.each<Record<string, string>>([
+  {},
+  { "x-forwarded-host": publicHost },
+  { host: "127.0.0.1:3000", "x-forwarded-host": publicHost },
+])("accepts the exact configured public origin with headers %j", async (headers) => {
+  vi.stubEnv("VEYRA_PUBLIC_ORIGIN", publicOrigin);
+  expect((await handleScan(publicRequest(headers))).status).toBe(201);
+});
+
+it.each<Record<string, string>>([
+  { origin: "https://other.example" },
+  { origin: `${publicOrigin}/` },
+  { "sec-fetch-site": "cross-site" },
+  { host: "other.example" },
+  { host: "other.example", "x-forwarded-host": publicHost },
+  { "x-forwarded-host": "other.example" },
+  { "x-forwarded-host": `${publicHost}, other.example` },
+  { host: "127.0.0.1:3000" },
+])("rejects mismatched public admission headers %j", async (headers) => {
+  vi.stubEnv("VEYRA_PUBLIC_ORIGIN", publicOrigin);
+  expect((await handleScan(publicRequest(headers))).status).toBe(403);
+  expect(safeRequest).not.toHaveBeenCalled();
+  expect(saveReport).not.toHaveBeenCalled();
+});
+
+it.each(["", "http://veyra.onrender.com", `${publicOrigin}/`, `${publicOrigin}/login`])(
+  "fails closed for an invalid configured origin %j",
+  async (setting) => {
+    vi.stubEnv("VEYRA_PUBLIC_ORIGIN", setting);
+    expect((await handleScan(publicRequest())).status).toBe(403);
+    expect((await handleScan(request())).status).toBe(403);
+    expect(safeRequest).not.toHaveBeenCalled();
+  },
+);
+
+it("does not use forwarded hosts to admit scans in loopback mode", async () => {
+  expect(
+    (await handleScan(publicRequest({ host: "127.0.0.1:3000", "x-forwarded-host": publicHost })))
+      .status,
+  ).toBe(403);
+  expect(safeRequest).not.toHaveBeenCalled();
+});
+
+it("rejects invalid or large public bodies before starting a scan", async () => {
+  vi.stubEnv("VEYRA_PUBLIC_ORIGIN", publicOrigin);
+  expect((await handleScan(new Request(publicRequest(), { body: '{"targetUrl":' }))).status).toBe(
+    403,
+  );
+  expect((await handleScan(publicRequest({}, { targetUrl: "x".repeat(5000) }))).status).toBe(403);
+  expect(safeRequest).not.toHaveBeenCalled();
+  expect(saveReport).not.toHaveBeenCalled();
+});
+
+it("uses the same destination policy and scan limits on the public host", async () => {
+  vi.stubEnv("VEYRA_PUBLIC_ORIGIN", publicOrigin);
+  expect((await handleScan(publicRequest({}, { targetUrl: "http://127.0.0.1" }))).status).toBe(400);
+  expect(safeRequest).not.toHaveBeenCalled();
+  const admission = Reflect.get(globalThis, Symbol.for("crossexam.scan-admission"));
+  admission.active = true;
+  expect((await handleScan(publicRequest())).status).toBe(429);
+  admission.active = false;
+  admission.starts = Array.from({ length: 6 }, () => Date.now());
+  expect((await handleScan(publicRequest())).status).toBe(429);
+  expect(safeRequest).not.toHaveBeenCalled();
 });
 it("redacts DNS failures and releases the active-scan slot", async () => {
   vi.mocked(safeRequest).mockResolvedValue({

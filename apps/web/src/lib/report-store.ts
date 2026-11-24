@@ -2,13 +2,16 @@ import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from "node:
 import path from "node:path";
 import { type ScanReport, ScanReportSchema } from "@crossexam/contracts";
 
-const directory = path.join(process.cwd(), ".crossexam", "reports");
+// Reports are runtime data. Keep local reports out of Next's deployment trace.
+const directory = path.resolve(
+  /* turbopackIgnore: true */ process.env.VEYRA_REPORT_DIR || ".crossexam/reports",
+);
 const idPattern = /^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/;
 const maxBytes = 4 * 1024 * 1024;
 const maxAge = 24 * 60 * 60 * 1000;
 const maxReports = 20;
 
-/** Local single-process storage. Random IDs are not authentication; do not expose publicly. */
+/** Single-process storage. Anyone with a report URL can read it. */
 export async function saveReport(input: ScanReport): Promise<string> {
   const report = ScanReportSchema.parse(input);
   if (
@@ -28,14 +31,17 @@ export async function saveReport(input: ScanReport): Promise<string> {
     await unlink(`${filename}.tmp`).catch(() => {});
   }
   const files = await Promise.all(
-    (await readdir(directory))
+    (await readdir(/* turbopackIgnore: true */ directory))
       .filter((name) => idPattern.test(name.replace(/\.json$/, "")) && name.endsWith(".json"))
-      .map(async (name) => ({ name, modified: (await stat(path.join(directory, name))).mtimeMs })),
+      .map(async (name) => ({
+        name,
+        modified: (await stat(/* turbopackIgnore: true */ path.join(directory, name))).mtimeMs,
+      })),
   );
   files.sort((a, b) => b.modified - a.modified);
   for (const [index, file] of files.entries())
     if (index >= maxReports || Date.now() - file.modified > maxAge)
-      await unlink(path.join(directory, file.name));
+      await unlink(/* turbopackIgnore: true */ path.join(directory, file.name));
   return report.summary.id;
 }
 export async function readReport(id: string): Promise<ScanReport | null> {
