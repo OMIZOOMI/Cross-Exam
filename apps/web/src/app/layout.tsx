@@ -6,6 +6,8 @@ import "./landing-stage18.css";
 import "./landing-stage181.css";
 import "./landing-stage182.css";
 import "./report-stage18.css";
+import "./veyra-theme.css";
+import "./report-live.css";
 
 export const metadata: Metadata = {
   title: {

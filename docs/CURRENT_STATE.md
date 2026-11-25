@@ -1,5 +1,22 @@
 # Current state
 
+## Live investigation report styling (2026-11-25)
+
+The live report shares the approved homepage’s white-and-blue tokens and
+wordmark. The Overview uses a metrics strip, Findings opens to Observed and
+Recommended fix, and Evidence groups existing records into the five numbered
+collection layers. Search, filters, linked details, repeat scans, and exports
+use the existing report data. Empty layers explain what was not captured.
+The cinematic landing, sample report, and scanner keep their existing behavior.
+
+Checked all three tabs using the saved local portfolio report with 22 records
+in desktop Chrome and phone-sized WebKit, including layout at 320 px, focus
+visibility, and reduced motion. The production build and workspace typecheck
+passed, along with 21 focused unit tests and changed-file Biome and diff checks.
+All 80 homepage, live report, and sample report browser tests passed against
+the production build in desktop and mobile Chrome and WebKit.
+The report redesign is available in the local production preview for review.
+
 ## Approved homepage on the Render branch (2026-11-25)
 
 The app homepage now uses the approved white-and-blue V1 design and its

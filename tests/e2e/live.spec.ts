@@ -85,6 +85,12 @@ test("live findings, graph, evidence and export use report data without fixture 
   await expect(page.locator(".route-table tbody tr")).toHaveCount(2);
   await inspector.getByRole("button", { name: /Problem 1 A page couldn’t be found/ }).click();
   await expect(page.locator("#detail-F-001")).toContainText("deterministic rule");
+  await expect(
+    page.locator("#detail-F-001").getByRole("heading", { name: "Observed" }),
+  ).toBeVisible();
+  await expect(
+    page.locator("#detail-F-001").getByRole("heading", { name: "Recommended fix" }),
+  ).toBeVisible();
   await expect(page.locator("#detail-F-001 .case-chain li")).toHaveCount(2);
   await expect(page.locator("#detail-F-001")).not.toContainText("fixture data");
   await expect(page.locator(".findings-index")).not.toContainText(internalCodes);
@@ -118,6 +124,41 @@ test("live findings, graph, evidence and export use report data without fixture 
   expect(report.pages).toHaveLength(2);
   expect(report.agentRuns).toEqual([]);
   expect(errors).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("live evidence groups records by collection layer and keeps search and status intact", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(`/report/${id}`);
+  await expect(page.getByRole("button", { name: "Scan again" })).toHaveCSS(
+    "transition-duration",
+    "0s",
+  );
+  await page.getByRole("button", { name: "Evidence 3" }).click();
+  const groups = page.locator(".evidence-layer");
+  await expect(groups.locator("h3.report-label")).toHaveText([
+    "01 · Surface",
+    "02 · DOM & components",
+    "03 · Routes & resources",
+    "04 · Requests & dependencies",
+    "05 · Responses & behavior",
+  ]);
+  await expect(groups.nth(0).locator(".evidence-record")).toHaveCount(1);
+  await expect(groups.nth(3)).toContainText("No separate request records");
+  await expect(groups.nth(4).locator(".evidence-status")).toHaveText(["200 OK", "404"]);
+  await expect(page.locator(".evidence-record")).toHaveCount(3);
+  await page.getByLabel("Filter evidence category").selectOption("metadata");
+  await expect(groups).toHaveCount(1);
+  await expect(groups.first()).toContainText("01 · Surface");
+  await page.getByLabel("Search evidence").fill("Check 2");
+  await expect(groups).toHaveCount(1);
+  await expect(groups.first()).toContainText("05 · Responses & behavior");
+  await expect(groups.first().locator("details")).toHaveAttribute("open", "");
+  const search = page.getByLabel("Search evidence");
+  await search.focus();
+  await expect(search).toHaveCSS("outline-style", "solid");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
@@ -162,7 +203,7 @@ test("live download chart keeps long paths and exact timings readable", async ({
   await expect(label).toBeVisible();
   await expect(label).toHaveCSS("font-size", "16px");
   expect(await label.evaluate((element) => getComputedStyle(element).fontFamily)).toContain(
-    "Avenir Next",
+    "Inter",
   );
   expect(
     await label.evaluate((element) => {

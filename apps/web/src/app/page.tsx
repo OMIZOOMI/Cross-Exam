@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ScanForm } from "../components/scan-form";
+import { VeyraWordmark } from "../components/ui";
 import { VeyraHomeScene } from "../components/veyra-home/scene";
 import "../components/veyra-home/home.css";
 
@@ -9,8 +10,7 @@ export default function HomePage() {
       <div className="app-shell">
         <header className="app-header">
           <a className="brand-lockup" href="#main" aria-label="Veyra home">
-            <span className="brand-mark">V</span>
-            <span className="brand-name">VEYRA</span>
+            <VeyraWordmark />
           </a>
           <nav className="primary-nav" aria-label="Primary navigation">
             <a href="#showcase">Product</a>

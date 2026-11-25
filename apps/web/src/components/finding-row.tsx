@@ -65,10 +65,23 @@ export function FindingRow({
       {open && (
         <div className="finding-detail" id={`detail-${finding.id}`}>
           <div className="finding-context">
-            <p>{plain?.result ?? finding.description}</p>
+            {plain ? (
+              <div className="finding-inspection">
+                <div>
+                  <h3>Observed</h3>
+                  <p>{plain.result}</p>
+                </div>
+                <div>
+                  <h3>Recommended fix</h3>
+                  <p>{plain.next}</p>
+                </div>
+              </div>
+            ) : (
+              <p>{finding.description}</p>
+            )}
             <span>
               {live
-                ? "Derived by a deterministic rule from returned HTML or response headers. No AI review or browser verification."
+                ? "Derived by a deterministic rule from returned HTML or response headers. Browser behavior is not proven from available evidence. This scan skips AI review."
                 : "Synthetic fixture investigation. Every step and record is fixture data; no TribunalRun or Stage 17 JudgeReview artifact is attached."}
             </span>
           </div>

@@ -53,8 +53,9 @@ export function LiveOverview({
           ) : (
             <h2>
               {problemCount
-                ? `${problemCount} ${problemCount === 1 ? "problem" : "problems"} flagged`
-                : "No problems flagged"}
+                ? `${problemCount} ${problemCount === 1 ? "problem" : "problems"}`
+                : "No problems"}{" "}
+              <em>flagged</em>
             </h2>
           )}
         </div>
@@ -84,7 +85,9 @@ export function LiveOverview({
       <LiveChecks report={report} onFinding={onFinding} onEvidence={onEvidence} />
       <section className="overview-map">
         <div className="section-heading">
-          <h2>How the pages connect</h2>
+          <h2>
+            How the pages <em>connect</em>
+          </h2>
           <button type="button" className="text-link" onClick={() => onNavigate("site-map")}>
             Explore the site map <ArrowUpRight size={15} />
           </button>

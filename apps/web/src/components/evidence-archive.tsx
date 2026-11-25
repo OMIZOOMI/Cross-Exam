@@ -1,11 +1,66 @@
 "use client";
 
-import type { ScanReport } from "@crossexam/contracts";
+import type { Evidence, ScanReport } from "@crossexam/contracts";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
 import { liveChecks, liveEvidenceLabel } from "../lib/live-checks";
 import { reportClaims } from "../lib/presentation";
 import { ProvenanceBadge } from "./ui";
+
+const evidenceLayers = [
+  { id: "surface", name: "Surface", empty: "No page metadata was recorded." },
+  { id: "structure", name: "DOM & components", empty: "No page structure was recorded." },
+  {
+    id: "routes",
+    name: "Routes & resources",
+    empty: "No routes or resource references were recorded.",
+  },
+  {
+    id: "requests",
+    name: "Requests & dependencies",
+    empty: "No separate request records. Page response codes appear in Responses & behavior.",
+  },
+  { id: "responses", name: "Responses & behavior", empty: "No responses were recorded." },
+] as const;
+type Layer = (typeof evidenceLayers)[number]["id"];
+
+const layersByCode: Record<NonNullable<Evidence["code"]>, Layer> = {
+  DOCUMENT_METADATA: "surface",
+  DOCUMENT_STRUCTURE: "structure",
+  BROWSER_RENDERED_DOM: "structure",
+  BROWSER_ACCESSIBILITY_OBSERVATION: "structure",
+  BROWSER_ACCESSIBILITY_RULES: "structure",
+  RESOURCE_REFERENCES: "routes",
+  ROBOTS_TXT: "routes",
+  SITEMAP_XML: "routes",
+  BROWSER_NAVIGATION: "routes",
+  FETCH_FAILURE: "requests",
+  BROWSER_REQUESTS: "requests",
+  HTTP_STATUS: "responses",
+  RESPONSE_HEADERS: "responses",
+  BROWSER_RESPONSES: "responses",
+  BROWSER_CONSOLE: "responses",
+  BROWSER_PAGE_ERRORS: "responses",
+  BROWSER_PERFORMANCE: "responses",
+  BROWSER_RUNTIME_ANALYSIS: "responses",
+};
+const layersByKind: Record<Evidence["kind"], Layer> = {
+  metadata: "surface",
+  navigation: "routes",
+  accessibility: "structure",
+  network: "requests",
+  headers: "responses",
+  performance: "responses",
+};
+
+function recordedStatus(item: Evidence) {
+  const status = item.data?.statusCode;
+  if (item.code === "FETCH_FAILURE") return "Not collected";
+  if (item.code === "RESPONSE_HEADERS" && item.data?.["content-security-policy"] === null)
+    return "Header missing";
+  if (typeof status === "number" && Number.isInteger(status) && status >= 100 && status <= 599)
+    return status === 200 ? "200 OK" : String(status);
+}
 
 export function EvidenceArchive({
   report,
@@ -38,6 +93,17 @@ export function EvidenceArchive({
           .toLowerCase()
           .includes(query.toLowerCase()),
   );
+  const layers = live
+    ? evidenceLayers
+        .map((layer, index) => ({
+          ...layer,
+          number: String(index + 1).padStart(2, "0"),
+          items: records.filter(
+            (item) => (item.code ? layersByCode[item.code] : layersByKind[item.kind]) === layer.id,
+          ),
+        }))
+        .filter((layer) => layer.items.length || (!search && kind === "all"))
+    : [{ id: "fixture", number: "", name: "", empty: "", items: records }];
   function clear() {
     onQuery("");
     setKind("all");
@@ -47,7 +113,15 @@ export function EvidenceArchive({
       <div className="section-heading">
         <div>
           <p className="section-kicker">The evidence archive</p>
-          <h2>Every conclusion starts somewhere.</h2>
+          <h2>
+            {live ? (
+              <>
+                Every conclusion starts with <em>evidence.</em>
+              </>
+            ) : (
+              "Every conclusion starts somewhere."
+            )}
+          </h2>
         </div>
         <span className="archive-count">
           {records.length} of {report.evidence.length} records
@@ -101,105 +175,129 @@ export function EvidenceArchive({
           </select>
         </label>
       </div>
-      <div className="archive-columns" aria-hidden="true">
-        <span>Record / type</span>
-        <span>Observation / source</span>
-        <span>Captured / referenced claims</span>
-      </div>
+      {!live && (
+        <div className="archive-columns" aria-hidden="true">
+          <span>Record / type</span>
+          <span>Observation / source</span>
+          <span>Captured / referenced claims</span>
+        </div>
+      )}
       <div className="evidence-list">
-        {records.map((item) => {
-          const check = checks.find((entry) => entry.id === item.id);
-          const claims = reportClaims(report).filter((claim) =>
-            claim.evidenceIds.includes(item.id),
-          );
-          return (
-            <article className="evidence-record" key={item.id}>
-              <div className="evidence-identity">
-                <code>{labels.get(item.id)}</code>
-                <ProvenanceBadge value={item.provenance} />
-                <span>{item.kind}</span>
-              </div>
-              <div className="evidence-observation">
-                <h3>{check?.question ?? item.title}</h3>
-                <code className="evidence-source">{item.url}</code>
-                {check && (
-                  <p>
-                    <strong>Result</strong> {check.result}
-                  </p>
-                )}
-                <details open={exactId === item.id}>
-                  <summary>{live ? "Show recorded details" : "Read observation"}</summary>
-                  <p>{item.detail}</p>
-                  <small>
-                    Collector: {item.collector} · Source: {item.source}
-                  </small>
-                  {item.data && (
-                    <dl className="observation-data">
-                      {Object.entries(item.data).map(([key, value]) => (
-                        <div key={key}>
-                          <dt>{key}</dt>
-                          <dd>
-                            {value === null
-                              ? "Not observed"
-                              : Array.isArray(value)
-                                ? value.length
-                                  ? value.join("\n")
-                                  : "None recorded"
-                                : String(value)}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  )}
-                </details>
-              </div>
-              <div className="evidence-references">
-                <time dateTime={item.capturedAt}>
-                  {new Date(item.capturedAt).toISOString().slice(11, 19)} UTC
-                  <span>
-                    {new Date(item.capturedAt).toISOString().slice(0, 10)} ·{" "}
-                    {live ? "Live" : "Fixture"}
-                  </span>
-                </time>
-                <div>
-                  {claims.length ? (
-                    claims.map((claim) => {
-                      const finding = report.findings.find(
-                        (finding) => finding.claimId === claim.id,
-                      );
-                      return finding ? (
-                        <button
-                          type="button"
-                          key={claim.id}
-                          onClick={() => onFinding(finding.id)}
-                          aria-label={
-                            live
-                              ? `Review Problem ${report.findings.indexOf(finding) + 1}`
-                              : `Review claim ${claim.id}`
-                          }
-                        >
-                          <code>
-                            {live ? `Problem ${report.findings.indexOf(finding) + 1}` : claim.id}
-                          </code>{" "}
-                          ↗
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          key={claim.id}
-                          onClick={() => onClaim(claim.id)}
-                          aria-label={live ? "Review linked claim" : `Review claim ${claim.id}`}
-                        >
-                          <code>{live ? "Linked claim" : claim.id}</code> ↗
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <span>Context record · No direct claim</span>
-                  )}
+        {layers.map((layer) => {
+          const rows = layer.items.map((item) => {
+            const check = checks.find((entry) => entry.id === item.id);
+            const status = live ? recordedStatus(item) : undefined;
+            const claims = reportClaims(report).filter((claim) =>
+              claim.evidenceIds.includes(item.id),
+            );
+            return (
+              <article className="evidence-record" key={item.id}>
+                <div className="evidence-identity">
+                  <code>{labels.get(item.id)}</code>
+                  {status && <code className="evidence-status">{status}</code>}
+                  <ProvenanceBadge value={item.provenance} />
+                  {!live && <span>{item.kind}</span>}
                 </div>
-              </div>
-            </article>
+                <div className="evidence-observation">
+                  <h3>{check?.question ?? item.title}</h3>
+                  <code className="evidence-source">{item.url}</code>
+                  {check && (
+                    <p>
+                      <strong>Result</strong> {check.result}
+                    </p>
+                  )}
+                  <details open={exactId === item.id}>
+                    <summary>{live ? "Show recorded details" : "Read observation"}</summary>
+                    <p>{item.detail}</p>
+                    <small>
+                      Collector: {item.collector} · Source: {item.source}
+                    </small>
+                    {item.data && (
+                      <dl className="observation-data">
+                        {Object.entries(item.data).map(([key, value]) => (
+                          <div key={key}>
+                            <dt>{key}</dt>
+                            <dd>
+                              {value === null
+                                ? "Not observed"
+                                : Array.isArray(value)
+                                  ? value.length
+                                    ? value.join("\n")
+                                    : "None recorded"
+                                  : String(value)}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                  </details>
+                </div>
+                <div className="evidence-references">
+                  <time dateTime={item.capturedAt}>
+                    {new Date(item.capturedAt).toISOString().slice(11, 19)} UTC
+                    <span>
+                      {new Date(item.capturedAt).toISOString().slice(0, 10)} ·{" "}
+                      {live ? "Live" : "Fixture"}
+                    </span>
+                  </time>
+                  <div>
+                    {claims.length ? (
+                      claims.map((claim) => {
+                        const finding = report.findings.find(
+                          (finding) => finding.claimId === claim.id,
+                        );
+                        return finding ? (
+                          <button
+                            type="button"
+                            key={claim.id}
+                            onClick={() => onFinding(finding.id)}
+                            aria-label={
+                              live
+                                ? `Review Problem ${report.findings.indexOf(finding) + 1}`
+                                : `Review claim ${claim.id}`
+                            }
+                          >
+                            <code>
+                              {live ? `Problem ${report.findings.indexOf(finding) + 1}` : claim.id}
+                            </code>{" "}
+                            ↗
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            key={claim.id}
+                            onClick={() => onClaim(claim.id)}
+                            aria-label={live ? "Review linked claim" : `Review claim ${claim.id}`}
+                          >
+                            <code>{live ? "Linked claim" : claim.id}</code> ↗
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <span>Context record · No direct claim</span>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          });
+          if (!live) return rows;
+          return (
+            <section
+              className="evidence-layer"
+              key={layer.id}
+              aria-labelledby={`evidence-${layer.id}`}
+            >
+              <header>
+                <h3 id={`evidence-${layer.id}`} className="report-label">
+                  {layer.number} · {layer.name}
+                </h3>
+                <span className="archive-count">
+                  {layer.items.length} {layer.items.length === 1 ? "record" : "records"}
+                </span>
+              </header>
+              {rows.length ? rows : <p className="evidence-layer-empty">{layer.empty}</p>}
+            </section>
           );
         })}
       </div>

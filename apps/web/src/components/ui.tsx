@@ -2,6 +2,17 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { provenanceMeanings } from "../lib/presentation";
 
+export function VeyraWordmark() {
+  return (
+    <>
+      <span className="brand-mark" aria-hidden="true">
+        V
+      </span>
+      <span className="brand-name">VEYRA</span>
+    </>
+  );
+}
+
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <Link className={`brand ${compact ? "compact" : ""}`} href="/" aria-label="Veyra home">

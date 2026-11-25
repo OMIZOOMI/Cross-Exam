@@ -11,12 +11,11 @@ import { reportClaims } from "../lib/presentation";
 import { EvidenceArchive } from "./evidence-archive";
 import { FindingRow } from "./finding-row";
 import { LiveOverview } from "./live-overview";
-import liveStyles from "./live-report.module.css";
 import { ReportOverview } from "./report-overview";
 import { ReportSolutions } from "./report-solutions";
 import { ScanForm } from "./scan-form";
 import { TribunalView } from "./tribunal-view";
-import { Badge, Brand, ProvenanceKey } from "./ui";
+import { Badge, Brand, ProvenanceKey, VeyraWordmark } from "./ui";
 
 const SiteGraph = dynamic(() => import("./site-graph"), {
   ssr: false,
@@ -112,12 +111,16 @@ export function ReportView({
   }
 
   return (
-    <div
-      className={`report-document report-stage18${live ? ` report-live ${liveStyles.readable}` : ""}`}
-    >
+    <div className={`report-document report-stage18${live ? " report-live" : ""}`}>
       <header className="report-masthead report-stage18-masthead">
-        <Brand />
-        <div>
+        {live ? (
+          <Link className="brand-lockup" href="/" aria-label="Veyra home">
+            <VeyraWordmark />
+          </Link>
+        ) : (
+          <Brand />
+        )}
+        <div className={live ? "report-breadcrumb" : undefined}>
           <Link href="/">Workspace</Link>
           <ChevronRight size={13} />
           <span>
@@ -252,7 +255,15 @@ export function ReportView({
               <div className="section-heading">
                 <div>
                   <p className="section-kicker">The public surface</p>
-                  <h2>Every route has a context.</h2>
+                  <h2>
+                    {live ? (
+                      <>
+                        Every route has a <em>context.</em>
+                      </>
+                    ) : (
+                      "Every route has a context."
+                    )}
+                  </h2>
                 </div>
                 <span className="archive-count">
                   {report.pages.length} routes · {live ? "Live observations" : "Fixture data"}
@@ -313,9 +324,15 @@ export function ReportView({
                 <div>
                   <p className="section-kicker">The findings</p>
                   <h2>
-                    {live
-                      ? `${report.findings.length} findings. Each with a record.`
-                      : "Five claims. Nothing taken on trust."}
+                    {live ? (
+                      <>
+                        {report.findings.length}{" "}
+                        {report.findings.length === 1 ? "finding" : "findings"}.{" "}
+                        <em>Each with a record.</em>
+                      </>
+                    ) : (
+                      "Five claims. Nothing taken on trust."
+                    )}
                   </h2>
                 </div>
                 <label className="filter-label">
@@ -338,13 +355,15 @@ export function ReportView({
                   ? "These deterministic rules describe the recorded HTTP responses and returned HTML. They do not establish browser behavior or a complete security/accessibility assessment."
                   : "Three findings are confirmed in this example. The two uncertain claims stay visible, with their unanswered questions."}
               </p>
-              <div className="finding-columns" aria-hidden="true">
-                <span>Severity</span>
-                <span>Finding / affected routes</span>
-                <span>Evidence type</span>
-                <span>Verdict</span>
-                <span />
-              </div>
+              {!live && (
+                <div className="finding-columns" aria-hidden="true">
+                  <span>Severity</span>
+                  <span>Finding / affected routes</span>
+                  <span>Evidence type</span>
+                  <span>Verdict</span>
+                  <span />
+                </div>
+              )}
               {report.findings
                 .filter((finding) => severity === "all" || finding.severity === severity)
                 .map(findingRow)}

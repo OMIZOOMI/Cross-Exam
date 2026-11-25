@@ -1,0 +1,24 @@
+:is(.veyra-home, .report-live, body:has(.report-live)) {
+  --veyra-paper: #f5f6fa;
+  --veyra-white: #fff;
+  --veyra-ink: #080a16;
+  --veyra-muted: #5f667d;
+  --veyra-blue: #2f6bff;
+  --veyra-blue-deep: #173aab;
+  --veyra-rule: rgba(8, 10, 22, 0.13);
+  --veyra-control-edge: rgba(8, 10, 22, 0.18);
+  --veyra-nav-edge: rgba(47, 107, 255, 0.14);
+  --veyra-nav-tint: rgba(47, 107, 255, 0.1);
+  --veyra-glass: rgba(255, 255, 255, 0.64);
+  --veyra-font: "Inter", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --veyra-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --veyra-gutter: 40px;
+  --veyra-gutter-narrow: 16px;
+  --veyra-pill: 999px;
+  --veyra-panel: 24px;
+  --veyra-control: 44px;
+  --veyra-cta: 50px;
+  --veyra-label-spacing: 0.08em;
+  --veyra-hover: 180ms ease;
+  --veyra-lift: 220ms ease;
+}

@@ -4123,23 +4123,23 @@ html:has(.veyra-home) {
 /* Electric blue Veyra art direction --------------------------------------- */
 
 .veyra-home {
-  --premium-ink: #080a16;
-  --premium-ink-muted: #5f667d;
-  --premium-blue: #2f6bff;
+  --premium-ink: var(--veyra-ink);
+  --premium-ink-muted: var(--veyra-muted);
+  --premium-blue: var(--veyra-blue);
   --premium-blue-bright: #00b8ff;
   --premium-ultramarine: #2438d9;
   --premium-indigo: #4526bc;
   --premium-violet: #b56bff;
-  --premium-paper: #f5f6fa;
-  --premium-white: #ffffff;
+  --premium-paper: var(--veyra-paper);
+  --premium-white: var(--veyra-white);
   --premium-orange: #ff7158;
-  --premium-rule: rgba(8, 10, 22, 0.13);
-  --premium-radius: 24px;
+  --premium-rule: var(--veyra-rule);
+  --premium-radius: var(--veyra-panel);
   --stage-dark: #07091e;
   --stage-indigo: #101355;
   --scene-shift-x: 0px;
   --scene-shift-y: 0px;
-  --display-font: "Inter", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --display-font: var(--veyra-font);
 }
 
 html:has(.veyra-home),
@@ -4157,7 +4157,7 @@ html:has(.veyra-home) {
 
 .veyra-home .app-shell {
   overflow: visible;
-  padding: 0 40px 42px;
+  padding: 0 var(--veyra-gutter) 42px;
   background:
     radial-gradient(ellipse 800px 620px at 82% 10%, rgba(191, 212, 255, 0.6), transparent 70%),
     radial-gradient(ellipse 540px 500px at 7% 42%, rgba(224, 211, 255, 0.48), transparent 74%),
@@ -4386,14 +4386,14 @@ html:has(.veyra-home) {
 }
 
 .veyra-home .hero-button {
-  min-height: 50px;
-  border-radius: 999px;
+  min-height: var(--veyra-cta);
+  border-radius: var(--veyra-pill);
   font-size: 12px;
   font-weight: 700;
   transition:
-    transform 220ms ease,
-    box-shadow 220ms ease,
-    background 220ms ease;
+    transform var(--veyra-lift),
+    box-shadow var(--veyra-lift),
+    background var(--veyra-lift);
 }
 
 .veyra-home .hero-button-primary {
@@ -4403,7 +4403,7 @@ html:has(.veyra-home) {
 }
 
 .veyra-home .hero-button-secondary {
-  border-color: rgba(8, 10, 22, 0.18);
+  border-color: var(--veyra-control-edge);
   background: rgba(255, 255, 255, 0.56);
   color: var(--premium-ink);
 }
@@ -5735,8 +5735,8 @@ html:has(.veyra-home) {
 /* Final desktop polish ------------------------------------------------------ */
 
 .veyra-home {
-  --ui-font: "Inter", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  --hero-blue-deep: #173aab;
+  --ui-font: var(--veyra-font);
+  --hero-blue-deep: var(--veyra-blue-deep);
   --label-ink: #50617f;
   --label-blue: #245be6;
 }
@@ -5817,9 +5817,9 @@ html:has(.veyra-home) {
   gap: 3px;
   margin-left: 0;
   padding: 4px;
-  border: 1px solid rgba(47, 107, 255, 0.14);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.64);
+  border: 1px solid var(--veyra-nav-edge);
+  border-radius: var(--veyra-pill);
+  background: var(--veyra-glass);
   box-shadow: 0 8px 22px rgba(40, 73, 145, 0.08);
 }
 
@@ -5839,8 +5839,8 @@ html:has(.veyra-home) {
 
 .veyra-home .primary-nav a:hover,
 .veyra-home .primary-nav a:focus-visible {
-  background: rgba(47, 107, 255, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(47, 107, 255, 0.14);
+  background: var(--veyra-nav-tint);
+  box-shadow: inset 0 0 0 1px var(--veyra-nav-edge);
   color: var(--premium-blue);
   transform: translateY(-1px);
 }
@@ -6207,7 +6207,7 @@ html:has(.veyra-home) {
 .veyra-home h1 em {
   display: inline-block;
   margin-left: 0.055em;
-  color: #173aab;
+  color: var(--hero-blue-deep);
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.95),
     0 7px 18px rgba(24, 55, 171, 0.18);
@@ -6810,8 +6810,8 @@ html:has(.veyra-home) {
 
 @media (max-width: 600px) {
   .veyra-home .app-shell {
-    padding-right: 16px;
-    padding-left: 16px;
+    padding-right: var(--veyra-gutter-narrow);
+    padding-left: var(--veyra-gutter-narrow);
   }
 
   .veyra-home .app-header {
@@ -7335,7 +7335,7 @@ html:has(.veyra-home) {
   display: block;
   margin-bottom: 4px;
   color: #8bd9ff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--veyra-mono);
   font-size: 8px;
   letter-spacing: 0.1em;
 }
@@ -8229,7 +8229,7 @@ html:has(.veyra-home) {
   display: grid;
   gap: 4px;
   color: #287f9a;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--veyra-mono);
   font-size: 9px;
   line-height: 1.1;
   text-align: center;
