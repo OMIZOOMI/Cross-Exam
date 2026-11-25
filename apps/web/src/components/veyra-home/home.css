@@ -6201,6 +6201,10 @@ html:has(.veyra-home) {
     0 7px 18px rgba(24, 55, 171, 0.18);
 }
 
+.veyra-home .hero-full-stop {
+  margin-inline-start: 0.085em;
+}
+
 .veyra-home .hero-copy::before {
   inset: -16% -9% -20% -10%;
   background: radial-gradient(

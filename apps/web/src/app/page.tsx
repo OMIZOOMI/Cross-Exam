@@ -59,7 +59,10 @@ export default function HomePage() {
               <h1 id="prototype-title">
                 <span className="hero-line">Your website says</span>
                 <span className="hero-line">
-                  it works. <em>Prove it.</em>
+                  it works.{" "}
+                  <em>
+                    Prove it<span className="hero-full-stop">.</span>
+                  </em>
                 </span>
               </h1>
               <p className="intro-copy">

@@ -2,6 +2,11 @@
 
 ## Homepage scan form and footer (2026-11-26)
 
+The homepage gives the full stop in “Prove it.” more space. It stays on the same
+line in Chrome at 1280 and 1440 px and WebKit at 320 and 390 px. The production
+build, changed-file Biome, Git diff checks, and all four homepage browser tests
+passed.
+
 Typed website addresses use dark text. The scan box has one focus outline, and
 the Scan website button keeps its own keyboard focus outline. The header no
 longer shows the Veyra demo badge. The footer centers the tagline and adds a
