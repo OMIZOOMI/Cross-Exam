@@ -33,19 +33,23 @@ test("URL form validates, calls only the local API, and handles scan failure", a
 
 test("fixture investigation exposes evidence and uncertainty", async ({ page }) => {
   const errors: string[] = [];
+  const internalCodes = /\b[EFC]-\d{3}\b/;
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/report/demo");
   await expect(
     page.getByText("No website was scanned and no AI agents were run.", { exact: false }),
   ).toBeVisible();
+  await expect(page.locator("main")).not.toContainText(internalCodes);
+  await expect(page.locator(".executive-summary > div > p").last()).toHaveCSS("font-size", "17px");
   await page.getByRole("button", { name: "Show graph", exact: true }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(8);
   await page.getByRole("button", { name: "See the contested claim" }).click();
   await expect(page.locator("#detail-F-005")).toContainText(
     "Correlation does not establish causation",
   );
-  await page.getByRole("button", { name: "E-009", exact: true }).click();
-  await expect(page.getByLabel("Search evidence")).toHaveValue("E-009");
+  await expect(page.locator("#detail-F-005")).not.toContainText(internalCodes);
+  await page.getByRole("button", { name: "Evidence 9", exact: true }).click();
+  await expect(page.getByLabel("Search evidence")).toHaveValue("Evidence 9");
   await expect(page.locator(".evidence-record")).toHaveCount(1);
   await expect(
     page.getByRole("heading", { name: "680 KB of transferred JavaScript" }),
@@ -55,6 +59,11 @@ test("fixture investigation exposes evidence and uncertainty", async ({ page }) 
   await page.getByRole("button", { name: "Clear search", exact: true }).click();
   await expect(page.locator(".evidence-record")).toHaveCount(12);
   await expect(page.locator(".evidence-layer")).toHaveCount(5);
+  await expect(page.locator(".evidence-archive")).not.toContainText(internalCodes);
+  const evidenceHeading = page.locator(".evidence-record h3").first();
+  expect(
+    await evidenceHeading.evaluate((element) => parseFloat(getComputedStyle(element).fontSize)),
+  ).toBeGreaterThanOrEqual(19);
   expect(errors).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
@@ -84,7 +93,7 @@ test("site graph, filters, and solutions are usable", async ({ page }) => {
   await expect(page.locator(".finding-row")).toHaveCount(2);
   await navigation.getByRole("button", { name: "Solutions", exact: true }).click();
   await expect(page.locator(".solution-row")).toHaveCount(5);
-  await page.getByRole("button", { name: "Review F-003 and its evidence" }).click();
+  await page.getByRole("button", { name: "Review Problem 3 and its evidence" }).click();
   await expect(page.locator("#detail-F-003")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
@@ -94,7 +103,7 @@ test("site graph, filters, and solutions are usable", async ({ page }) => {
 test("export retains fixture identity and the evidence record", async ({ page }) => {
   await page.goto("/report/demo");
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export fixture" }).click();
+  await page.getByRole("button", { name: "Download demo report" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("veyra-fixture-report.json");
   const stream = await download.createReadStream();
@@ -118,10 +127,10 @@ test("archive filters and route context lead back to the supporting claim", asyn
   await navigation.getByRole("button", { name: "Evidence" }).click();
   await page.getByLabel("Filter evidence category").selectOption("network");
   await expect(page.locator(".evidence-record")).toHaveCount(3);
-  await page.getByLabel("Search evidence").fill("E-009");
+  await page.getByLabel("Search evidence").fill("Evidence 9");
   await expect(page.locator(".evidence-record")).toHaveCount(1);
   await expect(page.locator(".evidence-record details")).toHaveAttribute("open", "");
-  await page.getByRole("button", { name: "Review claim C-005" }).click();
+  await page.getByRole("button", { name: "Review Problem 5" }).click();
   await expect(page.locator("#detail-F-005")).toContainText(
     "Correlation does not establish causation",
   );
@@ -134,7 +143,10 @@ test("archive filters and route context lead back to the supporting claim", asyn
     .getByRole("button", { name: "Site Map", exact: true })
     .click();
   await page.getByLabel("INSPECT ROUTE").selectOption("legacy");
-  await page.locator(".graph-inspector").getByRole("button", { name: /F-002/ }).click();
+  await page
+    .locator(".graph-inspector")
+    .getByRole("button", { name: /Problem 2/ })
+    .click();
   await expect(page.locator("#detail-F-002")).toBeVisible();
   await page
     .getByRole("navigation", { name: "Investigation details" })
@@ -214,11 +226,11 @@ test("Veyra opens the themed demo from the landing page without the retired film
   await expect(page.getByRole("link", { name: "Veyra home" }).locator(".brand-mark")).toBeVisible();
   await expect(page.locator(".report-document")).toHaveCSS("font-family", font);
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(245, 246, 250)");
-  await expect(page.getByRole("button", { name: "Export fixture" })).toHaveCSS(
+  await expect(page.getByRole("button", { name: "Download demo report" })).toHaveCSS(
     "border-top-left-radius",
     "999px",
   );
-  await expect(page.getByText("SYNTHETIC FIXTURE", { exact: true })).toBeVisible();
+  await expect(page.getByText("DEMO REPORT", { exact: true })).toBeVisible();
 });
 
 test("fixture Tribunal view exposes the chain and artifact boundary", async ({ page }) => {
@@ -247,7 +259,7 @@ test("fixture Tribunal view exposes the chain and artifact boundary", async ({ p
   await page
     .getByRole("navigation", { name: "Claims in this record" })
     .getByRole("button", {
-      name: /C-005/,
+      name: /Claim 5/,
     })
     .click();
   await expect(page.locator(".tribunal-claim")).toContainText("Is JavaScript delaying the hero?");
@@ -255,9 +267,9 @@ test("fixture Tribunal view exposes the chain and artifact boundary", async ({ p
   await page
     .locator(".tribunal-claim")
     .first()
-    .getByRole("button", { name: /E-009/ })
+    .getByRole("button", { name: /Evidence 9/ })
     .first()
     .click();
-  await expect(page.getByLabel("Search evidence")).toHaveValue("E-009");
+  await expect(page.getByLabel("Search evidence")).toHaveValue("Evidence 9");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

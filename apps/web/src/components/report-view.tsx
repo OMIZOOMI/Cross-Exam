@@ -6,7 +6,7 @@ import { ArrowUpRight, Check, ChevronRight, Download, FlaskConical, Plus } from 
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { liveEvidenceLabel, type ScanComparison } from "../lib/live-checks";
+import { evidenceLabel, type ScanComparison } from "../lib/live-checks";
 import { reportClaims } from "../lib/presentation";
 import { EvidenceArchive } from "./evidence-archive";
 import { FindingRow } from "./finding-row";
@@ -77,7 +77,7 @@ export function ReportView({
   }
   function showEvidence(id: string) {
     setSection("evidence");
-    setQuery(live ? liveEvidenceLabel(report, id) : id);
+    setQuery(evidenceLabel(report.evidence, id));
     requestAnimationFrame(() => contentRef.current?.focus());
   }
   function showFinding(id: string) {
@@ -130,11 +130,11 @@ export function ReportView({
       <main id="main" className="report-paper">
         <div className={`fixture-notice ${live ? "live-notice" : ""} report-boundary-strip`}>
           <FlaskConical size={15} />
-          <strong>{live ? "LIVE INVESTIGATION" : "SYNTHETIC FIXTURE"}</strong>
+          <strong>{live ? "LIVE INVESTIGATION" : "DEMO REPORT"}</strong>
           <span>
             {live
               ? "Checks based on page source and responses."
-              : "No website was scanned and no AI agents were run. Report records are synthetic."}
+              : "This example uses sample data. No website was scanned and no AI agents were run."}
           </span>
         </div>
         <header className="case-heading">
@@ -171,7 +171,7 @@ export function ReportView({
             )}
             <button type="button" className="button button-secondary" onClick={exportReport}>
               <Download size={15} />
-              {live ? "Export investigation" : "Export fixture"}
+              {live ? "Export investigation" : "Download demo report"}
             </button>
           </div>
         </header>

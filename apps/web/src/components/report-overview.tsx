@@ -4,6 +4,7 @@ import type { ScanReport } from "@crossexam/contracts";
 import { ArrowRight, ArrowUpRight, Check, ChevronRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useSyncExternalStore } from "react";
+import { evidenceLabel } from "../lib/live-checks";
 import { ReportScope } from "./report-scope";
 import { Badge, ProvenanceBadge } from "./ui";
 
@@ -54,14 +55,13 @@ export function ReportOverview({
         <div>
           <p className="section-kicker">The short version</p>
           <h2>
-            {counts.confirmed} fixture verdicts
+            {counts.confirmed} confirmed problems
             <br />
-            <em>are marked confirmed.</em>
+            <em>in this example.</em>
           </h2>
           <p>
-            Five synthetic claims are shown. Three carry synthetic confirmed verdicts, one is
-            contested, and one needs more evidence. No TribunalRun or Stage 17 JudgeReview artifact
-            is attached to this fixture.
+            The demo shows five possible problems. Three are marked confirmed, one is disputed, and
+            one needs more evidence. These are example results.
           </p>
           <div className="summary-verdicts">
             <span className="status-pill confirmed">
@@ -110,7 +110,7 @@ export function ReportOverview({
         <div className="priority-main">
           <div className="priority-byline">
             <span className="priority-marker" />
-            Most important finding<code>F-001</code>
+            Problem 1 · What needs attention first
           </div>
           <h2 id="priority-title">
             The first impression
@@ -140,7 +140,7 @@ export function ReportOverview({
           </div>
           <div className="paint-row">
             <button type="button" onClick={() => onEvidence("E-001")}>
-              Run A<code>E-001 ↗</code>
+              Example 1 <span>{evidenceLabel(report.evidence, "E-001")} ↗</span>
             </button>
             <div>
               <span style={{ width: "86%" }} />
@@ -151,7 +151,7 @@ export function ReportOverview({
           </div>
           <div className="paint-row">
             <button type="button" onClick={() => onEvidence("E-002")}>
-              Run B<code>E-002 ↗</code>
+              Example 2 <span>{evidenceLabel(report.evidence, "E-002")} ↗</span>
             </button>
             <div>
               <span style={{ width: "82%" }} />

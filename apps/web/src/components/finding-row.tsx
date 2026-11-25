@@ -2,7 +2,7 @@
 
 import type { Finding, ScanReport } from "@crossexam/contracts";
 import { ArrowUpRight, Check, ChevronDown } from "lucide-react";
-import { liveEvidenceLabel, plainFinding } from "../lib/live-checks";
+import { evidenceLabel, plainFinding } from "../lib/live-checks";
 import { experimentLabel } from "../lib/presentation";
 import { ProvenanceBadge } from "./ui";
 
@@ -44,7 +44,7 @@ export function FindingRow({
         <span className={`finding-severity ${finding.severity}`}>
           <i />
           {finding.severity}
-          <code>{live ? `Problem ${report.findings.indexOf(finding) + 1}` : finding.id}</code>
+          <code>{`Problem ${report.findings.indexOf(finding) + 1}`}</code>
         </span>
         <span className="finding-main">
           <span className="finding-title">{plain?.title ?? finding.title}</span>
@@ -90,7 +90,6 @@ export function FindingRow({
               <span className="chain-number">1</span>
               <div className="chain-label">
                 <strong>{live ? "What Veyra checked" : "Claim"}</strong>
-                {!live && <code>{claim?.id}</code>}
               </div>
               <p>{claim?.statement}</p>
             </li>
@@ -129,7 +128,7 @@ export function FindingRow({
             <span>Follow the supporting evidence</span>
             {finding.evidenceIds.map((id) => (
               <button type="button" key={id} onClick={() => onEvidence(id)}>
-                {live ? liveEvidenceLabel(report, id) : id}
+                {evidenceLabel(report.evidence, id)}
                 <ArrowUpRight size={13} />
               </button>
             ))}

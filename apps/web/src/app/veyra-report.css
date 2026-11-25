@@ -127,7 +127,12 @@ body:has(.veyra-report) {
 
 .veyra-report .case-metadata {
   color: var(--muted);
+  font-size: 0.875rem;
   row-gap: 8px;
+}
+
+.veyra-report .case-metadata .status-pill {
+  font-size: 0.875rem;
 }
 
 .veyra-report .case-metadata code {
@@ -368,6 +373,10 @@ body:has(.veyra-report) {
 
 .veyra-report .evidence-record h3 {
   margin-bottom: 6px;
+  color: var(--ink);
+  font-size: 1.2rem;
+  font-weight: 650;
+  line-height: 1.35;
 }
 
 .veyra-report .evidence-record p {
@@ -661,5 +670,79 @@ body:has(.veyra-report) {
 
   .veyra-report :is(.report-masthead > .text-link, .report-actions .button):hover:not(:disabled) {
     transform: none;
+  }
+}
+
+/* Keep the reading size consistent across the archive, findings, and linked details. */
+.report-stage18.veyra-report
+:is(
+  .view-intro,
+  .executive-summary > div > p:not(.section-kicker),
+  .priority-main > p,
+  .evidence-observation p,
+  .finding-inspection p,
+  .case-chain p,
+  .solution-problem,
+  .solution-reasoning p,
+  .tribunal-hero-copy,
+  .tribunal-step > div > p:not(.tribunal-step-label),
+  .tribunal-record p
+) {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.report-stage18.veyra-report
+  :is(
+    .report-boundary-strip > span,
+    .report-stage18-masthead > .text-link,
+    .report-actions .button,
+    .report-navigation > button,
+    .investigation-subnav > button,
+    .filter-label select,
+    .evidence-observation summary,
+    .evidence-references button,
+    .finding-evidence > button,
+    .solution-evidence > button,
+    .site-map-detail-links button,
+    .tribunal-evidence-links button,
+    .tribunal-claim-selector strong,
+    .graph-inspector select,
+    .collection-scope summary
+  ) {
+  font-size: 1rem;
+}
+
+.report-stage18.veyra-report
+  :is(
+    .archive-count,
+    .archive-note,
+    .report-label,
+    .evidence-status,
+    .provenance,
+    .finding-severity code,
+    .solution-number code,
+    .site-map-detail-links code,
+    .tribunal-evidence-links code
+  ) {
+  font-size: 0.875rem;
+}
+
+.veyra-report .paint-row button > span {
+  display: block;
+  color: var(--blue);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 480px) {
+  .report-document.veyra-report:not(.report-live) .report-navigation {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    border-radius: var(--veyra-panel);
+  }
+
+  .report-document.veyra-report:not(.report-live) .report-navigation > button {
+    justify-content: center;
   }
 }

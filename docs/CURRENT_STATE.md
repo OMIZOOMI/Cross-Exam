@@ -1,5 +1,21 @@
 # Current state
 
+## Report readability (2026-11-25)
+
+The demo report displays stable labels such as Evidence 1, Problem 1, and
+Claim 1 across its overview, site map, findings, solutions, evidence, and
+tribunal. The links use the original record IDs internally, and the export
+still contains those IDs. The demo is labeled as sample data. Report body
+copy uses 17 px, evidence headings use about 19 px, and the four demo tabs
+fit in two rows on small phones.
+
+Production build, workspace typecheck, Biome, diff checks, and 21 unit tests
+passed. A broader browser run passed 74 of 76 checks. The two WebKit checks
+reported the computed 19.2 px font with more decimal places, so the assertion
+now checks the readable minimum numerically. All 16 final focused browser
+checks passed in desktop and phone Chrome and WebKit, with a separate visual
+review of the demo down to 320 px.
+
 ## Demo report and film removal (2026-11-25)
 
 The demo case uses the live report’s white-and-blue typography, navigation,

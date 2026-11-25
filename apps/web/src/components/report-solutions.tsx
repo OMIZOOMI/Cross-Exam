@@ -2,7 +2,7 @@
 
 import type { ScanReport } from "@crossexam/contracts";
 import { ArrowUpRight } from "lucide-react";
-import { liveEvidenceLabel, plainFinding } from "../lib/live-checks";
+import { evidenceLabel, plainFinding } from "../lib/live-checks";
 import { verdictLabels } from "./finding-row";
 import { ProvenanceBadge } from "./ui";
 
@@ -55,11 +55,10 @@ export function ReportSolutions({
       {report.findings.map((finding, index) => {
         const verdict = report.verdicts.find((item) => item.id === finding.verdictId);
         const plain = live ? plainFinding(report, finding) : undefined;
-        const label = live ? `Problem ${index + 1}` : finding.id;
+        const label = `Problem ${index + 1}`;
         return (
           <article className="solution-row" key={finding.id}>
             <div className="solution-number">
-              {!live && <span>0{index + 1}</span>}
               <code>{label}</code>
             </div>
             <div className="solution-body">
@@ -77,7 +76,7 @@ export function ReportSolutions({
                 <span>Supporting evidence</span>
                 {finding.evidenceIds.map((id) => (
                   <button type="button" key={id} onClick={() => onEvidence(id)}>
-                    <code>{live ? liveEvidenceLabel(report, id) : id}</code> ↗
+                    <code>{evidenceLabel(report.evidence, id)}</code> ↗
                   </button>
                 ))}
               </div>

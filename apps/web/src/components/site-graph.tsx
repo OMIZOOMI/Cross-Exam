@@ -15,7 +15,7 @@ import {
 } from "@xyflow/react";
 import { ArrowUpRight, FileText, Globe2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { liveChecks, liveEvidenceLabel, plainFinding } from "../lib/live-checks";
+import { evidenceLabel, liveChecks, plainFinding } from "../lib/live-checks";
 import { LiveCheckGroups } from "./live-checks";
 import "@xyflow/react/dist/style.css";
 import "../app/site-map-stage18.css";
@@ -509,16 +509,12 @@ export default function SiteGraph({
               <span> · {selected.durationMs} ms</span>
             </p>
 
-            <p className="site-map-detail-label">
-              {liveReport ? "Problems on this page" : "Finding records"}
-            </p>
+            <p className="site-map-detail-label">Problems on this page</p>
             {selectedFindings.length > 0 ? (
               <div className="site-map-detail-links">
                 {selectedFindings.map((finding) => (
                   <button type="button" key={finding.id} onClick={() => onFinding?.(finding.id)}>
-                    <code>
-                      {liveReport ? `Problem ${findings.indexOf(finding) + 1}` : finding.id}
-                    </code>
+                    <code>{`Problem ${findings.indexOf(finding) + 1}`}</code>
                     <span>
                       {liveReport ? plainFinding(liveReport, finding).title : finding.title}
                     </span>
@@ -558,7 +554,7 @@ export default function SiteGraph({
                     onClick={() => onEvidence?.(item.id)}
                     title={item.url}
                   >
-                    <code>{liveReport ? liveEvidenceLabel(liveReport, item.id) : item.id}</code>
+                    <code>{evidenceLabel(evidence ?? [], item.id)}</code>
                     <span>{item.title}</span>
                     <ArrowUpRight size={14} aria-hidden="true" />
                   </button>

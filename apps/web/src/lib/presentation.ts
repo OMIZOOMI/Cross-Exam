@@ -22,6 +22,11 @@ export function reportClaims(report: ScanReport): Claim[] {
   return [...claims.values()];
 }
 
+export function claimLabel(report: ScanReport, id: string) {
+  const index = reportClaims(report).findIndex((claim) => claim.id === id);
+  return index < 0 ? "Claim" : `Claim ${index + 1}`;
+}
+
 /** Display only. Never promotes the demo's legacy experiment to a Stage 16 receipt. */
 export function experimentLabel(experiment: Experiment | undefined) {
   if (!experiment) return "None recorded";

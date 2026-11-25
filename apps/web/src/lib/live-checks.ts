@@ -130,11 +130,13 @@ function liveObservation(evidence: Evidence) {
   return describe(evidence);
 }
 
-export function liveEvidenceLabel(report: ScanReport, id: string) {
-  const index = report.evidence.findIndex((item) => item.id === id);
-  const item = report.evidence[index];
-  if (!item) return "Observation";
-  return `${liveObservation(item) ? "Check" : "Observation"} ${index + 1}`;
+export function evidenceLabel(evidence: Evidence[], id: string) {
+  const index = evidence.findIndex((item) => item.id === id);
+  const item = evidence[index];
+  if (!item) return "Evidence";
+  const label =
+    item.source === "fixture" ? "Evidence" : liveObservation(item) ? "Check" : "Observation";
+  return `${label} ${index + 1}`;
 }
 
 export function liveChecks(report: ScanReport): LiveCheck[] {

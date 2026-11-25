@@ -1,5 +1,5 @@
 import type { ScanReport } from "@crossexam/contracts";
-import { liveEvidenceLabel } from "../lib/live-checks";
+import { evidenceLabel } from "../lib/live-checks";
 
 export function ReportScope({
   report,
@@ -37,7 +37,7 @@ export function ReportScope({
                 key={record.id}
                 onClick={() => onEvidence(record.id)}
               >
-                {live ? liveEvidenceLabel(report, record.id) : record.id} · {record.title} ↗
+                {evidenceLabel(report.evidence, record.id)} · {record.title} ↗
               </button>
             ))}
           </details>

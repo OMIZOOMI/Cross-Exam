@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { liveEvidenceLabel, plainFinding } from "../lib/live-checks";
-import { experimentLabel, reportClaims, verdictMeanings } from "../lib/presentation";
+import { evidenceLabel, plainFinding } from "../lib/live-checks";
+import { claimLabel, experimentLabel, reportClaims, verdictMeanings } from "../lib/presentation";
 import { ProvenanceBadge } from "./ui";
 
 type Props = {
@@ -68,7 +68,7 @@ function EvidenceLinks({
         const evidence = report.evidence.find((item) => item.id === id);
         return (
           <button type="button" key={id} onClick={() => onEvidence(id)}>
-            <code>{report.summary.source === "live" ? liveEvidenceLabel(report, id) : id}</code>
+            <code>{evidenceLabel(report.evidence, id)}</code>
             <span>{evidence?.title ?? "Evidence record"}</span>
             <ArrowUpRight size={13} />
           </button>
@@ -98,8 +98,7 @@ function ChallengeRecord({
         </span>
       </div>
       <p>
-        <code>{challenge.id}</code> · {challenge.category.replaceAll("-", " ")} · provenance{" "}
-        {challenge.provenance}
+        {challenge.category.replaceAll("-", " ")} · provenance {challenge.provenance}
       </p>
       {challenge.missingEvidence && <p>Missing evidence: {challenge.missingEvidence}</p>}
       {challenge.evidenceIds.length > 0 && (
@@ -177,9 +176,6 @@ function ReproducerState({
       <details>
         <summary>Show planned method and record links</summary>
         <p>{experiment.method}</p>
-        <p>
-          <code>{experiment.id}</code> → challenge <code>{experiment.challengeId}</code>
-        </p>
         <EvidenceLinks report={report} ids={experiment.evidenceIds} onEvidence={onEvidence} />
       </details>
     </div>
@@ -248,7 +244,7 @@ function ClaimChain({ claim, report, onEvidence, onFinding }: Props & { claim: C
       <header className="tribunal-claim-header">
         <div>
           <div className="tribunal-claim-meta">
-            <code>{claim.id}</code>
+            <span>{claimLabel(report, claim.id)}</span>
             <ProvenanceBadge value={claim.provenance} />
             <span>
               {hasAttachedTribunal ? "TribunalRun claim" : recordKind(report.summary.source)}
@@ -262,8 +258,7 @@ function ClaimChain({ claim, report, onEvidence, onFinding }: Props & { claim: C
             className="tribunal-finding-link"
             onClick={() => onFinding(finding.id)}
           >
-            {live ? `Problem ${report.findings.indexOf(finding) + 1}` : `Finding ${finding.id}`}{" "}
-            <ArrowUpRight size={14} />
+            {`Problem ${report.findings.indexOf(finding) + 1}`} <ArrowUpRight size={14} />
           </button>
         )}
       </header>
@@ -509,7 +504,9 @@ export function TribunalView({ report, onEvidence, onFinding, initialClaimId }: 
       <section className="tribunal-index" aria-label="Tribunal claim index">
         <div>
           <span className="section-kicker">On the record</span>
-          <strong>{selectedClaim ? `Claim ${selectedClaim.id}` : "No selected claim"}</strong>
+          <strong>
+            {selectedClaim ? claimLabel(report, selectedClaim.id) : "No selected claim"}
+          </strong>
         </div>
         <span>
           {claims.length} claim{claims.length === 1 ? "" : "s"} ·{" "}
@@ -532,7 +529,7 @@ export function TribunalView({ report, onEvidence, onFinding, initialClaimId }: 
                   onClick={() => setSelectedClaimId(claim.id)}
                 >
                   <span>
-                    <code>{claim.id}</code>
+                    <span>{claimLabel(report, claim.id)}</span>
                     <strong>
                       {finding && live
                         ? plainFinding(report, finding).title
