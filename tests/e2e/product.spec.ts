@@ -213,7 +213,7 @@ test("Veyra opens the themed demo from the landing page without the retired film
 }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Veyra/);
-  await expect(page.getByText("Veyra demo", { exact: true })).toBeAttached();
+  await expect(page.getByRole("banner").getByText("Veyra demo", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Checks up to 8 pages.", { exact: false })).toBeVisible();
   await expect(page.getByRole("link", { name: "Watch the Veyra film" })).toHaveCount(0);
   for (const path of [

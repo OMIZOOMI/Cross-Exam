@@ -17,12 +17,6 @@ export default function HomePage() {
             <a href="#showcase">Demo</a>
           </nav>
           <div className="header-actions">
-            <span
-              className="header-status"
-              title="Illustrative demo data. No live requests or automatic fixes."
-            >
-              <span className="status-dot" aria-hidden="true"></span> Veyra demo{" "}
-            </span>
             <a className="header-cta" href="#scan">
               Scan a website <span aria-hidden="true">↗</span>
             </a>
@@ -803,6 +797,7 @@ export default function HomePage() {
         <footer className="app-footer">
           <span>VEYRA</span>
           <span>Evidence over assumption</span>
+          <span className="footer-credit">Made by Om Sawkare</span>
         </footer>
       </div>
     </VeyraHomeScene>

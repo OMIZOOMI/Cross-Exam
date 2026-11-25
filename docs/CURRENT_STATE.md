@@ -1,5 +1,20 @@
 # Current state
 
+## Homepage scan form and footer (2026-11-26)
+
+Typed website addresses use dark text. The scan box has one focus outline, and
+the Scan website button keeps its own keyboard focus outline. The header no
+longer shows the Veyra demo badge. The footer centers the tagline and adds a
+quiet “Made by Om Sawkare” credit. The three footer labels stack and center on
+phones.
+
+The production build and workspace type checking passed. The scan box, header,
+and footer were checked visually in desktop Chrome at 1280 px and phone-sized
+WebKit at 390 px. Changed-file Biome and Git diff checks passed. The broader
+browser run passed 85 of 88 cases. All four homepage profiles passed after making
+the keyboard-focus assertion independent of platform tab preferences. The one
+mobile WebKit live-report test that timed out passed on its own rerun.
+
 ## Launch QA fixes (2026-11-26)
 
 Live findings wrap long addresses, identify the original link when a redirect

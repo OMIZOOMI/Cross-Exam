@@ -15,6 +15,9 @@ test("the approved homepage preserves the interactive demo and separates it from
   await expect(
     page.getByRole("heading", { name: "Your website says it works. Prove it." }),
   ).toBeVisible();
+  const footer = page.getByRole("contentinfo");
+  await expect(footer.getByText("Evidence over assumption")).toBeVisible();
+  await expect(footer.getByText("Made by Om Sawkare")).toBeVisible();
   await expect(home.locator(".hero-atmosphere")).toBeVisible();
   await expect(home.locator(".layer")).toHaveCount(5);
   await expect(page.locator("video")).toHaveCount(0);
@@ -48,10 +51,25 @@ test("the approved homepage preserves the interactive demo and separates it from
     .last()
     .click();
   await expect(page).toHaveURL(/#scan$/);
-  await expect(page.getByLabel("Website URL")).toBeVisible();
+  const input = page.getByLabel("Website URL");
+  const form = page.locator("#scan form");
+  await expect(input).toBeVisible();
+  await input.fill("example.com");
+  const headingColor = await page
+    .getByRole("heading", { name: "Scan a website" })
+    .evaluate((heading) => getComputedStyle(heading).color);
+  await expect(input).toHaveCSS("color", headingColor);
+  await expect(input).toHaveCSS("outline-style", "none");
+  await expect(form).toHaveCSS("outline-style", "solid");
+  const scanButton = form.getByRole("button", { name: "Scan website" });
+  await input.press("ArrowRight");
+  await scanButton.focus();
+  await expect(scanButton).toBeFocused();
+  await expect(scanButton).toHaveCSS("outline-style", "solid");
+  await expect(form).toHaveCSS("outline-style", "none");
   await page.getByRole("link", { name: "See the demo case" }).click();
   await expect(page).toHaveURL(/\/report\/demo$/);
-  await expect(page.getByText("SYNTHETIC FIXTURE", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("This example uses sample data.", { exact: false })).toBeVisible();
   await page.goBack();
   await expect(home).toHaveAttribute("data-scene-ready", "true");
   await expect(home.locator(".trace-path")).toHaveCount(16);

@@ -2218,13 +2218,6 @@ html:has(.veyra-home),
   .veyra-home .camera-help {
     display: none;
   }
-  .veyra-home .app-footer {
-    gap: 10px;
-    font-size: 7px;
-  }
-  .veyra-home .app-footer span:nth-child(2) {
-    display: none;
-  }
 }
 
 @media (max-width: 520px) {
@@ -2254,11 +2247,6 @@ html:has(.veyra-home),
   }
   .veyra-home .camera-controls .control-button {
     width: 100%;
-  }
-  .veyra-home .app-footer span:last-child {
-    max-width: 130px;
-    text-align: right;
-    line-height: 1.35;
   }
 }
 
@@ -6462,8 +6450,6 @@ html:has(.veyra-home) {
   padding-bottom: 66px;
 }
 
-/* Three equal footer columns: the middle phrase is mathematically centered. */
-
 .veyra-home .app-footer {
   position: relative;
   z-index: 2;
@@ -6475,14 +6461,18 @@ html:has(.veyra-home) {
   align-items: center;
   gap: 0;
   width: 100%;
+  font-size: 13px;
   text-align: center;
 }
 
 .veyra-home .app-footer span:first-child {
   text-align: left;
 }
-.veyra-home .app-footer span:last-child {
+.veyra-home .footer-credit {
+  font-weight: 500;
+  letter-spacing: normal;
   text-align: right;
+  text-transform: none;
 }
 
 /* Remaining micro-copy uses the same smooth UI face; code samples stay coded. */
@@ -7212,12 +7202,11 @@ html:has(.veyra-home) {
     gap: 9px;
     min-height: 0;
     padding: 22px 0 6px;
-    font-size: 9px;
     text-align: center;
   }
 
   .veyra-home .app-footer span:first-child,
-  .veyra-home .app-footer span:last-child {
+  .veyra-home .footer-credit {
     text-align: center;
   }
 }
@@ -8447,23 +8436,32 @@ html:has(.veyra-home) {
 }
 
 .veyra-home .veyra-scan .scan-form {
+  color-scheme: light;
   background: white;
   border-radius: 12px;
 }
 
-.veyra-home .veyra-scan .scan-form:focus-within {
-  outline: 2px solid var(--premium-blue);
-  outline-offset: 2px;
+.veyra-home .veyra-scan .scan-form:has(input:focus) {
+  border-color: var(--hero-blue-deep);
+  outline: 2px solid var(--hero-blue-deep);
+  outline-offset: -1px;
+}
+
+.veyra-home .veyra-scan .scan-form input:focus-visible {
+  outline: none;
 }
 
 .veyra-home .veyra-scan .scan-form input {
   min-width: 0;
+  color: var(--premium-ink);
   font-size: 1rem;
 }
+
 .veyra-home .veyra-scan .scan-form .button {
   min-height: 48px;
   border-radius: 8px;
   background: var(--hero-blue-deep);
+  border-color: var(--hero-blue-deep);
   color: white;
   font-size: 1rem;
 }
