@@ -1,5 +1,19 @@
 # Current state
 
+## Approved homepage on the Render branch (2026-11-25)
+
+The app homepage now uses the approved white-and-blue V1 design and its
+five-stage scroll demo. “Scan a website” opens the existing live scan form.
+The interactive layers use illustrative data, and the sample report remains
+available at `/report/demo`. The previous cinematic page and video are
+available at `/film`.
+
+The production build, changed-file Biome checks, and 51 focused scan, report,
+and film unit tests passed. All 100 homepage, live report, sample report, and
+film browser checks passed against the production build in desktop and phone
+Chrome and WebKit. The homepage and scroll scene were also checked visually in
+desktop Chrome and phone-sized WebKit.
+
 ## Single-instance Render preparation (2026-11-24)
 
 The Node web app can opt into one exact public HTTPS origin with
@@ -18,8 +32,10 @@ invalid-body and private-destination input, and completed one real read-only
 scan of the owned Pricing site. Its two-page report was stored in the temporary
 directory and opened successfully. Both deployment traces exclude local reports.
 
-Next: deploy the reviewed branch with the [Render checklist](DEPLOY_RENDER.md)
-and verify a first scan on the assigned public address.
+Render reported the first deployment live at `https://veyra-4mu5.onrender.com`
+on commit `57e98c4`, which used the previous homepage. The approved homepage
+update is reviewed separately. See the [Render checklist](DEPLOY_RENDER.md)
+for the service settings and public smoke check.
 
 ## Simpler live overview and WebKit check (2026-11-24)
 

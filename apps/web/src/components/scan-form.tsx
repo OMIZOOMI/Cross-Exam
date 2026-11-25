@@ -29,7 +29,7 @@ export function ScanForm({ repeat }: { repeat?: { targetUrl: string; reportId: s
     }
     setInvalid(false);
     setPending(true);
-    setFeedback("Reading website evidence locally…");
+    setFeedback("Checking your website…");
     const active = new AbortController();
     controller.current = active;
     try {
@@ -105,7 +105,7 @@ export function ScanForm({ repeat }: { repeat?: { targetUrl: string; reportId: s
           required
         />
         <button className="button button-primary" type="submit" disabled={pending}>
-          {pending ? "Investigating locally…" : "Investigate locally"} <ArrowRight size={17} />
+          {pending ? "Scanning…" : "Scan website"} <ArrowRight size={17} />
         </button>
       </form>
       {feedback ? (
@@ -125,7 +125,7 @@ export function ScanForm({ repeat }: { repeat?: { targetUrl: string; reportId: s
       ) : (
         <p id="scan-note" className="form-note">
           <span className="tiny-dot" />
-          Read-only HTML investigation · Up to 8 pages · Browser and AI analysis unavailable
+          Checks up to 8 pages. Browser and AI analysis are unavailable.
         </p>
       )}
     </div>

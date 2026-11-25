@@ -18,10 +18,10 @@ test("URL form validates, calls only the local API, and handles scan failure", a
   await expect(
     page.getByRole("heading", { name: "Your website says it works. Prove it." }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Investigate locally" }).click();
+  await page.getByRole("button", { name: "Scan website" }).click();
   await expect(page.getByRole("status")).toContainText("Enter a full HTTP or HTTPS URL");
   await page.getByLabel("Website URL").fill("https://example.com");
-  await page.getByRole("button", { name: "Investigate locally" }).click();
+  await page.getByRole("button", { name: "Scan website" }).click();
   await expect(page.getByRole("status")).toContainText("could not be investigated");
   expect(externalRequests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
@@ -179,12 +179,12 @@ test("unsafe URL feedback is local and does not disclose internal policy details
     "file:///etc/passwd",
   ]) {
     await page.getByLabel("Website URL").fill(url);
-    await page.getByRole("button", { name: "Investigate locally" }).click();
+    await page.getByRole("button", { name: "Scan website" }).click();
     await expect(page.getByRole("status")).toHaveText("This destination cannot be scanned.");
     await expect(page.getByLabel("Website URL")).toHaveAttribute("aria-invalid", "true");
   }
   await page.getByLabel("Website URL").fill("https://public-looking.com");
-  await page.getByRole("button", { name: "Investigate locally" }).click();
+  await page.getByRole("button", { name: "Scan website" }).click();
   await expect(page.getByRole("status")).toContainText("could not be investigated");
   expect(targetRequests).toEqual([]);
 });
@@ -192,13 +192,11 @@ test("unsafe URL feedback is local and does not disclose internal policy details
 test("Veyra landing keeps demo navigation and honest capability scope", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Veyra/);
-  await expect(page.locator(".stage182-hero-caption")).toContainText("synthetic");
-  await page.getByText("Read the film · text equivalent", { exact: true }).click();
-  await expect(page.locator(".stage182-film-transcript")).toContainText(
-    "No code is automatically changed",
-  );
-  await expect(page.locator(".stage182-film-transcript")).toContainText(
-    "Public browser scanning and real providers remain unavailable",
+  await expect(page.getByText("Veyra demo", { exact: true })).toBeAttached();
+  await expect(page.getByText("Checks up to 8 pages.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Watch the Veyra film" })).toHaveAttribute(
+    "href",
+    "/film",
   );
   await page.getByRole("link", { name: "See the demo case", exact: true }).click();
   await expect(page).toHaveURL(/\/report\/demo$/);

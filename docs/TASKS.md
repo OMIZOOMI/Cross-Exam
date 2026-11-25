@@ -7,7 +7,8 @@ Status: `[x]` done, `[ ]` pending. Days are sequencing guidance, not delivery pr
 - [x] Make live report text larger and rounder and keep full page names visible in the timing chart. Verified at desktop and phone widths.
 - [x] Fit the live map to its panel, render timing bars when styles fail, and condense coverage into plain language with optional technical details. Verified in Chrome and WebKit.
 - [x] Prepare the single-instance Render deployment and verify a live scan on a local production server with public settings.
-- [ ] Deploy the reviewed branch on Render and verify the first scan on the assigned HTTPS address.
+- [x] Bring the approved white-and-blue V1 homepage into the app with the existing live scan form and a separate film page.
+- [ ] Verify the approved homepage and a live scan on Render’s assigned HTTPS address.
 - [ ] Run a guided scan with a tester who owns the target site.
 
 ## Veyra V2 — Inside the website

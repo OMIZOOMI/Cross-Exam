@@ -7,7 +7,7 @@ test("Veyra video landing starts on a poster without downloading the film", asyn
   page.on("request", (request) => {
     if (request.url().endsWith(".mp4")) media.push(request.url());
   });
-  await page.goto("/");
+  await page.goto("/film");
   const video = page.locator(".stage182-film video");
   await expect(video).toHaveAttribute("preload", "none");
   await expect(video).toHaveAttribute("poster", "/media/veyra-product-film-poster.webp");
@@ -23,7 +23,7 @@ test("Veyra video landing plays the real MP4, pauses, ends and explicitly replay
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/film");
   await page.locator(".stage182-film-play").click();
   const video = page.locator(".stage182-film video");
   await expect
@@ -63,7 +63,7 @@ test("Veyra video landing respects reduced motion and a preference change during
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
+  await page.goto("/film");
   const surface = page.locator(".stage182-film-surface"),
     video = surface.locator("video");
   await expect(surface).toHaveAttribute("data-reduced-motion", "true");
@@ -90,10 +90,8 @@ test("Veyra video landing keeps cinematic scale, CTAs and intentional mobile fra
     [390, 844],
   ] as const) {
     await page.setViewportSize({ width, height });
-    await page.goto("/");
-    await expect(
-      page.getByRole("button", { name: "Investigate locally", exact: true }),
-    ).toBeInViewport();
+    await page.goto("/film");
+    await expect(page.getByRole("button", { name: "Scan website", exact: true })).toBeInViewport();
     await expect(
       page.getByRole("link", { name: "See the demo case", exact: true }),
     ).toBeInViewport();
@@ -119,7 +117,7 @@ test("Veyra video landing keeps cinematic scale, CTAs and intentional mobile fra
 test("Veyra video landing offers keyboard playback and a complete text alternative", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/film");
   const button = page.locator(".stage182-film-play");
   await button.focus();
   await expect(button).toHaveCSS("outline-style", "solid");
@@ -136,7 +134,7 @@ test("Veyra video landing handles unavailable media without changing admission",
   page,
 }) => {
   await page.route("**/media/veyra-product-film.mp4", (route) => route.abort());
-  await page.goto("/");
+  await page.goto("/film");
   await page.locator(".stage182-film-play").click();
   await expect(page.getByRole("status")).toContainText("Playback is unavailable");
   await expect(

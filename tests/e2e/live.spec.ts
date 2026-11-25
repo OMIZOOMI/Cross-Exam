@@ -19,6 +19,7 @@ test.afterEach(async () => {
 
 test("local scan submission shows honest waiting then renders a controlled live-mode report", async ({
   page,
+  baseURL,
 }) => {
   let complete: () => void = () => {};
   const gate = new Promise<void>((resolve) => {
@@ -26,7 +27,7 @@ test("local scan submission shows honest waiting then renders a controlled live-
   });
   const external: string[] = [];
   page.on("request", (request) => {
-    if (!request.url().startsWith("http://127.0.0.1:3000/") && !request.url().startsWith("data:"))
+    if (!request.url().startsWith(`${baseURL}/`) && !request.url().startsWith("data:"))
       external.push(request.url());
   });
   await page.route("**/api/scans", async (route) => {
@@ -40,9 +41,9 @@ test("local scan submission shows honest waiting then renders a controlled live-
   });
   await page.goto("/");
   await page.getByLabel("Website URL").fill("https://example.com");
-  await page.getByRole("button", { name: "Investigate locally" }).click();
-  await expect(page.getByRole("status")).toContainText("Reading website evidence locally");
-  await expect(page.getByRole("button", { name: "Investigating locally…" })).toBeDisabled();
+  await page.getByRole("button", { name: "Scan website" }).click();
+  await expect(page.getByRole("status")).toContainText("Checking your website");
+  await expect(page.getByRole("button", { name: "Scanning…" })).toBeDisabled();
   complete();
   await expect(page).toHaveURL(`/report/${id}`);
   await expect(page.getByText("LIVE INVESTIGATION", { exact: true })).toBeVisible();
@@ -131,10 +132,10 @@ test("cancellation resets the form without fabricating a completed report", asyn
   });
   await page.goto("/");
   await page.getByLabel("Website URL").fill("https://example.com");
-  await page.getByRole("button", { name: "Investigate locally" }).click();
+  await page.getByRole("button", { name: "Scan website" }).click();
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Investigation cancelled");
-  await expect(page.getByRole("button", { name: "Investigate locally" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Scan website" })).toBeEnabled();
   finish();
   await expect(page).toHaveURL("/");
 });
@@ -174,14 +175,18 @@ test("live download chart keeps long paths and exact timings readable", async ({
     }),
   ).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
 
+test("live download chart retains labels and bars when stylesheets fail", async ({ page }) => {
   let blockedStylesheets = 0;
   await page.route(/\.css(?:\?|$)/, (route) => {
     blockedStylesheets++;
     return route.abort();
   });
-  await page.reload();
+  await page.goto(`/report/${id}`);
   expect(blockedStylesheets).toBeGreaterThan(0);
+  const chart = page.getByRole("list", { name: "How long each page took to download" });
+  const home = chart.getByRole("listitem").filter({ hasText: "Homepage" });
   await expect(home).toContainText("Homepage 321 ms");
   await expect(home.locator("svg")).toBeVisible();
   await expect(home.locator("svg > rect").last()).toHaveAttribute("fill", "#5477b0");
@@ -242,9 +247,10 @@ test("scan limitations have a short summary and optional readable details", asyn
 
 test("real API rejects unsafe and cross-origin submissions without a target request", async ({
   request,
+  baseURL,
 }) => {
   const unsafe = await request.post("/api/scans", {
-    headers: { Origin: "http://127.0.0.1:3000" },
+    headers: { Origin: new URL("/api/scans", baseURL).origin },
     data: { targetUrl: "http://127.0.0.1" },
   });
   expect(unsafe.status()).toBe(400);
