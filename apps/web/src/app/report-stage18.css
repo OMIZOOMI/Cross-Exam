@@ -1130,13 +1130,6 @@
   }
 }
 
-.live-report-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 8px 12px;
-}
 .report-rescan {
   max-width: 20rem;
 }
@@ -1256,11 +1249,4 @@
 
 .report-live .network-note > * {
   min-width: 0;
-}
-
-@media (max-width: 760px) {
-  .live-report-actions {
-    justify-content: flex-start;
-    margin-top: 0.85rem;
-  }
 }

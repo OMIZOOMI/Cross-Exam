@@ -1,4 +1,4 @@
-:is(.veyra-home, .report-live, body:has(.report-live)) {
+:is(.veyra-home, .veyra-report, body:has(.veyra-report)) {
   --veyra-paper: #f5f6fa;
   --veyra-white: #fff;
   --veyra-ink: #080a16;

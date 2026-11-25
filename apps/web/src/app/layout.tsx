@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import "./editorial.css";
-import "./landing-stage18.css";
-import "./landing-stage181.css";
-import "./landing-stage182.css";
 import "./report-stage18.css";
 import "./veyra-theme.css";
-import "./report-live.css";
+import "./veyra-report.css";
 
 export const metadata: Metadata = {
   title: {

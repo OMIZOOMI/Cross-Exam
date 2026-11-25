@@ -1,5 +1,20 @@
 # Current state
 
+## Demo report and film removal (2026-11-25)
+
+The demo case uses the live report’s white-and-blue typography, navigation,
+and five evidence groups. It still contains 12 synthetic records, its existing
+findings and tribunal example, and the sample-data disclosure and export.
+The homepage film link, old page, video, poster, and dedicated film tooling
+were removed from the current app.
+
+Production build, workspace typecheck, 21 focused unit tests, changed-file
+Biome, and diff checks passed. The homepage and report matrix passed 80 tests
+in desktop and mobile Chrome and WebKit. After the narrow-screen spacing
+fix, all eight focused demo checks passed on the same browser matrix. The
+old page and both media URLs returned 404, and the demo was visually checked
+on desktop and phone, with a 320 px overflow check for the Tribunal tab.
+
 ## Live investigation report styling (2026-11-25)
 
 The live report shares the approved homepage’s white-and-blue tokens and
@@ -7,7 +22,7 @@ wordmark. The Overview uses a metrics strip, Findings opens to Observed and
 Recommended fix, and Evidence groups existing records into the five numbered
 collection layers. Search, filters, linked details, repeat scans, and exports
 use the existing report data. Empty layers explain what was not captured.
-The cinematic landing, sample report, and scanner keep their existing behavior.
+That change focused on live reports and kept the existing scanner behavior.
 
 Checked all three tabs using the saved local portfolio report with 22 records
 in desktop Chrome and phone-sized WebKit, including layout at 320 px, focus
@@ -22,8 +37,8 @@ The report redesign is available in the local production preview for review.
 The app homepage now uses the approved white-and-blue V1 design and its
 five-stage scroll demo. “Scan a website” opens the existing live scan form.
 The interactive layers use illustrative data, and the sample report remains
-available at `/report/demo`. The previous cinematic page and video are
-available at `/film`.
+available at `/report/demo`. That deployment moved the previous cinematic
+page and video to `/film`, which was later retired.
 
 The production build, changed-file Biome checks, and 51 focused scan, report,
 and film unit tests passed. All 100 homepage, live report, sample report, and

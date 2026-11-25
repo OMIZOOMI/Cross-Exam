@@ -15,7 +15,7 @@ import { ReportOverview } from "./report-overview";
 import { ReportSolutions } from "./report-solutions";
 import { ScanForm } from "./scan-form";
 import { TribunalView } from "./tribunal-view";
-import { Badge, Brand, ProvenanceKey, VeyraWordmark } from "./ui";
+import { Badge, ProvenanceKey, VeyraWordmark } from "./ui";
 
 const SiteGraph = dynamic(() => import("./site-graph"), {
   ssr: false,
@@ -111,16 +111,12 @@ export function ReportView({
   }
 
   return (
-    <div className={`report-document report-stage18${live ? " report-live" : ""}`}>
+    <div className={`report-document report-stage18 veyra-report${live ? " report-live" : ""}`}>
       <header className="report-masthead report-stage18-masthead">
-        {live ? (
-          <Link className="brand-lockup" href="/" aria-label="Veyra home">
-            <VeyraWordmark />
-          </Link>
-        ) : (
-          <Brand />
-        )}
-        <div className={live ? "report-breadcrumb" : undefined}>
+        <Link className="brand-lockup" href="/" aria-label="Veyra home">
+          <VeyraWordmark />
+        </Link>
+        <div className="report-breadcrumb">
           <Link href="/">Workspace</Link>
           <ChevronRight size={13} />
           <span>
@@ -167,22 +163,17 @@ export function ReportView({
               </span>
             </div>
           </div>
-          {live ? (
-            <div className="live-report-actions">
+          <div className="report-actions">
+            {live && (
               <ScanForm
                 repeat={{ targetUrl: report.summary.targetUrl, reportId: report.summary.id }}
               />
-              <button type="button" className="button button-secondary" onClick={exportReport}>
-                <Download size={15} />
-                Export investigation
-              </button>
-            </div>
-          ) : (
+            )}
             <button type="button" className="button button-secondary" onClick={exportReport}>
               <Download size={15} />
-              Export fixture
+              {live ? "Export investigation" : "Export fixture"}
             </button>
-          )}
+          </div>
         </header>
         <span className="sr-only" role="status">
           {exported
@@ -208,7 +199,6 @@ export function ReportView({
                 {id === "tribunal" && <span>{reportClaims(report).length}</span>}
               </button>
             ))}
-          {!live && <span>Evidence, with limits.</span>}
         </nav>
         {investigation && (
           <nav className="investigation-subnav" aria-label="Investigation details">
@@ -355,15 +345,6 @@ export function ReportView({
                   ? "These deterministic rules describe the recorded HTTP responses and returned HTML. They do not establish browser behavior or a complete security/accessibility assessment."
                   : "Three findings are confirmed in this example. The two uncertain claims stay visible, with their unanswered questions."}
               </p>
-              {!live && (
-                <div className="finding-columns" aria-hidden="true">
-                  <span>Severity</span>
-                  <span>Finding / affected routes</span>
-                  <span>Evidence type</span>
-                  <span>Verdict</span>
-                  <span />
-                </div>
-              )}
               {report.findings
                 .filter((finding) => severity === "all" || finding.severity === severity)
                 .map(findingRow)}

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ScanForm } from "../components/scan-form";
 import { VeyraWordmark } from "../components/ui";
 import { VeyraHomeScene } from "../components/veyra-home/scene";
@@ -804,7 +803,6 @@ export default function HomePage() {
         <footer className="app-footer">
           <span>VEYRA</span>
           <span>Evidence over assumption</span>
-          <Link href="/film">Watch the Veyra film</Link>
         </footer>
       </div>
     </VeyraHomeScene>

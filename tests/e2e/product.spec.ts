@@ -54,6 +54,7 @@ test("fixture investigation exposes evidence and uncertainty", async ({ page }) 
   await expect(page.getByText("No evidence matches", { exact: false })).toBeVisible();
   await page.getByRole("button", { name: "Clear search", exact: true }).click();
   await expect(page.locator(".evidence-record")).toHaveCount(12);
+  await expect(page.locator(".evidence-layer")).toHaveCount(5);
   expect(errors).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
@@ -189,17 +190,35 @@ test("unsafe URL feedback is local and does not disclose internal policy details
   expect(targetRequests).toEqual([]);
 });
 
-test("Veyra landing keeps demo navigation and honest capability scope", async ({ page }) => {
+test("Veyra opens the themed demo from the landing page without the retired film", async ({
+  page,
+  request,
+}) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Veyra/);
   await expect(page.getByText("Veyra demo", { exact: true })).toBeAttached();
   await expect(page.getByText("Checks up to 8 pages.", { exact: false })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Watch the Veyra film" })).toHaveAttribute(
-    "href",
+  await expect(page.getByRole("link", { name: "Watch the Veyra film" })).toHaveCount(0);
+  for (const path of [
     "/film",
-  );
+    "/media/veyra-product-film.mp4",
+    "/media/veyra-product-film-poster.webp",
+  ]) {
+    expect((await request.get(path)).status()).toBe(404);
+  }
+  const font = await page
+    .locator(".veyra-home")
+    .evaluate((home) => getComputedStyle(home).fontFamily);
   await page.getByRole("link", { name: "See the demo case", exact: true }).click();
   await expect(page).toHaveURL(/\/report\/demo$/);
+  await expect(page.getByRole("link", { name: "Veyra home" }).locator(".brand-mark")).toBeVisible();
+  await expect(page.locator(".report-document")).toHaveCSS("font-family", font);
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(245, 246, 250)");
+  await expect(page.getByRole("button", { name: "Export fixture" })).toHaveCSS(
+    "border-top-left-radius",
+    "999px",
+  );
+  await expect(page.getByText("SYNTHETIC FIXTURE", { exact: true })).toBeVisible();
 });
 
 test("fixture Tribunal view exposes the chain and artifact boundary", async ({ page }) => {
@@ -219,6 +238,11 @@ test("fixture Tribunal view exposes the chain and artifact boundary", async ({ p
     }),
   ).toBeVisible();
   await expect(page.locator(".tribunal-claim")).toHaveCount(1);
+  const viewport = page.viewportSize();
+  if (viewport && viewport.width <= 480) {
+    await page.setViewportSize({ ...viewport, width: 320 });
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.locator(".tribunal-claim")).toContainText("not an observed reproduction");
   await page
     .getByRole("navigation", { name: "Claims in this record" })

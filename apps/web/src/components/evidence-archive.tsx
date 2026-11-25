@@ -93,17 +93,15 @@ export function EvidenceArchive({
           .toLowerCase()
           .includes(query.toLowerCase()),
   );
-  const layers = live
-    ? evidenceLayers
-        .map((layer, index) => ({
-          ...layer,
-          number: String(index + 1).padStart(2, "0"),
-          items: records.filter(
-            (item) => (item.code ? layersByCode[item.code] : layersByKind[item.kind]) === layer.id,
-          ),
-        }))
-        .filter((layer) => layer.items.length || (!search && kind === "all"))
-    : [{ id: "fixture", number: "", name: "", empty: "", items: records }];
+  const layers = evidenceLayers
+    .map((layer, index) => ({
+      ...layer,
+      number: String(index + 1).padStart(2, "0"),
+      items: records.filter(
+        (item) => (item.code ? layersByCode[item.code] : layersByKind[item.kind]) === layer.id,
+      ),
+    }))
+    .filter((layer) => layer.items.length || (!search && kind === "all"));
   function clear() {
     onQuery("");
     setKind("all");
@@ -114,13 +112,7 @@ export function EvidenceArchive({
         <div>
           <p className="section-kicker">The evidence archive</p>
           <h2>
-            {live ? (
-              <>
-                Every conclusion starts with <em>evidence.</em>
-              </>
-            ) : (
-              "Every conclusion starts somewhere."
-            )}
+            Every conclusion starts with <em>evidence.</em>
           </h2>
         </div>
         <span className="archive-count">
@@ -175,13 +167,6 @@ export function EvidenceArchive({
           </select>
         </label>
       </div>
-      {!live && (
-        <div className="archive-columns" aria-hidden="true">
-          <span>Record / type</span>
-          <span>Observation / source</span>
-          <span>Captured / referenced claims</span>
-        </div>
-      )}
       <div className="evidence-list">
         {layers.map((layer) => {
           const rows = layer.items.map((item) => {
@@ -196,7 +181,6 @@ export function EvidenceArchive({
                   <code>{labels.get(item.id)}</code>
                   {status && <code className="evidence-status">{status}</code>}
                   <ProvenanceBadge value={item.provenance} />
-                  {!live && <span>{item.kind}</span>}
                 </div>
                 <div className="evidence-observation">
                   <h3>{check?.question ?? item.title}</h3>
@@ -281,7 +265,6 @@ export function EvidenceArchive({
               </article>
             );
           });
-          if (!live) return rows;
           return (
             <section
               className="evidence-layer"
