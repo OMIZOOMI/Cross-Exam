@@ -1,5 +1,25 @@
 # Current state
 
+## Launch QA fixes (2026-11-26)
+
+Live findings wrap long addresses, identify the original link when a redirect
+ends at a missing page, and put the missing address in the problem title.
+Repeat scans acknowledge individual repaired links while keeping unresolved
+problems visible. The Overview shows when the page cap left eligible addresses
+unchecked. Older reports with the existing limit note still show a coverage
+notice. The scanner still uses the eight-page and 45-second limits.
+
+Cancelling before the scan finishes skips saving the report. A partial result
+from the scan deadline can still be saved. The homepage accepts bare domains
+and trims surrounding spaces before the existing destination checks. It points
+out unsupported query text. Retry messages distinguish an active scan from the
+one-minute limit, and a missing or expired report offers a new scan.
+
+Local verification passed for type checking, the production build, changed-file
+Biome checks, and Git diff checks. Security passed 288 tests, the scanner passed
+95, and web unit tests passed 63. Chrome and WebKit passed 84 browser tests
+across desktop (1280 px) and mobile (390 px), including 48 live report tests.
+
 ## Report readability (2026-11-25)
 
 The demo report displays stable labels such as Evidence 1, Problem 1, and

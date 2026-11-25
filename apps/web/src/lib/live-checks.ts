@@ -204,26 +204,82 @@ function linkingPages(report: ScanReport, page: Page) {
   return report.pages.filter((item) => item.linksTo.includes(page.id));
 }
 
+function addressLabel(address: string) {
+  return pageLabel(new URL(address).pathname);
+}
+
+function brokenLinkSources(report: ScanReport, page: Page) {
+  const destination = pageAddress(report, page);
+  const candidates = new Set(
+    report.evidence
+      .filter(
+        (item) =>
+          observed(item) &&
+          item.code === "HTTP_STATUS" &&
+          item.data?.statusCode === 404 &&
+          (item.data.finalUrl ?? item.url) === destination,
+      )
+      .map((item) => item.url),
+  );
+  return linkingPages(report, page).map((source) => {
+    const links = linkData(report, pageAddress(report, source))?.internalLinks;
+    const addresses = Array.isArray(links)
+      ? links.filter((url): url is string => typeof url === "string" && candidates.has(url))
+      : candidates.size === 1 && candidates.has(destination)
+        ? [destination]
+        : [];
+    return { source, addresses: [...new Set(addresses)] };
+  });
+}
+
 export function plainFinding(report: ScanReport, finding: Finding) {
   const page = brokenPage(report, finding);
   if (page) {
-    const sources = linkingPages(report, page);
-    const pagesToEdit = [...new Set(sources.map(({ path }) => pageLabel(path)))];
-    const firstSource = sources[0];
+    const sources = brokenLinkSources(report, page);
+    const pagesToEdit = [...new Set(sources.map(({ source }) => pageLabel(source.path)))];
+    const firstSource = sources[0]?.source;
     const missingAddress = pageLabel(page.path);
+    const addressesToEdit = [
+      ...new Set(sources.flatMap(({ addresses }) => addresses.map(addressLabel))),
+    ];
+    const redirected =
+      (page.requestedUrl !== undefined && page.requestedUrl !== pageAddress(report, page)) ||
+      addressesToEdit.some((address) => address !== missingAddress);
     const result = `The website said ${missingAddress} couldn’t be found (404).`;
+    let next = "Check whether this page should exist or should send visitors to a new address.";
+    if (redirected) {
+      if (addressesToEdit.length)
+        next =
+          firstSource && sources.length === 1 && addressesToEdit.length === 1
+            ? `On ${firstSource.path === "/" ? "your homepage" : pageLabel(firstSource.path)}, update the link to ${addressesToEdit[0]}.`
+            : "Update the links listed above so they point to working pages.";
+      else if (firstSource) next = "Check the link and where it redirects.";
+    } else if (pagesToEdit.length > 1) {
+      next = `Update the link that points to ${missingAddress} on these pages: ${pagesToEdit.join(", ")}.`;
+    } else if (firstSource) {
+      next = `On ${firstSource.path === "/" ? "your homepage" : pageLabel(firstSource.path)}, update the link that points to ${missingAddress}.`;
+    }
     return {
-      title: "A page couldn’t be found",
-      result: firstSource
-        ? `Following a link from ${firstSource.path === "/" ? "the homepage" : pageLabel(firstSource.path)} led to ${missingAddress}. ${result}`
-        : result,
-      next:
-        pagesToEdit.length > 1
-          ? `Update the link that points to ${missingAddress} on these pages: ${pagesToEdit.join(", ")}.`
-          : firstSource
-            ? `On ${firstSource.path === "/" ? "your homepage" : pageLabel(firstSource.path)}, update the link that points to ${missingAddress}.`
-            : "Check whether this page should exist or should send visitors to a new address.",
-      brokenLink: { pagesToEdit, missingAddress },
+      title: `Missing page: ${missingAddress}`,
+      result: redirected
+        ? `The link redirected to ${missingAddress}, which couldn’t be found (404).`
+        : firstSource
+          ? `Following a link from ${firstSource.path === "/" ? "the homepage" : pageLabel(firstSource.path)} led to ${missingAddress}. ${result}`
+          : result,
+      next,
+      brokenLink: {
+        pagesToEdit,
+        missingAddress,
+        redirected,
+        editLinks: redirected
+          ? sources.flatMap(({ source, addresses }) =>
+              addresses.map((address) => ({
+                page: pageLabel(source.path),
+                address: addressLabel(address),
+              })),
+            )
+          : [],
+      },
     };
   }
   if (finding.title === "No Content-Security-Policy response header")
@@ -247,10 +303,30 @@ export type ScanComparison = {
   details: string[];
 };
 
-function recordedLinks(report: ScanReport, address: string) {
-  const data = report.evidence.find(
+export function pageLimitNotice(report: ScanReport) {
+  const { pages, investigation } = report;
+  const checked = `Veyra checked ${pages.length} ${pages.length === 1 ? "page" : "pages"}`;
+  const skipped = investigation?.skippedPageCandidates;
+  if (skipped) {
+    return `${checked} and skipped ${skipped} more to keep the scan fast.`;
+  }
+  if (
+    investigation?.notes.includes(
+      "Stopped at the page or time limit; some eligible links were not investigated.",
+    )
+  ) {
+    return `${checked}. Some links were left unchecked when the scan reached its limit.`;
+  }
+}
+
+function linkData(report: ScanReport, address: string) {
+  return report.evidence.find(
     (item) => observed(item) && item.code === "DOCUMENT_STRUCTURE" && item.url === address,
   )?.data;
+}
+
+function recordedLinks(report: ScanReport, address: string) {
+  const data = linkData(report, address);
   const links = data?.internalLinks;
   // A capped or deduplicated list cannot establish that an address is absent.
   if (!Array.isArray(links) || data?.internalLinkCount !== links.length) return undefined;
@@ -268,32 +344,59 @@ function respondedSuccessfully(report: ScanReport, address: string) {
   );
 }
 
-function resolvedBrokenLink(prior: ScanReport, report: ScanReport, page: Page) {
-  const address = page.requestedUrl ?? pageAddress(prior, page);
-  const missing = pageLabel(new URL(address).pathname);
-  if (respondedSuccessfully(report, address)) return [`${missing} now responds successfully.`];
-
-  const sources = linkingPages(prior, page);
-  if (!sources.length) return [];
-  const details: string[] = [];
-  for (const source of sources) {
-    const sourceAddress = pageAddress(prior, source);
-    const before = recordedLinks(prior, sourceAddress);
-    const after = recordedLinks(report, sourceAddress);
-    if (!before?.includes(address) || !after || after.includes(address)) return [];
-
-    const name = source.path === "/" ? "Your homepage" : pageLabel(source.path);
-    const added = after.filter(
-      (link): link is string => typeof link === "string" && !before.includes(link),
-    );
-    let detail = `${name} no longer links to ${missing}.`;
-    const replacement = added.length === 1 ? added[0] : undefined;
-    if (replacement && respondedSuccessfully(report, replacement)) {
-      detail += ` It now links to ${pageLabel(new URL(replacement).pathname)}, which responded successfully.`;
-    }
-    details.push(detail);
+function brokenLinkProgress(prior: ScanReport, report: ScanReport, page: Page) {
+  const destination = pageAddress(prior, page);
+  const sources = brokenLinkSources(prior, page);
+  if (
+    respondedSuccessfully(report, destination) &&
+    (!page.requestedUrl || page.requestedUrl === destination) &&
+    sources.every(
+      ({ addresses }) => addresses.length && addresses.every((address) => address === destination),
+    )
+  ) {
+    return {
+      fixed: true,
+      details: [`${addressLabel(destination)} now responds successfully.`],
+      remaining: [],
+    };
   }
-  return details;
+  const details: string[] = [];
+  const remaining = new Set<string>();
+  let fixed = sources.length > 0;
+  for (const { source, addresses } of sources) {
+    const sourceAddress = pageAddress(prior, source);
+    const before = linkData(prior, sourceAddress)?.internalLinks;
+    const after = recordedLinks(report, sourceAddress);
+    if (!addresses.length) fixed = false;
+    for (const address of addresses) {
+      if (respondedSuccessfully(report, address)) {
+        details.push(`${addressLabel(address)} now responds successfully.`);
+        continue;
+      }
+      if (after?.includes(address)) remaining.add(pageLabel(source.path));
+      if (
+        !Array.isArray(before) ||
+        !before.includes(address) ||
+        !after ||
+        after.includes(address)
+      ) {
+        fixed = false;
+        continue;
+      }
+      const name = source.path === "/" ? "Your homepage" : pageLabel(source.path);
+      const added = after.filter(
+        (link): link is string => typeof link === "string" && !before.includes(link),
+      );
+      let detail = `${name} no longer links to ${addressLabel(address)}.`;
+      const replacement =
+        recordedLinks(prior, sourceAddress) && added.length === 1 ? added[0] : undefined;
+      if (replacement && respondedSuccessfully(report, replacement)) {
+        detail += ` It now links to ${addressLabel(replacement)}, which responded successfully.`;
+      }
+      details.push(detail);
+    }
+  }
+  return { fixed, details: [...new Set(details)], remaining: [...remaining] };
 }
 
 function findingKey(finding: Finding) {
@@ -320,12 +423,18 @@ export function compareScans(prior: ScanReport, report: ScanReport): ScanCompari
   let fixed = 0;
   let unverified = false;
   for (const finding of prior.findings) {
-    if (currentKeys.has(findingKey(finding))) continue;
+    const stillFlagged = currentKeys.has(findingKey(finding));
     const missing = brokenPage(prior, finding);
-    const changes = missing ? resolvedBrokenLink(prior, report, missing) : [];
-    if (changes.length) {
+    const progress = missing && brokenLinkProgress(prior, report, missing);
+    if (progress?.details.length) {
+      details.push(...progress.details);
+      if (stillFlagged && progress.remaining.length) {
+        details.push(`Still needs attention: ${progress.remaining.join(", ")}.`);
+      }
+    }
+    if (stillFlagged) continue;
+    if (progress?.fixed) {
       fixed++;
-      details.push(...changes);
     } else {
       unverified = true;
     }

@@ -4,7 +4,7 @@ import type { ScanReport } from "@crossexam/contracts";
 import { ArrowUpRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import type { ScanComparison } from "../lib/live-checks";
+import { pageLimitNotice, type ScanComparison } from "../lib/live-checks";
 import { LiveChecks } from "./live-checks";
 import styles from "./live-report.module.css";
 
@@ -29,6 +29,7 @@ export function LiveOverview({
   const longestFetch = Math.max(1, ...chartPages.map((page) => page.durationMs));
   const problemCount = report.findings.length;
   const investigation = report.investigation;
+  const limitNotice = pageLimitNotice(report);
 
   return (
     <div className="overview-editorial">
@@ -58,6 +59,7 @@ export function LiveOverview({
               <em>flagged</em>
             </h2>
           )}
+          {limitNotice && <p className="scan-limit-notice">{limitNotice}</p>}
         </div>
         <dl className="scope-facts">
           <div>

@@ -5,14 +5,13 @@ export default function NotFound() {
   return (
     <main id="main" className="empty-page">
       <Brand />
-      <span className="eyebrow">404 / OUTSIDE THE RECORD</span>
-      <h1>This case file isn’t here.</h1>
-      <p>Return to Veyra or explore the example investigation.</p>
-      <Link className="button button-primary" href="/report/demo">
-        Open demo report
+      <h1>This page couldn’t be found.</h1>
+      <p>If you opened a report link, it may have expired. Reports are kept for up to 24 hours.</p>
+      <Link className="button button-primary" href="/#scan">
+        Start a new scan
       </Link>
-      <Link className="text-link" href="/">
-        Back to home
+      <Link className="text-link" href="/report/demo">
+        Open demo report
       </Link>
     </main>
   );

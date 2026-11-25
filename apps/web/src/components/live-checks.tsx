@@ -84,8 +84,16 @@ export function LiveChecks({
                         </p>
                       )}
                       <p>
-                        <strong>Missing address:</strong> {plain.brokenLink.missingAddress}
+                        <strong>
+                          {plain.brokenLink.redirected ? "Redirect failed at:" : "Missing address:"}
+                        </strong>{" "}
+                        {plain.brokenLink.missingAddress}
                       </p>
+                      {plain.brokenLink.editLinks.map(({ page, address }) => (
+                        <p key={JSON.stringify([page, address])}>
+                          <strong>Link to edit:</strong> {address} on {page}
+                        </p>
+                      ))}
                     </>
                   ) : (
                     <p>

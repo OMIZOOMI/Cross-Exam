@@ -132,6 +132,7 @@ describe("real collector through deterministic DNS/transport fixtures", () => {
     expect(vi.mocked(safeRequest)).toHaveBeenCalledTimes(10);
     expect(new Set(requestedPaths()).size).toBe(10);
     expect(report.investigation?.notes.join(" ")).toContain("page or time limit");
+    expect(report.investigation?.skippedPageCandidates).toBe(23);
     expect(
       vi
         .mocked(safeRequest)

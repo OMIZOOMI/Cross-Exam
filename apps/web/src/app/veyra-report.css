@@ -522,6 +522,14 @@ body:has(.veyra-report) {
   margin: 0;
 }
 
+.veyra-report :is(.finding-main, .finding-inspection > div, .case-chain li > *) {
+  min-width: 0;
+}
+
+.veyra-report .finding-row {
+  overflow-wrap: anywhere;
+}
+
 .veyra-report
   :is(.finding-meta code, .case-chain p, .finding-meta > span:first-child, .verdict-label) {
   font-size: 0.875rem;

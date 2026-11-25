@@ -7,8 +7,14 @@ type Admission = { active: boolean; starts: number[] };
 const state = globalThis as typeof globalThis & { [stateKey]?: Admission };
 state[stateKey] ??= { active: false, starts: [] };
 const admission = state[stateKey];
-const reply = (body: object, status = 200) =>
-  Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
+const reply = (body: object, status = 200, retryAfter?: number) =>
+  Response.json(body, {
+    status,
+    headers: {
+      "Cache-Control": "no-store",
+      ...(retryAfter === undefined ? {} : { "Retry-After": String(retryAfter) }),
+    },
+  });
 
 const loopback = new Set(["127.0.0.1", "localhost", "[::1]"]);
 
@@ -102,16 +108,25 @@ export async function handleScan(request: Request): Promise<Response> {
     Object.keys(body).some((key) => key !== "targetUrl")
   )
     return invalidBody("Enter a valid website URL.");
-  admission.starts = admission.starts.filter((start) => Date.now() - start < 60000);
-  if (admission.active || admission.starts.length >= 6)
+  const now = Date.now();
+  admission.starts = admission.starts.filter((start) => now - start < 60000);
+  if (admission.active)
     return reply(
-      {
-        message: `An investigation is already running or the ${publicOrigin === undefined ? "local " : ""}request limit was reached. Please try again shortly.`,
-      },
+      { message: "Another scan is running right now. Please wait a few seconds and try again." },
       429,
     );
+  if (admission.starts.length >= 6) {
+    const seconds = Math.ceil((60000 - (now - Math.min(...admission.starts))) / 1000);
+    return reply(
+      {
+        message: `Too many scans in the last minute. Please wait about ${seconds} ${seconds === 1 ? "second" : "seconds"} and try again.`,
+      },
+      429,
+      seconds,
+    );
+  }
   admission.active = true;
-  admission.starts.push(Date.now());
+  admission.starts.push(now);
   try {
     const outcome = await new DeterministicScanRunner().run(
       {
@@ -121,6 +136,7 @@ export async function handleScan(request: Request): Promise<Response> {
       },
       request.signal,
     );
+    if (request.signal.aborted) return reply({ message: "Scan cancelled." }, 422);
     if (outcome.status !== "completed")
       return reply({ message: outcome.message }, outcome.status === "rejected" ? 400 : 422);
     const id = await saveReport(outcome.report);

@@ -19,7 +19,7 @@ test("URL form validates, calls only the local API, and handles scan failure", a
     page.getByRole("heading", { name: "Your website says it works. Prove it." }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Scan website" }).click();
-  await expect(page.getByRole("status")).toContainText("Enter a full HTTP or HTTPS URL");
+  await expect(page.getByRole("status")).toContainText("Check the address and try again.");
   await page.getByLabel("Website URL").fill("https://example.com");
   await page.getByRole("button", { name: "Scan website" }).click();
   await expect(page.getByRole("status")).toContainText("could not be investigated");
@@ -119,6 +119,11 @@ test("unknown routes have a useful recovery path", async ({ page }) => {
   const response = await page.goto("/report/missing");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("link", { name: "Open demo report" })).toBeVisible();
+  await expect(page.getByText(/report link, it may have expired/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start a new scan" })).toHaveAttribute(
+    "href",
+    "/#scan",
+  );
 });
 
 test("archive filters and route context lead back to the supporting claim", async ({ page }) => {

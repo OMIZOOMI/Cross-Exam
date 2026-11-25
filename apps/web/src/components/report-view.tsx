@@ -6,7 +6,7 @@ import { ArrowUpRight, Check, ChevronRight, Download, FlaskConical, Plus } from 
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { evidenceLabel, type ScanComparison } from "../lib/live-checks";
+import { evidenceLabel, pageLimitNotice, type ScanComparison } from "../lib/live-checks";
 import { reportClaims } from "../lib/presentation";
 import { EvidenceArchive } from "./evidence-archive";
 import { FindingRow } from "./finding-row";
@@ -42,6 +42,7 @@ export function ReportView({
   comparison?: ScanComparison;
 }) {
   const live = report.summary.source === "live";
+  const limited = live && (report.summary.status === "partial" || Boolean(pageLimitNotice(report)));
   const [section, setSection] = useState<Section>("overview");
   const [query, setQuery] = useState("");
   const [severity, setSeverity] = useState("all");
@@ -146,14 +147,14 @@ export function ReportView({
             <h1>{new URL(report.summary.targetUrl).hostname}</h1>
             <div className="case-metadata">
               <code>{report.summary.targetUrl}</code>
-              <span
-                className={`status-pill ${live && report.summary.status === "partial" ? "unresolved" : "confirmed"}`}
-              >
-                <Check size={13} />
+              <span className={`status-pill ${limited ? "unresolved" : "confirmed"}`}>
+                {!limited && <Check size={13} />}
                 {live
                   ? report.summary.status === "partial"
                     ? "Partial investigation"
-                    : "Investigation complete"
+                    : limited
+                      ? "Scan limit reached"
+                      : "Investigation complete"
                   : "Demo complete"}
               </span>
               <span>

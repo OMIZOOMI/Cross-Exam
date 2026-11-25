@@ -40,7 +40,15 @@ test("local scan submission shows honest waiting then renders a controlled live-
     });
   });
   await page.goto("/");
-  await page.getByLabel("Website URL").fill("https://example.com");
+  await page.getByLabel("Website URL").fill("https//example.com");
+  await page.getByRole("button", { name: "Scan website" }).click();
+  await expect(page.getByRole("status")).toContainText("Check the address and try again.");
+  await page.getByLabel("Website URL").fill("example.com/?lang=en");
+  await page.getByRole("button", { name: "Scan website" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "Remove the question mark and everything after it",
+  );
+  await page.getByLabel("Website URL").fill("  example.com  ");
   await page.getByRole("button", { name: "Scan website" }).click();
   await expect(page.getByRole("status")).toContainText("Checking your website");
   await expect(page.getByRole("button", { name: "Scanning…" })).toBeDisabled();
@@ -83,7 +91,7 @@ test("live findings, graph, evidence and export use report data without fixture 
   await expect(inspector.getByRole("button", { name: "Show evidence for Check 2" })).toBeVisible();
   await expect(inspector).not.toContainText(internalCodes);
   await expect(page.locator(".route-table tbody tr")).toHaveCount(2);
-  await inspector.getByRole("button", { name: /Problem 1 A page couldn’t be found/ }).click();
+  await inspector.getByRole("button", { name: /Problem 1 Missing page: \/broken/ }).click();
   await expect(page.locator("#detail-F-001")).toContainText("deterministic rule");
   await expect(
     page.locator("#detail-F-001").getByRole("heading", { name: "Observed" }),
@@ -184,9 +192,17 @@ test("cancellation resets the form without fabricating a completed report", asyn
 test("live download chart keeps long paths and exact timings readable", async ({ page }) => {
   const report = liveReportFixture(id);
   const project = report.pages[1];
-  if (!project) throw new Error("Missing fixture page");
-  const longPath = `/projects/${"longprojectname".repeat(7)}`;
-  project.path = longPath;
+  const response = report.evidence[1];
+  const claim = report.claims[0];
+  const finding = report.findings[0];
+  if (!project || !response || !claim || !finding)
+    throw new Error("Missing fixture page or finding");
+  const longPath = `/projects/${"a".repeat(452)}`;
+  const address = `https://example.com${longPath}`;
+  Object.assign(project, { path: longPath, requestedUrl: address, finalUrl: address });
+  Object.assign(response, { url: address, data: { statusCode: 404, finalUrl: address } });
+  finding.affectedPaths = [longPath];
+  claim.statement = `${longPath} returned 404.`;
   await writeFile(filename, JSON.stringify(report));
   await page.goto(`/report/${id}`);
 
@@ -216,6 +232,66 @@ test("live download chart keeps long paths and exact timings readable", async ({
     }),
   ).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole("button", { name: "See details for Problem 1" }).click();
+  await expect(page.locator(".finding-detail")).toContainText(longPath);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("shows the page limit notice in the overview without opening technical details", async ({
+  page,
+}) => {
+  const report = liveReportFixture(id);
+  const home = report.pages[0];
+  if (!report.investigation || !home) throw new Error("Missing fixture data");
+  report.investigation.skippedPageCandidates = 2;
+  report.summary.status = "completed";
+  for (let n = 3; n <= 8; n++) {
+    const address = `https://example.com/page-${n}`;
+    report.pages.push({
+      ...home,
+      id: `P-${n}`,
+      path: `/page-${n}`,
+      requestedUrl: address,
+      finalUrl: address,
+      linksTo: [],
+    });
+  }
+  report.summary.pageCount = 8;
+  await writeFile(filename, JSON.stringify(report));
+  await page.goto(`/report/${id}`);
+  await expect(page.getByText("Scan limit reached", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Veyra checked 8 pages and skipped 2 more to keep the scan fast.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+});
+
+test("shows the link to edit separately from the failing redirect destination", async ({
+  page,
+}) => {
+  const report = liveReportFixture(id);
+  const broken = report.pages[1];
+  const response = report.evidence[1];
+  const homeEvidence = report.evidence[0];
+  if (!broken || !response || !homeEvidence) throw new Error("Missing fixture data");
+  const alias = "https://example.com/old-address";
+  broken.requestedUrl = alias;
+  response.url = alias;
+  report.evidence.push({
+    ...homeEvidence,
+    id: "E-004",
+    code: "DOCUMENT_STRUCTURE",
+    data: { internalLinks: [alias], internalLinkCount: 1 },
+  });
+  report.summary.evidenceCount++;
+  await writeFile(filename, JSON.stringify(report));
+  await page.goto(`/report/${id}`);
+  const card = page.locator(".live-check-issue");
+  await expect(card.getByRole("heading", { name: "Missing page: /broken" })).toBeVisible();
+  await expect(card).toContainText("Page to edit: Homepage");
+  await expect(card).toContainText("Link to edit: /old-address on Homepage");
+  await expect(card).toContainText("Redirect failed at: /broken");
 });
 
 test("live download chart retains labels and bars when stylesheets fail", async ({ page }) => {

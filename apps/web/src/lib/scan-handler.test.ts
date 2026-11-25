@@ -175,11 +175,77 @@ it("redacts DNS failures and releases the active-scan slot", async () => {
   expect(Reflect.get(globalThis, Symbol.for("crossexam.scan-admission")).active).toBe(false);
 });
 it("enforces concurrency and per-process admission bounds", async () => {
+  const now = Date.now();
+  const clock = vi.spyOn(Date, "now").mockReturnValue(now);
   const admission = Reflect.get(globalThis, Symbol.for("crossexam.scan-admission"));
-  admission.active = true;
-  expect((await handleScan(request())).status).toBe(429);
-  admission.active = false;
-  admission.starts = Array.from({ length: 6 }, () => Date.now());
-  expect((await handleScan(request())).status).toBe(429);
-  expect(safeRequest).not.toHaveBeenCalled();
+  try {
+    admission.active = true;
+    const busy = await handleScan(request());
+    expect(busy.status).toBe(429);
+    expect(await busy.json()).toEqual({
+      message: "Another scan is running right now. Please wait a few seconds and try again.",
+    });
+    admission.active = false;
+    admission.starts = [now - 45000, ...Array<number>(5).fill(now)];
+    const limited = await handleScan(request());
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("Retry-After")).toBe("15");
+    expect(await limited.json()).toEqual({
+      message: "Too many scans in the last minute. Please wait about 15 seconds and try again.",
+    });
+    expect(safeRequest).not.toHaveBeenCalled();
+    clock.mockReturnValue(now + 15000);
+    expect((await handleScan(request())).status).toBe(201);
+  } finally {
+    clock.mockRestore();
+  }
 });
+
+it.each(["cancel", "deadline"] as const)(
+  "only saves the partial report after a scan %s when the caller is still waiting",
+  async (event) => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    let notifyStarted = () => {};
+    const slowStarted = new Promise<void>((resolve) => {
+      notifyStarted = resolve;
+    });
+    const collect = vi.mocked(safeRequest).getMockImplementation();
+    if (!collect) throw new Error("Missing transport");
+    vi.mocked(safeRequest).mockImplementation(async (input, options) => {
+      if (new URL(String(input)).pathname === "/slow") {
+        notifyStarted();
+        await new Promise<void>((done) =>
+          options?.signal?.addEventListener("abort", () => done(), { once: true }),
+        );
+        return { ok: false, reason: "ABORTED", stage: "connection", history: [], hop: 0 };
+      }
+      const result = await collect(input, options);
+      return result.ok && new URL(String(input)).pathname === "/"
+        ? { ...result, body: Buffer.from('<title>Homepage</title><a href="/slow">Slow</a>') }
+        : result;
+    });
+    try {
+      const pending = handleScan(new Request(request(), { signal: controller.signal }));
+      await slowStarted;
+      if (event === "cancel") {
+        controller.abort();
+        expect((await pending).status).toBe(422);
+        expect(saveReport).not.toHaveBeenCalled();
+      } else {
+        await vi.advanceTimersByTimeAsync(45000);
+        expect((await pending).status).toBe(201);
+        expect(saveReport).toHaveBeenCalledWith(
+          expect.objectContaining({
+            summary: expect.objectContaining({ status: "partial" }),
+          }),
+        );
+      }
+      expect(Reflect.get(globalThis, Symbol.for("crossexam.scan-admission")).active).toBe(false);
+      vi.mocked(safeRequest).mockImplementation(collect);
+      expect((await handleScan(request())).status).toBe(201);
+    } finally {
+      vi.useRealTimers();
+    }
+  },
+);

@@ -187,6 +187,7 @@ export const ScanReportSchema = z
         finalOrigin: z.string().url(),
         requestCount: z.number().int().min(0).max(10),
         receivedBytes: z.number().int().nonnegative(),
+        skippedPageCandidates: z.number().int().min(1).max(100).optional(),
         limits: z.record(z.string(), z.number().nonnegative()),
         limitations: z.array(z.string()),
         notes: z.array(z.string()),

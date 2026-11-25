@@ -63,16 +63,42 @@ it("names a linking page only when the site map recorded a connection", () => {
   );
 });
 
-function observeLinks(report: ScanReport, links: string[], internalLinkCount = links.length) {
+function observeLinks(
+  report: ScanReport,
+  links: string[],
+  internalLinkCount = links.length,
+  source = "/",
+) {
   const evidence = report.evidence[0];
   if (!evidence) throw new Error("Missing homepage evidence");
   report.evidence.push({
     ...evidence,
-    id: "E-004",
+    id: `E-${report.evidence.length + 1}`,
+    url: `https://example.com${source}`,
     code: "DOCUMENT_STRUCTURE",
     data: { internalLinks: links.map((path) => `https://example.com${path}`), internalLinkCount },
   });
 }
+
+it("names the actual link to edit and the failing destination separately after a redirect", () => {
+  const report = liveReportFixture("redirect");
+  const [, broken] = report.pages;
+  const response = report.evidence[1];
+  const finding = report.findings[0];
+  if (!broken || !response || !finding) throw new Error("Missing broken link");
+  broken.requestedUrl = "https://example.com/old-address";
+  response.url = broken.requestedUrl;
+  observeLinks(report, ["/old-address"]);
+  expect(plainFinding(report, finding)).toMatchObject({
+    title: "Missing page: /broken",
+    next: "On your homepage, update the link to /old-address.",
+    brokenLink: {
+      missingAddress: "/broken",
+      redirected: true,
+      editLinks: [{ page: "Homepage", address: "/old-address" }],
+    },
+  });
+});
 
 function repeatReports() {
   const prior = liveReportFixture("first-scan");
@@ -130,6 +156,21 @@ it("recognizes the same problem even when its internal ID changes", () => {
   expect(compareScans(prior, report)).toMatchObject({
     headline: "Still 1 problem flagged",
     details: [],
+  });
+});
+
+it("reports one repaired link even while a different page still links to the same 404", () => {
+  const { prior, report } = repeatReports();
+  for (const scan of [prior, report]) {
+    const home = scan.pages[0];
+    if (!home) throw new Error("Missing homepage");
+    scan.pages.push({ ...home, id: "P-3", path: "/about", finalUrl: "https://example.com/about" });
+    observeLinks(scan, ["/broken"], 1, "/about");
+  }
+  observeLinks(report, []);
+  expect(compareScans(prior, report)).toMatchObject({
+    headline: "Still 1 problem flagged",
+    details: ["Your homepage no longer links to /broken.", "Still needs attention: /about."],
   });
 });
 

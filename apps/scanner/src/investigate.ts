@@ -453,8 +453,11 @@ export async function investigate(input: ScanInput, signal?: AbortSignal): Promi
       }
       recordPage(next.url, next.depth, result, durationMs, capturedAt);
     }
-    if (queue.length)
+    const skipped = queue.filter(({ url }) => !seen.has(url) && allowed(url)).length;
+    if (skipped) {
       note("Stopped at the page or time limit; some eligible links were not investigated.");
+      if (pageAttempts >= maxPages) info.skippedPageCandidates = skipped;
+    }
     if (combined.aborted) {
       note(
         "Investigation stopped at its deadline or cancellation; retained completed observations.",

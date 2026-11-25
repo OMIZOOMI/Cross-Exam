@@ -5,6 +5,9 @@ import { ArrowRight, Globe2, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
+const bareDomain =
+  /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?(?=[/?#]|$)/i;
+
 export function ScanForm({ repeat }: { repeat?: { targetUrl: string; reportId: string } } = {}) {
   const [url, setUrl] = useState(repeat?.targetUrl ?? "");
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -16,14 +19,17 @@ export function ScanForm({ repeat }: { repeat?: { targetUrl: string; reportId: s
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (controller.current) return;
-    const targetUrl = repeat?.targetUrl ?? url;
+    const trimmed = (repeat?.targetUrl ?? url).trim();
+    const targetUrl = bareDomain.test(trimmed) ? `https://${trimmed}` : trimmed;
     const decision = validateTargetUrl(targetUrl);
-    if (!decision.ok) {
+    if (!decision.ok || URL.parse(decision.url)?.search) {
       setInvalid(true);
       setFeedback(
-        ["INVALID_INPUT", "MALFORMED_URL"].includes(decision.reason)
-          ? "Enter a full HTTP or HTTPS URL without embedded credentials."
-          : "This destination cannot be scanned.",
+        decision.ok
+          ? "Remove the question mark and everything after it, then try again."
+          : ["INVALID_INPUT", "MALFORMED_URL", "INVALID_HOSTNAME"].includes(decision.reason)
+            ? "Check the address and try again. For example, example.com."
+            : "This destination cannot be scanned.",
       );
       return;
     }
