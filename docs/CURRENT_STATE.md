@@ -2,6 +2,10 @@
 
 ## Homepage scan form and footer (2026-11-26)
 
+The homepage headline has more space between its two lines so the “y” in
+“says” clears the dot on the “i” in “Prove it.” The production build, Biome,
+Git diff checks, and desktop Chrome and phone WebKit previews passed.
+
 The homepage gives the full stop in “Prove it.” more space. It stays on the same
 line in Chrome at 1280 and 1440 px and WebKit at 320 and 390 px. The production
 build, changed-file Biome, Git diff checks, and all four homepage browser tests
