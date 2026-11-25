@@ -4,8 +4,9 @@ services:
     runtime: node
     plan: free
     numInstances: 1
-    buildCommand: corepack enable pnpm && pnpm install --frozen-lockfile && pnpm build
-    startCommand: pnpm start:public
+    # Render's system bin directory is read-only.
+    buildCommand: mkdir -p .render-bin && corepack enable --install-directory .render-bin pnpm && export PATH="$PWD/.render-bin:$PATH" && pnpm install --frozen-lockfile && pnpm build
+    startCommand: PATH="$PWD/.render-bin:$PATH" pnpm start:public
     envVars:
       - key: NODE_VERSION
         value: "24.22.1"
