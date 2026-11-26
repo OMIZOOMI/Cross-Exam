@@ -2,6 +2,13 @@
 
 ## Homepage scan form and footer (2026-11-26)
 
+Text selection is disabled within the interactive homepage demo, including the
+layer text and inspector. Dragging still rotates the scene. The shared text
+selection highlight preserves the original text colors. Selected headline
+screenshots in Chrome and WebKit confirmed black and blue text remained intact.
+Production build, Biome, Git diff checks, and all four homepage browser tests
+passed, including desktop drag-without-selection checks.
+
 The homepage Scan a website and Explore the demo links use text-only buttons.
 The production build, Biome, Git diff checks, and all four homepage browser
 tests passed.

@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("the approved homepage preserves the interactive demo and separates it from live scans", async ({
   page,
+  isMobile,
 }) => {
   const problems: string[] = [];
   const scans: string[] = [];
@@ -25,6 +26,17 @@ test("the approved homepage preserves the interactive demo and separates it from
 
   const stage = page.locator("#showcase");
   const inspector = page.locator("#inspector");
+  for (const selector of [".stage-scroll", ".layer1-hero h2", "#inspector-title"]) {
+    await expect(home.locator(selector)).toHaveCSS("user-select", "none");
+  }
+  const colors = await home
+    .locator(".hero-line")
+    .first()
+    .evaluate((element) => ({
+      normal: getComputedStyle(element).color,
+      selected: getComputedStyle(element, "::selection").color,
+    }));
+  expect(colors.selected).toBe(colors.normal);
   for (const [progress, beat] of [
     [0.21, "interaction"],
     [0.52, "evidence"],
@@ -40,6 +52,23 @@ test("the approved homepage preserves the interactive demo and separates it from
       });
     }, progress);
     await expect(inspector).toHaveAttribute("data-narrative-stage", beat);
+  }
+  if (!isMobile) {
+    const world = page.locator("#world");
+    const yaw = () => world.evaluate((element) => element.style.getPropertyValue("--scene-yaw"));
+    const initialYaw = await yaw();
+    const text = page.locator(".layer1-hero h2");
+    const bounds = await text.boundingBox();
+    expect(bounds).not.toBeNull();
+    if (!bounds) throw new Error("Demo heading is missing");
+    const x = bounds.x + bounds.width / 3;
+    const y = bounds.y + bounds.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 60, y + 12, { steps: 8 });
+    await page.mouse.up();
+    expect(await yaw()).not.toBe(initialYaw);
+    expect(await page.evaluate(() => window.getSelection()?.toString())).toBe("");
   }
   expect(scans).toEqual([]);
   expect(problems).toEqual([]);

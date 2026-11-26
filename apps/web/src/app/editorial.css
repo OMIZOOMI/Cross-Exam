@@ -46,7 +46,6 @@ summary:focus-visible {
 }
 ::selection {
   background: #dce7f6;
-  color: var(--ink);
 }
 .brand,
 .brand.compact {
