@@ -2,6 +2,11 @@
 
 ## Homepage scan form and footer (2026-11-26)
 
+Following owner feedback, the headline uses slightly tighter -0.03em letter
+spacing. The type size and two-line layout are retained. Production build,
+Biome, Git diff checks, ten screen-width/browser previews, and four homepage
+browser tests passed.
+
 The hero headline uses normal letter spacing to separate previously touching
 letters. Headline sizing and width are adjusted to retain two centered lines.
 Chrome and WebKit previews passed at ten screen-width/browser combinations from 320
