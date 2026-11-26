@@ -2,6 +2,10 @@
 
 ## Homepage scan form and footer (2026-11-26)
 
+The homepage Scan a website and Explore the demo links use text-only buttons.
+The production build, Biome, Git diff checks, and all four homepage browser
+tests passed.
+
 The homepage headline has more space between its two lines so the “y” in
 “says” clears the dot on the “i” in “Prove it.” The production build, Biome,
 Git diff checks, and desktop Chrome and phone WebKit previews passed.

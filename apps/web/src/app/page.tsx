@@ -18,7 +18,7 @@ export default function HomePage() {
           </nav>
           <div className="header-actions">
             <a className="header-cta" href="#scan">
-              Scan a website <span aria-hidden="true">↗</span>
+              Scan a website
             </a>
             <button
               className="mobile-menu-toggle"
@@ -41,7 +41,7 @@ export default function HomePage() {
               Demo <span>↗</span>
             </a>
             <a className="mobile-nav-cta" href="#scan">
-              Scan a website <span aria-hidden="true">↗</span>
+              Scan a website
             </a>
           </nav>
         </header>
@@ -72,10 +72,10 @@ export default function HomePage() {
               </p>
               <div className="hero-actions">
                 <a className="hero-button hero-button-primary" href="#scan">
-                  Scan a website <span aria-hidden="true">↘</span>
+                  Scan a website
                 </a>
                 <a className="hero-button hero-button-secondary" href="#showcase">
-                  Explore the demo <span aria-hidden="true">↓</span>
+                  Explore the demo
                 </a>
               </div>
             </div>
