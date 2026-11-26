@@ -2,6 +2,10 @@
 
 ## Homepage scan form and footer (2026-11-26)
 
+The hero heading uses consistent letter spacing with automatic pair kerning
+disabled. Production build, Biome, diff checks, ten screen-width/browser
+previews, and all four homepage browser tests passed.
+
 Following owner feedback, the headline uses slightly tighter -0.03em letter
 spacing. The type size and two-line layout are retained. Production build,
 Biome, Git diff checks, ten screen-width/browser previews, and four homepage

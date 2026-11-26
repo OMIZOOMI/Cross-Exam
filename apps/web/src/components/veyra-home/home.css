@@ -4358,6 +4358,7 @@ html:has(.veyra-home) {
   color: var(--premium-ink);
   font-size: clamp(54px, 7.6vw, 120px);
   font-weight: 720;
+  font-kerning: none;
   letter-spacing: -0.03em;
   line-height: 0.84;
 }
