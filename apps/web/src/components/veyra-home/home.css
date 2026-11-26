@@ -4357,9 +4357,11 @@ html:has(.veyra-home) {
   margin-bottom: 25px;
   color: var(--premium-ink);
   font-size: clamp(54px, 7.6vw, 120px);
-  font-weight: 720;
-  font-kerning: none;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  font-kerning: normal;
+  font-feature-settings: "kern" 1;
+  font-optical-sizing: auto;
+  letter-spacing: -0.035em;
   line-height: 0.84;
 }
 
@@ -6201,15 +6203,10 @@ html:has(.veyra-home) {
 
 .veyra-home h1 em {
   display: inline-block;
-  margin-left: 0.055em;
   color: var(--hero-blue-deep);
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.95),
     0 7px 18px rgba(24, 55, 171, 0.18);
-}
-
-.veyra-home .hero-full-stop {
-  margin-inline-start: 0.085em;
 }
 
 .veyra-home .hero-copy::before {
