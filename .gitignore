@@ -12,3 +12,9 @@ test-results/
 
 # Local, bounded live investigation reports
 .crossexam/
+
+# Private local projects and scratch work
+omnirush/
+/.opencode/
+/prototypes/veyra-v2/
+/artifacts/

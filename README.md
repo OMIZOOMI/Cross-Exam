@@ -1,54 +1,61 @@
-# Veyra / CrossExam
+# Veyra
 
-**Evidence-backed website investigations.** Veyra is the public product presentation for CrossExam:
-evidence-first website intelligence with claims that must survive challenge and reproduction.
-CrossExam remains the repository, package, contract, scanner, security, and internal engine name.
+**An independent, evidence-first QA engineer for your website.**
 
-Veyra now runs a **real, bounded HTTP/HTML investigation** from its local URL form and renders a
-LIVE INVESTIGATION report. The separate `/report/demo` remains synthetic fixture data. Browser
-scanning, AI providers, Tribunal execution, and reproduction are intentionally unavailable in the
-web flow; the report presentation names those boundaries rather than implying activity.
+[**Try Live Demo →**](https://veyra-4mu5.onrender.com/)
 
-## Run
+![Veyra homepage with headline Your website says it works. Prove it.](docs/assets/veyra-home.png)
 
-Requires Node.js 24 and pnpm 11.19.0. Use an installed pnpm or install that version with your preferred package-manager setup.
+## What Veyra does
+
+Veyra helps website owners and developers understand what needs attention, why it matters, and what to do next.
+
+- **Problems** — Find broken links, missing pages, and observed redirect failures.
+- **Worth checking** *(V1.1 preview)* — Spot redundant navigation, missing section targets, and inconsistent link labels without treating intentional repetition as a bug.
+- **Evidence traceability** — Follow each finding back to the recorded page and supporting check.
+- **Repeat scans** — See whether an observed problem has been fixed after making changes.
+
+## Inside a report
+
+![Veyra report showing a broken link, separate navigation suggestions and check results](docs/assets/veyra-report.png)
+
+*The report explains what happened, which page to edit, and what to do next. Screenshot: locally verified V1.1 with controlled example data. The public demo currently runs V1.*
+
+## How to use it
+
+1. Paste a public website address — no `https://` needed.
+2. Review the **Problems** in plain English. V1.1 also separates suggestions under **Worth checking**.
+3. Make a change, then select **Scan again** to compare the results.
+
+## Under the surface
+
+![Interactive five-layer website investigation showcase](docs/assets/veyra-showcase.png)
+
+The interactive showcase illustrates how evidence can explain a website problem. It uses example data, not a live browser investigation.
+
+## Quick start
+
+Requires Node.js 24 and pnpm 11.19.0.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open <http://127.0.0.1:3000> or <http://127.0.0.1:3000/report/demo>.
+Open [localhost:3000](http://localhost:3000).
 
-The local form accepts public HTTP(S) URLs, investigates up to eight pages on the final entry origin, and saves compact reports for up to 24 hours under ignored `apps/web/.crossexam/reports`. The app binds to loopback; do not expose it as a public scanning service. No forms are submitted, no resources are loaded, and no JavaScript runs on target pages. See [SECURITY.md](docs/SECURITY.md) for exact guarantees and limitations.
+## Engineering highlights
 
-For an intentional real CLI investigation: `pnpm --filter @crossexam/scanner scan https://example.com`. The scanner smoke test below uses controlled responses and does not contact that website.
+| Area | Implementation |
+| --- | --- |
+| Frontend | Next.js, React, TypeScript |
+| Scanner | Deterministic, read-only HTTP/HTML collection; up to 8 pages and 45 seconds |
+| Reliability | URL, SSRF/egress and origin safeguards; bounded report storage |
+| Quality | 826 automated checks passed for the locally verified V1.1 feature branch, including desktop and mobile Chrome/WebKit |
+| Deployment | Single-instance Node service on Render |
 
-## Validate
+Veyra inspects returned page source and responses. Target JavaScript, browser interactions and AI analysis are not executed. See the [scanning boundaries](docs/SECURITY.md), [architecture](docs/ARCHITECTURE.md), and [deployment guide](docs/DEPLOY_RENDER.md).
 
-```sh
-pnpm lint
-pnpm test
-pnpm test:security
-pnpm test:scanner
-pnpm test:browser-security
-pnpm build
-pnpm scanner:smoke
-pnpm exec playwright install chromium
-pnpm test:e2e
-```
+---
 
-`pnpm build` type-checks every workspace package and produces the Next.js production build. `pnpm start` serves that build locally. E2E tests start a local server if port 3000 is unused. To test production, stop any development server, build, then run `E2E_PRODUCTION=1 pnpm test:e2e`.
-
-## Repository map
-
-- `apps/web`: local scan form/API, bounded file storage, live reports, and the separate interactive demo.
-- `apps/scanner`: bounded deterministic HTML collector, discovery policy, compact evidence, rule engine, and real CLI; all target requests use the engine security boundary.
-- `apps/browser-worker`: fail-closed public launch gate and internal Chromium fixture harness. The HTTP/CONNECT proxy is tested, but external OS/network isolation is unavailable; arbitrary browser scanning stays disabled. See SECURITY.md for tested paths and gaps.
-- `packages/contracts`: Zod schemas and referential report validation.
-- `packages/engine`: ScanRunner interface, deterministic verdict summary, and isolated URL/pinned HTTP egress boundary. Browser traffic is not yet protected; see `docs/SECURITY.md`.
-- `packages/agents`: role-specific provider interfaces; no model execution.
-- `docs`: product, architecture, security, protocol, decisions, roadmap, and handoff state.
-- `tests/e2e`: browser checks at desktop and mobile widths.
-
-**Start future work with [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md).**
+Made by **Om Sawkare** · Evidence over assumption.
