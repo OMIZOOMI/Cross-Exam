@@ -4353,12 +4353,12 @@ html:has(.veyra-home) {
 }
 
 .veyra-home h1 {
-  max-width: 1000px;
+  max-width: 1100px;
   margin-bottom: 25px;
   color: var(--premium-ink);
-  font-size: clamp(60px, 8.6vw, 142px);
+  font-size: clamp(54px, 7.6vw, 120px);
   font-weight: 720;
-  letter-spacing: -0.088em;
+  letter-spacing: 0;
   line-height: 0.84;
 }
 
@@ -5908,7 +5908,7 @@ html:has(.veyra-home) {
 }
 
 .veyra-home .hero-copy {
-  max-width: 1040px;
+  max-width: 1160px;
   padding: 0 clamp(24px, 3vw, 56px);
 }
 
@@ -6867,12 +6867,11 @@ html:has(.veyra-home) {
   }
 
   .veyra-home h1 {
-    max-width: 358px;
+    max-width: min(100%, 390px);
     margin-right: auto;
     margin-bottom: 22px;
     margin-left: auto;
-    font-size: clamp(42px, 12.4vw, 50px);
-    letter-spacing: -0.09em;
+    font-size: clamp(32px, 10.6vw, 45px);
     line-height: 0.89;
   }
 
@@ -7233,7 +7232,7 @@ html:has(.veyra-home) {
   }
 
   .veyra-home h1 {
-    font-size: clamp(40px, 12vw, 45px);
+    font-size: clamp(32px, 10.4vw, 40px);
   }
 
   .veyra-home .hero-actions {

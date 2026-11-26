@@ -2,6 +2,12 @@
 
 ## Homepage scan form and footer (2026-11-26)
 
+The hero headline uses normal letter spacing to separate previously touching
+letters. Headline sizing and width are adjusted to retain two centered lines.
+Chrome and WebKit previews passed at ten screen-width/browser combinations from 320
+to 1920 px. Production build, Biome, Git diff checks, and all four homepage
+browser tests passed.
+
 Text selection is disabled within the interactive homepage demo, including the
 layer text and inspector. Dragging still rotates the scene. The shared text
 selection highlight preserves the original text colors. Selected headline
