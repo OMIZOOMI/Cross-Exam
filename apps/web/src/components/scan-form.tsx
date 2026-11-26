@@ -103,7 +103,7 @@ export function ScanForm({ repeat }: { repeat?: { targetUrl: string; reportId: s
             setFeedback(null);
             setInvalid(false);
           }}
-          placeholder="https://your-website.com"
+          placeholder="your-website.com"
           autoComplete="url"
           spellCheck={false}
           aria-describedby={feedback ? "scan-feedback" : "scan-note"}

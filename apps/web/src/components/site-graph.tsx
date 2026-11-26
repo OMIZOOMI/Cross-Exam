@@ -10,6 +10,7 @@ import {
   type NodeProps,
   Position,
   ReactFlow,
+  ReactFlowProvider,
   useReactFlow,
   useStore,
 } from "@xyflow/react";
@@ -373,46 +374,52 @@ export default function SiteGraph({
             className={`site-graph site-map-graph ${expanded ? "expanded" : ""}`}
             data-testid="site-graph"
           >
-            <div className="site-map-canvas">
-              <ReactFlow
-                key={compact ? "compact" : "wide"}
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={nodeTypes}
-                onNodeClick={(_, node) => selectPage(node.id)}
-                onNodesChange={(changes) => {
-                  const selection = changes.find(
-                    (change) => change.type === "select" && change.selected,
-                  );
-                  if (selection?.type === "select") selectPage(selection.id);
-                }}
-                fitView={!live}
-                fitViewOptions={{ padding: 0.12 }}
-                minZoom={graphMinZoom}
-                maxZoom={graphMaxZoom}
-                nodesDraggable={false}
-                nodesConnectable={false}
-                deleteKeyCode={null}
-                multiSelectionKeyCode={null}
-                edgesFocusable={false}
-                zoomOnScroll={false}
-                preventScrolling={false}
-                colorMode="light"
-                aria-label={
-                  source === "live"
-                    ? "Interactive live route graph"
-                    : "Interactive synthetic fixture route graph"
-                }
-                ariaLabelConfig={{
-                  "node.a11yDescription.default":
-                    "Select this route with Enter or Space to inspect it. Routes cannot be edited or deleted.",
-                }}
-              >
-                <Background color="#d7dcdf" gap={19} size={1} />
-                <Controls showInteractive={false} position="bottom-left" />
-                {live && <FitLiveGraph />}
-              </ReactFlow>
-            </div>
+            <ReactFlowProvider key={compact ? "compact" : "wide"}>
+              <div className="site-map-canvas">
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  nodeTypes={nodeTypes}
+                  onNodeClick={(_, node) => selectPage(node.id)}
+                  onNodesChange={(changes) => {
+                    const selection = changes.find(
+                      (change) => change.type === "select" && change.selected,
+                    );
+                    if (selection?.type === "select") selectPage(selection.id);
+                  }}
+                  fitView={!live}
+                  fitViewOptions={{ padding: 0.12 }}
+                  minZoom={graphMinZoom}
+                  maxZoom={graphMaxZoom}
+                  nodesDraggable={false}
+                  nodesConnectable={false}
+                  deleteKeyCode={null}
+                  multiSelectionKeyCode={null}
+                  edgesFocusable={false}
+                  zoomOnScroll={false}
+                  preventScrolling={false}
+                  colorMode="light"
+                  aria-label={
+                    source === "live"
+                      ? "Interactive live route graph"
+                      : "Interactive synthetic fixture route graph"
+                  }
+                  ariaLabelConfig={{
+                    "node.a11yDescription.default":
+                      "Select this route with Enter or Space to inspect it. Routes cannot be edited or deleted.",
+                  }}
+                >
+                  <Background color="#d7dcdf" gap={19} size={1} />
+                  {!compact && <Controls showInteractive={false} position="bottom-left" />}
+                  {live && <FitLiveGraph />}
+                </ReactFlow>
+              </div>
+              {compact && (
+                <div className="site-map-controls-row">
+                  <Controls showInteractive={false} orientation="horizontal" />
+                </div>
+              )}
+            </ReactFlowProvider>
             {!live && (
               <div className="graph-legend" role="note">
                 <span>Edges represent recorded page.linksTo relationships.</span>
@@ -483,7 +490,9 @@ export default function SiteGraph({
             <div className="site-map-detail-heading">
               {!live && <p className="site-map-kicker">Selected route</p>}
               <h3>{selected.title}</h3>
-              <code title={selected.path}>{selected.path}</code>
+              <code title={selected.path}>
+                {live && selected.path === "/" ? "Homepage" : selected.path}
+              </code>
             </div>
             <p
               className={`site-map-detail-status ${isErrorStatus(selected.statusCode) ? "is-error" : ""}`}

@@ -157,7 +157,7 @@ test("archive filters and route context lead back to the supporting claim", asyn
     .getByRole("navigation", { name: "Investigation details" })
     .getByRole("button", { name: "Solutions", exact: true })
     .click();
-  await expect(page.getByText("Veyra Fix", { exact: false })).toContainText("planned");
+  await expect(page.getByText("Veyra Fix", { exact: false })).toHaveCount(0);
   const proposal = page.locator(".solution-row").first();
   await proposal.getByText("How to verify", { exact: true }).click();
   await expect(proposal.locator("details")).toHaveAttribute("open", "");

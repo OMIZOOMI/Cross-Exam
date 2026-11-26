@@ -33,22 +33,22 @@ export function ReportSolutions({
     <section className="solutions-index">
       <div className="section-heading">
         <div>
-          <p className="section-kicker">Proposed corrections</p>
-          <h2>A next step, with a way to verify it.</h2>
+          <p className="section-kicker">{live ? "Suggested fixes" : "Proposed corrections"}</p>
+          <h2>
+            {live ? "What to fix and how to check it" : "A next step, with a way to verify it."}
+          </h2>
         </div>
-        <span className="planned-feature">
-          Veyra Fix <span>— planned</span>
-        </span>
       </div>
       <p className="view-intro">
-        These are proposals, not applied fixes. Start with confirmed problems; investigate uncertain
-        claims before treating them as causes.
+        {live
+          ? "Review the suggestions below, make changes to your website, then scan it again to check the results."
+          : "These are proposals, not applied fixes. Start with confirmed problems; investigate uncertain claims before treating them as causes."}
       </p>
       <div className="proposal-key">
         {!live && <ProvenanceBadge value="INFERRED" />}
         <span>
           {live
-            ? "Rule-based suggestions for review. No website has been modified."
+            ? "Veyra has not made any changes to your website."
             : "Expected results are hypotheses. No website has been modified."}
         </span>
       </div>
@@ -67,7 +67,7 @@ export function ReportSolutions({
                 <span className={`verdict-label verdict-${verdict?.status}`}>
                   <i />
                   {live
-                    ? "Rule matched"
+                    ? "Check flagged"
                     : `Synthetic verdict · ${verdictLabels[verdict?.status ?? ""]}`}
                 </span>
               </div>
@@ -83,9 +83,11 @@ export function ReportSolutions({
               <div className="solution-reasoning">
                 <div>
                   <h4>
-                    {verdict?.status === "confirmed"
-                      ? "Recommended correction"
-                      : "Recommended investigation"}
+                    {live
+                      ? "What to do next"
+                      : verdict?.status === "confirmed"
+                        ? "Recommended correction"
+                        : "Recommended investigation"}
                   </h4>
                   <p>{plain?.next ?? finding.recommendation}</p>
                   <button type="button" className="text-link" onClick={() => onFinding(finding.id)}>
@@ -93,10 +95,12 @@ export function ReportSolutions({
                   </button>
                 </div>
                 <div className="solution-outcome">
-                  <h4>Intended result</h4>
+                  <h4>{live ? "Check your change" : "Intended result"}</h4>
                   <p>
                     {(!live ? outcomes[finding.id] : undefined) ??
-                      "Reassess the finding after verifying the proposed change."}
+                      (live
+                        ? "Scan again to see whether the problem is still flagged."
+                        : "Reassess the finding after verifying the proposed change.")}
                   </p>
                   <details>
                     <summary>How to verify</summary>
@@ -115,7 +119,7 @@ export function ReportSolutions({
       )}
       <p className="archive-note">
         {live
-          ? "Recommendations follow deterministic observations. Changes and their effects have not been tested."
+          ? "The suggestions are based on this scan. Their effects have not been tested yet."
           : "Recommendations belong to this synthetic fixture investigation. They have not been tested against a live website or validated by a TribunalRun."}
       </p>
     </section>

@@ -2,7 +2,7 @@
 
 import type { Finding, ScanReport } from "@crossexam/contracts";
 import { ArrowUpRight, Check, ChevronDown } from "lucide-react";
-import { evidenceLabel, plainFinding } from "../lib/live-checks";
+import { evidenceLabel, pageLabel, plainFinding } from "../lib/live-checks";
 import { experimentLabel } from "../lib/presentation";
 import { ProvenanceBadge } from "./ui";
 
@@ -32,6 +32,47 @@ export function FindingRow({
   const verdict = report.verdicts.find((item) => item.id === finding.verdictId);
   const challenge = report.challenges.find((item) => item.claimId === finding.claimId);
   const experiment = report.experiments.find((item) => item.claimId === finding.claimId);
+  const caseChain = (
+    <ol className="case-chain">
+      <li>
+        <span className="chain-number">1</span>
+        <div className="chain-label">
+          <strong>{live ? "What Veyra checked" : "Claim"}</strong>
+        </div>
+        <p>{claim?.statement}</p>
+      </li>
+      {!live && (
+        <li>
+          <span className="chain-number">2</span>
+          <div className="chain-label">
+            <strong>Challenge</strong>
+            <span>
+              {challenge?.raisedBy} · {challenge?.status}
+            </span>
+          </div>
+          <p>{challenge?.question}</p>
+        </li>
+      )}
+      {!live && (
+        <li>
+          <span className="chain-number">3</span>
+          <div className="chain-label">
+            <strong>Experiment</strong>
+            <span>{experimentLabel(experiment)}</span>
+          </div>
+          <p>{experiment?.method}</p>
+        </li>
+      )}
+      <li className={`chain-verdict ${verdict?.status}`}>
+        <span className="chain-number">{live ? "2" : "4"}</span>
+        <div className="chain-label">
+          <strong>{live ? "Rule result" : "Synthetic verdict"}</strong>
+          <span>{live ? "Rule matched" : verdictLabels[verdict?.status ?? ""]}</span>
+        </div>
+        <p>{verdict?.rationale}</p>
+      </li>
+    </ol>
+  );
   return (
     <article className={`finding-row ${open ? "finding-open" : ""}`}>
       <button
@@ -51,14 +92,14 @@ export function FindingRow({
           <span className="finding-meta">
             <span>{finding.category}</span>
             {finding.affectedPaths.map((path) => (
-              <code key={path}>{path}</code>
+              <code key={path}>{live ? pageLabel(path) : path}</code>
             ))}
           </span>
         </span>
-        <ProvenanceBadge value={finding.provenance} />
+        <ProvenanceBadge value={finding.provenance} plain={live} />
         <span className={`verdict-label verdict-${verdict?.status}`}>
           {verdict?.status === "confirmed" ? <Check size={13} /> : <i />}
-          {live ? "Rule matched" : `Synthetic verdict · ${verdictLabels[verdict?.status ?? ""]}`}
+          {live ? "Check flagged" : `Synthetic verdict · ${verdictLabels[verdict?.status ?? ""]}`}
         </span>
         <ChevronDown className={open ? "rotated" : ""} size={16} />
       </button>
@@ -68,7 +109,7 @@ export function FindingRow({
             {plain ? (
               <div className="finding-inspection">
                 <div>
-                  <h3>Observed</h3>
+                  <h3>What happened</h3>
                   <p>{plain.result}</p>
                 </div>
                 <div>
@@ -79,51 +120,29 @@ export function FindingRow({
             ) : (
               <p>{finding.description}</p>
             )}
-            <span>
-              {live
-                ? "Derived by a deterministic rule from returned HTML or response headers. Browser behavior is not proven from available evidence. This scan skips AI review."
-                : "Synthetic fixture investigation. Every step and record is fixture data; no TribunalRun or Stage 17 JudgeReview artifact is attached."}
-            </span>
+            {live ? (
+              <span>
+                Based on the pages your website sent back. Browser behavior was not tested.
+              </span>
+            ) : (
+              <span>
+                Synthetic fixture investigation. Every step and record is fixture data; no
+                TribunalRun or Stage 17 JudgeReview artifact is attached.
+              </span>
+            )}
           </div>
-          <ol className="case-chain">
-            <li>
-              <span className="chain-number">1</span>
-              <div className="chain-label">
-                <strong>{live ? "What Veyra checked" : "Claim"}</strong>
-              </div>
-              <p>{claim?.statement}</p>
-            </li>
-            {!live && (
-              <li>
-                <span className="chain-number">2</span>
-                <div className="chain-label">
-                  <strong>Challenge</strong>
-                  <span>
-                    {challenge?.raisedBy} · {challenge?.status}
-                  </span>
-                </div>
-                <p>{challenge?.question}</p>
-              </li>
-            )}
-            {!live && (
-              <li>
-                <span className="chain-number">3</span>
-                <div className="chain-label">
-                  <strong>Experiment</strong>
-                  <span>{experimentLabel(experiment)}</span>
-                </div>
-                <p>{experiment?.method}</p>
-              </li>
-            )}
-            <li className={`chain-verdict ${verdict?.status}`}>
-              <span className="chain-number">{live ? "2" : "4"}</span>
-              <div className="chain-label">
-                <strong>{live ? "Rule result" : "Synthetic verdict"}</strong>
-                <span>{live ? "Rule matched" : verdictLabels[verdict?.status ?? ""]}</span>
-              </div>
-              <p>{verdict?.rationale}</p>
-            </li>
-          </ol>
+          {live ? (
+            <details className="finding-technical">
+              <summary>How this problem was checked</summary>
+              <p>
+                <ProvenanceBadge value={finding.provenance} /> Derived by a deterministic rule from
+                returned HTML or response headers. This scan skips AI review.
+              </p>
+              {caseChain}
+            </details>
+          ) : (
+            caseChain
+          )}
           <div className="finding-evidence">
             <span>Follow the supporting evidence</span>
             {finding.evidenceIds.map((id) => (

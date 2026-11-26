@@ -54,7 +54,7 @@ test("local scan submission shows honest waiting then renders a controlled live-
   await expect(page.getByRole("button", { name: "Scanning…" })).toBeDisabled();
   complete();
   await expect(page).toHaveURL(`/report/${id}`);
-  await expect(page.getByText("LIVE INVESTIGATION", { exact: true })).toBeVisible();
+  await expect(page.getByText("LIVE REPORT", { exact: true }).first()).toBeVisible();
   await expect(page.locator(".case-metadata")).toContainText("Partial investigation");
   await expect(page.locator(".scope-facts")).toContainText("1.3");
   await page.getByRole("button", { name: "Show graph", exact: true }).click();
@@ -91,11 +91,19 @@ test("live findings, graph, evidence and export use report data without fixture 
   await expect(inspector.getByRole("button", { name: "Show evidence for Check 2" })).toBeVisible();
   await expect(inspector).not.toContainText(internalCodes);
   await expect(page.locator(".route-table tbody tr")).toHaveCount(2);
+  await expect(page.locator(".route-table tbody tr").first().locator("td").first()).toHaveText(
+    "Homepage",
+  );
+  await expect(page.getByRole("heading", { name: "How your website pages connect" })).toBeVisible();
   await inspector.getByRole("button", { name: /Problem 1 Missing page: \/broken/ }).click();
-  await expect(page.locator("#detail-F-001")).toContainText("deterministic rule");
   await expect(
-    page.locator("#detail-F-001").getByRole("heading", { name: "Observed" }),
+    page.locator("#detail-F-001").getByRole("heading", { name: "What happened" }),
   ).toBeVisible();
+  const technical = page.locator("#detail-F-001 .finding-technical");
+  await expect(technical.locator(".case-chain")).not.toBeVisible();
+  await technical.getByText("How this problem was checked").click();
+  await expect(technical.locator(".case-chain")).toBeVisible();
+  await expect(technical).toContainText("deterministic rule");
   await expect(
     page.locator("#detail-F-001").getByRole("heading", { name: "Recommended fix" }),
   ).toBeVisible();
@@ -115,14 +123,14 @@ test("live findings, graph, evidence and export use report data without fixture 
   await navigation.getByRole("button", { name: "Investigation" }).click();
   await page
     .getByRole("navigation", { name: "Investigation details" })
-    .getByRole("button", { name: "Solutions", exact: true })
+    .getByRole("button", { name: "How to fix", exact: true })
     .click();
   await expect(page.locator(".solution-row")).toHaveCount(1);
   await expect(page.locator(".solution-row")).not.toContainText(internalCodes);
   await expect(page.locator(".solutions-index")).not.toContainText("homepage hero");
   await expect(page.locator(".solutions-index")).not.toContainText("fixture investigation");
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export investigation" }).click();
+  await page.getByRole("button", { name: "Download report" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe(`veyra-${id}.json`);
   const chunks = [];
@@ -131,6 +139,14 @@ test("live findings, graph, evidence and export use report data without fixture 
   expect(report.summary.source).toBe("live");
   expect(report.pages).toHaveLength(2);
   expect(report.agentRuns).toEqual([]);
+  await expect(page.getByText("Veyra Fix", { exact: false })).toHaveCount(0);
+  const key = page.locator(".provenance-key");
+  await expect(key.getByText("How Veyra knows")).toBeVisible();
+  await key.getByText("How Veyra knows").click();
+  await expect(key).toContainText("ScanReport v2");
+  await page.getByRole("link", { name: "New scan" }).click();
+  await expect(page).toHaveURL(/\/#scan$/);
+  await expect(page.getByLabel("Website URL")).toBeVisible();
   expect(errors).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
@@ -147,11 +163,11 @@ test("live evidence groups records by collection layer and keeps search and stat
   await page.getByRole("button", { name: "Evidence 3" }).click();
   const groups = page.locator(".evidence-layer");
   await expect(groups.locator("h3.report-label")).toHaveText([
-    "01 · Surface",
-    "02 · DOM & components",
-    "03 · Routes & resources",
-    "04 · Requests & dependencies",
-    "05 · Responses & behavior",
+    "01 · Page details",
+    "02 · Page structure",
+    "03 · Links & files",
+    "04 · Requests",
+    "05 · Server responses",
   ]);
   await expect(groups.nth(0).locator(".evidence-record")).toHaveCount(1);
   await expect(groups.nth(3)).toContainText("No separate request records");
@@ -159,10 +175,10 @@ test("live evidence groups records by collection layer and keeps search and stat
   await expect(page.locator(".evidence-record")).toHaveCount(3);
   await page.getByLabel("Filter evidence category").selectOption("metadata");
   await expect(groups).toHaveCount(1);
-  await expect(groups.first()).toContainText("01 · Surface");
+  await expect(groups.first()).toContainText("01 · Page details");
   await page.getByLabel("Search evidence").fill("Check 2");
   await expect(groups).toHaveCount(1);
-  await expect(groups.first()).toContainText("05 · Responses & behavior");
+  await expect(groups.first()).toContainText("05 · Server responses");
   await expect(groups.first().locator("details")).toHaveAttribute("open", "");
   const search = page.getByLabel("Search evidence");
   await search.focus();
@@ -334,17 +350,26 @@ test("site map fills its panel as page details expand", async ({ page }) => {
           node.getBoundingClientRect(),
         );
         if (!canvas || !nodes.length) return null;
+        const controlsRow = element
+          .querySelector(".site-map-controls-row")
+          ?.getBoundingClientRect();
         const bottom = element.parentElement?.getBoundingClientRect().bottom ?? 0;
         const topPadding = Math.min(...nodes.map((node) => node.top)) - canvas.top;
         const bottomPadding = canvas.bottom - Math.max(...nodes.map((node) => node.bottom));
         return {
-          canvasAligned: Math.abs(bottom - canvas.bottom) <= 2,
+          canvasAligned: Math.abs(bottom - (controlsRow?.bottom ?? canvas.bottom)) <= 2,
+          controlsSeparate: !controlsRow || controlsRow.top >= canvas.bottom - 1,
           nodesInside: topPadding >= 0 && bottomPadding >= 0,
           nodesCentered: Math.abs(topPadding - bottomPadding) <= 4,
         };
       }),
     )
-    .toEqual({ canvasAligned: true, nodesInside: true, nodesCentered: true });
+    .toEqual({
+      canvasAligned: true,
+      controlsSeparate: true,
+      nodesInside: true,
+      nodesCentered: true,
+    });
 });
 
 test("scan limitations have a short summary and optional readable details", async ({ page }) => {

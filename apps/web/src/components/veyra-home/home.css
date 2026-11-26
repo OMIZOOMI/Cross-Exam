@@ -5208,7 +5208,10 @@ html:has(.veyra-home) {
   color: inherit;
   font-size: clamp(44px, 5.8vw, 84px);
   font-weight: 700;
-  letter-spacing: -0.085em;
+  font-kerning: normal;
+  font-feature-settings: "kern" 1;
+  font-optical-sizing: auto;
+  letter-spacing: -0.035em;
   line-height: 0.86;
 }
 
@@ -5337,7 +5340,10 @@ html:has(.veyra-home) {
   color: var(--premium-ink);
   font-size: clamp(48px, 5.6vw, 80px);
   font-weight: 700;
-  letter-spacing: -0.085em;
+  font-kerning: normal;
+  font-feature-settings: "kern" 1;
+  font-optical-sizing: auto;
+  letter-spacing: -0.035em;
   line-height: 0.86;
 }
 
@@ -7480,6 +7486,13 @@ html:has(.veyra-home) {
   padding: 0;
 }
 
+.veyra-home .stage-scroll-cue {
+  color: #c8dcff;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+}
+
 .veyra-home .stage-title strong {
   color: rgba(239, 247, 255, 0.86);
   font-family: var(--ui-font);
@@ -7574,6 +7587,10 @@ html:has(.veyra-home) {
   font-weight: 650;
   letter-spacing: -0.025em;
   line-height: 1.25;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .veyra-home .inspector-layer-note p {
@@ -7832,21 +7849,59 @@ html:has(.veyra-home) {
   }
 
   .veyra-home .stage-frame-topline {
-    top: 24px;
-    right: 16px;
-    left: 16px;
+    position: relative;
+    inset: auto;
+    flex: none;
+    gap: 8px;
+    padding: 0 16px;
   }
 
   .veyra-home .stage-title strong {
     font-size: 15px;
   }
 
+  .veyra-home .stage-layout {
+    display: grid;
+    grid-template-rows: minmax(0, 44%) minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px 0;
+  }
+
+  .veyra-home .stage-frame {
+    position: relative;
+    inset: auto;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .veyra-home .viewport {
+    position: relative;
+    inset: auto;
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+
+  .veyra-home .world {
+    transform: translate(
+        calc(-50% + var(--scene-shift-x)),
+        calc(-50% + var(--scene-shift-y) * 0.35)
+      )
+      scale(calc(var(--world-scale) * var(--scene-zoom))) rotateX(var(--scene-pitch))
+      rotateY(var(--scene-yaw));
+  }
+
   .veyra-home .reading-rail.inspector-panel {
-    right: 16px;
-    bottom: 34px;
-    left: 16px;
-    max-height: calc(100svh - 122px);
+    position: relative;
+    inset: auto;
+    align-self: start;
+    margin: 0 16px;
+    max-height: 100%;
     padding: 17px 15px;
+    width: auto;
   }
 
   .veyra-home .summary-step {
@@ -8440,6 +8495,16 @@ html:has(.veyra-home) {
 .veyra-home .veyra-scan p {
   margin-top: 0.5rem;
   line-height: 1.5;
+}
+
+.veyra-home .veyra-scan .form-note {
+  color: var(--premium-ink-muted);
+  font-size: 0.875rem;
+}
+
+.veyra-home .hero-actions .hero-button,
+.veyra-home .header-cta {
+  font-size: 0.875rem;
 }
 
 .veyra-home .veyra-scan .scan-form {

@@ -549,12 +549,35 @@
   }
 
   .site-map-graph,
-  .site-map-graph.expanded {
+  .site-map-graph.expanded,
+  .site-map-expanded .site-map-graph.expanded {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+
+  .site-map-canvas {
+    position: relative;
+    inset: auto;
     height: 455px;
   }
 
-  .site-map-expanded .site-map-graph.expanded {
-    height: 455px;
+  .site-map-live .site-map-canvas {
+    height: 21rem;
+  }
+
+  .site-map-controls-row {
+    display: flex;
+    justify-content: center;
+    padding: 8px;
+    border-top: 1px solid var(--site-map-line);
+  }
+
+  .site-map-controls-row .react-flow__controls {
+    position: static;
+    margin: 0;
+    background: #fffefa;
+    color: var(--site-map-ink);
   }
 
   .site-map-route-list,
@@ -590,9 +613,8 @@
   }
 
   .graph-legend {
-    right: 10px;
-    bottom: 14px;
-    left: 10px;
+    position: static;
+    padding: 8px 10px 14px;
     max-width: none;
     justify-content: flex-start;
     text-align: left;

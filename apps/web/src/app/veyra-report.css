@@ -493,6 +493,20 @@ body:has(.veyra-report) {
   max-width: 75ch;
 }
 
+.veyra-report .finding-technical {
+  margin-block: 20px;
+}
+
+.veyra-report .finding-technical summary {
+  color: var(--blue);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.veyra-report .finding-technical > p {
+  margin-top: 12px;
+}
+
 .veyra-report .finding-inspection {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

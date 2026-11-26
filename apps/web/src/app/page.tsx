@@ -14,7 +14,7 @@ export default function HomePage() {
           <nav className="primary-nav" aria-label="Primary navigation">
             <a href="#showcase">Product</a>
             <a href="#how-it-works">How it works</a>
-            <a href="#showcase">Demo</a>
+            <a href="/report/demo">Demo</a>
           </nav>
           <div className="header-actions">
             <a className="header-cta" href="#scan">
@@ -37,7 +37,7 @@ export default function HomePage() {
             <a href="#how-it-works">
               How it works <span>↓</span>
             </a>
-            <a href="#showcase">
+            <a href="/report/demo">
               Demo <span>↗</span>
             </a>
             <a className="mobile-nav-cta" href="#scan">
@@ -103,6 +103,7 @@ export default function HomePage() {
                         The visible surface
                       </strong>
                     </div>
+                    <span className="stage-scroll-cue">Scroll to investigate</span>
                   </div>
                   <div
                     className="viewport"

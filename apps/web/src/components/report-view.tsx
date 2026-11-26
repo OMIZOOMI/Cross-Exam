@@ -6,7 +6,7 @@ import { ArrowUpRight, Check, ChevronRight, Download, FlaskConical, Plus } from 
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { evidenceLabel, pageLimitNotice, type ScanComparison } from "../lib/live-checks";
+import { evidenceLabel, pageLabel, pageLimitNotice, type ScanComparison } from "../lib/live-checks";
 import { reportClaims } from "../lib/presentation";
 import { EvidenceArchive } from "./evidence-archive";
 import { FindingRow } from "./finding-row";
@@ -42,6 +42,13 @@ export function ReportView({
   comparison?: ScanComparison;
 }) {
   const live = report.summary.source === "live";
+  const detailsViews = live
+    ? ([
+        { id: "site-map", label: "Site Map" },
+        { id: "findings", label: "Problems" },
+        { id: "solutions", label: "How to fix" },
+      ] as const)
+    : investigationViews;
   const limited = live && (report.summary.status === "partial" || Boolean(pageLimitNotice(report)));
   const [section, setSection] = useState<Section>("overview");
   const [query, setQuery] = useState("");
@@ -118,31 +125,34 @@ export function ReportView({
           <VeyraWordmark />
         </Link>
         <div className="report-breadcrumb">
-          <Link href="/">Workspace</Link>
+          <Link href="/">{live ? "Home" : "Workspace"}</Link>
           <ChevronRight size={13} />
-          <span>
-            {live ? `Investigation ${report.summary.id.slice(0, 8)}` : "Investigation 001"}
-          </span>
+          <span>{live ? "Your report" : "Investigation 001"}</span>
         </div>
-        <Link className="text-link" href="/">
-          New examination <Plus size={15} />
+        <Link className="text-link" href="/#scan">
+          New scan <Plus size={15} />
         </Link>
       </header>
       <main id="main" className="report-paper">
         <div className={`fixture-notice ${live ? "live-notice" : ""} report-boundary-strip`}>
           <FlaskConical size={15} />
-          <strong>{live ? "LIVE INVESTIGATION" : "DEMO REPORT"}</strong>
+          <strong>{live ? "LIVE REPORT" : "DEMO REPORT"}</strong>
           <span>
             {live
-              ? "Checks based on page source and responses."
+              ? "Checks based on the pages your website sent back."
               : "This example uses sample data. No website was scanned and no AI agents were run."}
           </span>
         </div>
         <header className="case-heading">
           <div>
             <p className="section-kicker">
-              Website investigation{" "}
-              <span className="case-number">/ {live ? report.summary.id.slice(0, 8) : "001"}</span>
+              {live ? (
+                "Website report"
+              ) : (
+                <>
+                  Website investigation <span className="case-number">/ 001</span>
+                </>
+              )}
             </p>
             <h1>{new URL(report.summary.targetUrl).hostname}</h1>
             <div className="case-metadata">
@@ -172,7 +182,7 @@ export function ReportView({
             )}
             <button type="button" className="button button-secondary" onClick={exportReport}>
               <Download size={15} />
-              {live ? "Export investigation" : "Download demo report"}
+              {live ? "Download report" : "Download demo report"}
             </button>
           </div>
         </header>
@@ -203,7 +213,7 @@ export function ReportView({
         </nav>
         {investigation && (
           <nav className="investigation-subnav" aria-label="Investigation details">
-            {investigationViews.map(({ id, label }) => (
+            {detailsViews.map(({ id, label }) => (
               <button
                 key={id}
                 type="button"
@@ -219,7 +229,7 @@ export function ReportView({
           ref={contentRef}
           tabIndex={-1}
           className="report-content"
-          aria-label={`${[...sections, ...investigationViews].find((item) => item.id === section)?.label} content`}
+          aria-label={`${[...sections, ...detailsViews].find((item) => item.id === section)?.label} content`}
         >
           {section === "overview" && live && (
             <LiveOverview
@@ -245,23 +255,17 @@ export function ReportView({
             <section className="map-index">
               <div className="section-heading">
                 <div>
-                  <p className="section-kicker">The public surface</p>
-                  <h2>
-                    {live ? (
-                      <>
-                        Every route has a <em>context.</em>
-                      </>
-                    ) : (
-                      "Every route has a context."
-                    )}
-                  </h2>
+                  <p className="section-kicker">{live ? "Site map" : "The public surface"}</p>
+                  <h2>{live ? "How your website pages connect" : "Every route has a context."}</h2>
                 </div>
                 <span className="archive-count">
-                  {report.pages.length} routes · {live ? "Live observations" : "Fixture data"}
+                  {report.pages.length} {live ? "pages checked" : "routes · Fixture data"}
                 </span>
               </div>
               <p className="view-intro">
-                Follow a connection, select a route, then inspect the findings attached to it.
+                {live
+                  ? "Choose a page to see its checks, problems and links to other pages."
+                  : "Follow a connection, select a route, then inspect the findings attached to it."}
               </p>
               <SiteGraph
                 pages={report.pages}
@@ -278,22 +282,22 @@ export function ReportView({
                 <table className="route-table">
                   <caption className="sr-only">
                     {live
-                      ? "Accessible route inventory; live document observations"
+                      ? "Pages checked and their results"
                       : "Accessible route inventory; all values are fixture data"}
                   </caption>
                   <thead>
                     <tr>
-                      <th>Route</th>
+                      <th>{live ? "Page" : "Route"}</th>
                       <th>Response</th>
                       <th>Time</th>
-                      <th>Findings</th>
+                      <th>{live ? "Problems" : "Findings"}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {report.pages.map((page) => (
                       <tr key={page.id}>
                         <td>
-                          <code>{page.path}</code>
+                          <code>{live ? pageLabel(page.path) : page.path}</code>
                         </td>
                         <td>
                           <Badge tone={page.statusCode >= 400 ? "coral" : "neutral"}>
@@ -313,13 +317,12 @@ export function ReportView({
             <section className="findings-index">
               <div className="section-heading">
                 <div>
-                  <p className="section-kicker">The findings</p>
+                  <p className="section-kicker">{live ? "Problems found" : "The findings"}</p>
                   <h2>
                     {live ? (
                       <>
                         {report.findings.length}{" "}
-                        {report.findings.length === 1 ? "finding" : "findings"}.{" "}
-                        <em>Each with a record.</em>
+                        {report.findings.length === 1 ? "problem" : "problems"} flagged
                       </>
                     ) : (
                       "Five claims. Nothing taken on trust."
@@ -343,7 +346,7 @@ export function ReportView({
               </div>
               <p className="view-intro">
                 {live
-                  ? "These deterministic rules describe the recorded HTTP responses and returned HTML. They do not establish browser behavior or a complete security/accessibility assessment."
+                  ? "These checks use the pages your website sent back. They do not test browser speed, accessibility or overall security."
                   : "Three findings are confirmed in this example. The two uncertain claims stay visible, with their unanswered questions."}
               </p>
               {report.findings
@@ -353,13 +356,14 @@ export function ReportView({
                 (finding) => severity === "all" || finding.severity === severity,
               ).length && (
                 <p className="view-intro">
-                  No findings match this view. Review the evidence and scope before drawing broader
-                  conclusions.
+                  {live
+                    ? "No problems match this filter. Try another severity."
+                    : "No findings match this view. Review the evidence and scope before drawing broader conclusions."}
                 </p>
               )}
               <p className="archive-note">
                 {live
-                  ? "Open a finding to inspect its rule and supporting evidence. Tribunal and reproduction are unavailable for live reports."
+                  ? "Open a problem to see what happened, what to do next and the supporting checks."
                   : "Open any finding to follow its claim, challenge, experiment, and verdict. All records are fixture data."}
               </p>
             </section>
@@ -386,12 +390,12 @@ export function ReportView({
             <ReportSolutions report={report} onFinding={showFinding} onEvidence={showEvidence} />
           )}
         </section>
-        <ProvenanceKey />
+        <ProvenanceKey liveReport={live ? report : undefined} />
         <footer className="case-footer">
           <span>
             Veyra <span>·</span> Every conclusion has a record.
           </span>
-          <span>{live ? "Live observations" : "Fixture data"} · ScanReport v2</span>
+          <span>{live ? "Live report" : "Fixture data · ScanReport v2"}</span>
           <a href="/#how-it-works">
             About the method <ArrowUpRight size={13} />
           </a>

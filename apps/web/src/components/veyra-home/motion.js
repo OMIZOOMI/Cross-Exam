@@ -829,8 +829,8 @@ export function mountVeyraScene(root) {
     const width = viewport.clientWidth;
     const height = viewport.clientHeight;
     if (width <= 600) {
-      const phoneScale = (width - 32) / 960;
-      root.style.setProperty("--world-scale", clamp(phoneScale, 0.34, 0.42).toFixed(3));
+      const phoneScale = Math.min((width - 32) / 960, (height - 16) / 780);
+      root.style.setProperty("--world-scale", clamp(phoneScale, 0.2, 0.42).toFixed(3));
       syncAnchorSockets();
       requestScrollSync();
       return;

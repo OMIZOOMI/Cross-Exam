@@ -1,5 +1,24 @@
 # Current state
 
+## Final V1 interface polish (2026-11-26)
+
+The mobile showcase reserves separate space for the five animated layers and
+scrollable inspector. Mobile Site Map zoom controls occupy a separate row below
+the graph. Proof and walkthrough headings use the approved hero kerning; the
+hero itself is unchanged. Long inspector layer titles wrap. Demo navigation
+opens the example report, the scan field shows a bare-domain example, and new
+scans link directly to the form. Live reports use plain-English headings,
+problem and solution labels, evidence categories, and Homepage in the page list.
+Technical evidence and provenance remain available in disclosures and the
+unchanged JSON download. The example’s data and live/demo boundary are intact.
+
+Validation: production build (including workspace typecheck), changed-file
+Biome checks, 63/63 web unit tests, and 88/88 browser tests (homepage, live and
+product suites across desktop and mobile Chromium/WebKit) passed. Visual checks
+at desktop Chrome 1440px and phone WebKit 390px and 320px verified the mobile
+scene/inspector separation, graph controls, and lower headings. No scanner,
+security, origin, scan-limit or report data changes were made.
+
 ## Homepage scan form and footer (2026-11-26)
 
 The hero heading uses consistent letter spacing with automatic pair kerning

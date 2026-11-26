@@ -23,6 +23,11 @@ test("the approved homepage preserves the interactive demo and separates it from
   await expect(home.locator(".layer")).toHaveCount(5);
   await expect(page.locator("video")).toHaveCount(0);
   await expect(home.locator(".trace-path")).toHaveCount(16);
+  await expect(page.getByText("Scroll to investigate", { exact: true })).toBeVisible();
+  for (const selector of [".story-panel h2", ".method-heading h2"]) {
+    await expect(home.locator(selector).first()).toHaveCSS("font-kerning", "normal");
+    await expect(home.locator(selector).first()).toHaveCSS("font-weight", "700");
+  }
 
   const stage = page.locator("#showcase");
   const inspector = page.locator("#inspector");
@@ -52,7 +57,22 @@ test("the approved homepage preserves the interactive demo and separates it from
       });
     }, progress);
     await expect(inspector).toHaveAttribute("data-narrative-stage", beat);
+    if (isMobile && beat === "verdict") {
+      await expect
+        .poll(() =>
+          stage.evaluate((element) => {
+            const viewport = element.querySelector("#viewport");
+            const rail = element.querySelector("#inspector");
+            if (!viewport || !rail) return false;
+            const scene = viewport.getBoundingClientRect();
+            const panel = rail.getBoundingClientRect();
+            return scene.height > 0 && scene.bottom <= panel.top;
+          }),
+        )
+        .toBe(true);
+    }
   }
+  await expect(page.locator("#inspector-layer-title")).toHaveCSS("white-space", "normal");
   if (!isMobile) {
     const world = page.locator("#world");
     const yaw = () => world.evaluate((element) => element.style.getPropertyValue("--scene-yaw"));
@@ -83,6 +103,7 @@ test("the approved homepage preserves the interactive demo and separates it from
   const input = page.getByLabel("Website URL");
   const form = page.locator("#scan form");
   await expect(input).toBeVisible();
+  await expect(input).toHaveAttribute("placeholder", "your-website.com");
   await input.fill("example.com");
   const headingColor = await page
     .getByRole("heading", { name: "Scan a website" })
@@ -102,5 +123,15 @@ test("the approved homepage preserves the interactive demo and separates it from
   await page.goBack();
   await expect(home).toHaveAttribute("data-scene-ready", "true");
   await expect(home.locator(".trace-path")).toHaveCount(16);
+  if (isMobile) await page.getByRole("button", { name: "Menu" }).click();
+  const demoNav = page.getByRole("navigation", {
+    name: isMobile ? "Mobile navigation" : "Primary navigation",
+  });
+  await demoNav.getByRole("link", { name: /Demo/ }).click();
+  await expect(page).toHaveURL(/\/report\/demo$/);
+  await expect(page.getByText("This example uses sample data.", { exact: false })).toBeVisible();
+  await page.getByRole("link", { name: "New scan" }).click();
+  await expect(page).toHaveURL(/\/#scan$/);
+  await expect(page.getByLabel("Website URL")).toBeVisible();
   expect(problems).toEqual([]);
 });
